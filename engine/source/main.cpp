@@ -7,20 +7,20 @@
 
 auto core = std::make_unique<Core>();
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 {
-    return core->Init();
+	return core->Init();
 };
 
-SDL_AppResult SDL_AppIterate(void *appstate)
+SDL_AppResult SDL_AppIterate(void* appstate)
 {
-    return core->Iterate();
+	return core->Iterate();
 };
 
-SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
+SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 {
-    return core->ProcessEvent(event);
+	return core->ProcessEvent(event);
 };
 
-void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+void SDL_AppQuit(void* appstate, SDL_AppResult result) {
 };
