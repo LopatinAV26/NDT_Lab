@@ -32,12 +32,11 @@ void XrayBase::DrawThicknessMarkers(const std::vector<DiagramLineRef> &lines,
     if (!std::isfinite(thickness))
         return;
 
+    ImPlotSpec spec;
+    spec.LineColor = ImVec4(1.0f, 1.0f, 1.0f, 0.35f);
+
     if (drawVerticalLine)
-    {
-        ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(1.0f, 1.0f, 1.0f, 0.35f));
-        ImPlot::PlotInfLines("##thickness-line", &thickness, 1);
-        ImPlot::PopStyleColor();
-    }
+        ImPlot::PlotInfLines("##thickness-line", &thickness, 1, spec);
 
     for (const auto &line : lines)
     {
@@ -72,9 +71,15 @@ void XrayBase::DrawThicknessMarkers(const std::vector<DiagramLineRef> &lines,
             const ImVec4 fillColor = line.color;
             const ImVec4 outlineColor{0.05f, 0.05f, 0.05f, 1.0f};
 
-            ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond, 6.0f, fillColor, 2.0f, outlineColor);
             std::string markerLabel = "##thickness-marker-" + line.label + "-" + std::to_string(i);
-            ImPlot::PlotScatter(markerLabel.c_str(), &px, &py, 1, ImPlotScatterFlags_NoClip);
+
+            ImPlotSpec spec;
+            spec.LineWeight = 2.0f;
+            spec.Marker = ImPlotMarker_Diamond;
+            spec.MarkerSize = 6.0f;
+            spec.MarkerLineColor = outlineColor;
+            spec.MarkerFillColor = fillColor;
+            ImPlot::PlotScatter(markerLabel.c_str(), &px, &py, 1, spec);
 
             char buffer[64];
             std::snprintf(buffer, sizeof(buffer), "%s S=%.1f  T=%.1f", line.label.c_str(), px, py);
