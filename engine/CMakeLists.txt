@@ -1,5 +1,6 @@
-file(GLOB_RECURSE SRC_FILES source/*.cpp CMAKE_CONFIGURE_DEPENDS)
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS source/*.cpp)
+
+add_executable(${PROJECT_NAME} ${SRC_FILES} )
 
 if(MSVC)
     if(NOT CMAKE_GENERATOR STREQUAL "Ninja")

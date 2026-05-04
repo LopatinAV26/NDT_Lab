@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 4.2.0)
-project(SDL3_Engine VERSION 0.1.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 4.0.0)
+project(SDL3_Engine VERSION 0.1.0 LANGUAGES C CXX)
 
 # set the output directory for built objects.
 # This makes sure that the dynamic library goes into the build directory automatically

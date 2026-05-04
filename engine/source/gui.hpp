@@ -6,14 +6,12 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 #include "imgui_stdlib.h"
-// #include "imgui_internal.h"
-#include "implot.h"
-#include "implot_internal.h"
 
+#include "implot.h"
+
+#include "applicationData.hpp"
 #include "protocolVMC.hpp"
 #include "nomogram.hpp"
-
-struct ApplicationData;
 
 class Gui
 {

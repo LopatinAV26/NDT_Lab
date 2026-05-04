@@ -23,12 +23,14 @@ SDL_AppResult Core::Init()
 	appData->renderer = SDL_CreateRenderer(appData->window, NULL); // openGL; vulkan; direct3d12
 	if (!appData->renderer)
 	{
+		SDL_DestroyWindow(appData->window);
+		appData->window = nullptr;
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create renderer: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
 	}
 
 	SDL_Log("SDL initialized successfully.");
-	appData->driver = SDL_GetCurrentVideoDriver();
+	appData->driverName = SDL_GetCurrentVideoDriver();
 
 	// SDL_SetRenderVSync(coreData->renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
 
@@ -48,7 +50,7 @@ SDL_AppResult Core::Iterate()
 	}
 
 	imWindow->IterateImGui();
-	SDL_SetRenderDrawColor(appData->renderer, 64, 64, 64, SDL_ALPHA_OPAQUE);
+	// SDL_SetRenderDrawColor(appData->renderer, 64, 64, 64, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(appData->renderer);
 
 	// Update();
@@ -91,8 +93,10 @@ SDL_AppResult Core::ProcessEvent(const SDL_Event *event)
 
 Core::~Core()
 {
-	// imWindow.reset();
+	imWindow.reset();
 	SDL_DestroyRenderer(appData->renderer);
 	SDL_DestroyWindow(appData->window);
+	SDL_Quit();
+
 	SDL_Log("SDL shutdown complete.");
 }

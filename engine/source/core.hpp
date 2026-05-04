@@ -1,29 +1,12 @@
 #pragma once
 
-#include <string_view>
 #include <memory>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_render.h>
 
+#include "applicationData.hpp"
 #include "gui.hpp"
 
-struct ApplicationData
-{
-	SDL_Window *window{nullptr};
-	SDL_Renderer *renderer{nullptr};
-	int windowWidth{1280};
-	int windowHeight{720};
-	SDL_WindowFlags windowFlags{SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY};
-	float mainScale{1.25};
-	std::string_view driver;
-	std::string fontName{"resources/fonts/ShareTechMonoRegular.ttf"};
-	float fontSize{13.0f};
-
-	bool isWindowFocused{true};
-	bool isWindowMinimized{false};
-};
-
-//class Gui;
 class Core
 {
 public:

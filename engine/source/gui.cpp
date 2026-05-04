@@ -2,8 +2,6 @@
 
 #include <SDL3/SDL.h>
 
-#include "core.hpp"
-
 Gui::Gui(const std::shared_ptr<ApplicationData> appData)
 	: appData{appData}
 {
@@ -25,7 +23,7 @@ void Gui::InitImGui()
 	font_config.OversampleV = 2;	// Включаем вертикальный оверсэмплинг
 	font_config.PixelSnapH = false; // Отключаем привязку к пикселям для лучшего дробного масштабирования
 
-	io.Fonts->AddFontFromFileTTF(appData->fontName.c_str(),
+	io.Fonts->AddFontFromFileTTF(appData->fontName,
 								 appData->fontSize,
 								 &font_config);
 
@@ -101,7 +99,7 @@ void Gui::DebugWindow()
 	ImGui::Begin("DebugWindow", &showDebugWindow);
 	{
 		ImGui::Text("API: %s", SDL_GetRendererName(appData->renderer));
-		ImGui::Text("Driver: %s", appData->driver.data());
+		ImGui::Text("Driver: %s", appData->driverName ? appData->driverName : "unknown");
 
 		fpsUpdateTimer += io.DeltaTime;
 		if (fpsUpdateTimer >= 0.5f)
