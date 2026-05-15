@@ -2,10 +2,11 @@
 
 #include <SDL3/SDL.h>
 
+#include "embeddedFonts.hpp"
+
 Gui::Gui(const std::shared_ptr<ApplicationData> appData)
-	: appData{appData}
-{
-}
+	: appData{ appData }
+{}
 
 void Gui::InitImGui()
 {
@@ -13,29 +14,26 @@ void Gui::InitImGui()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImPlot::CreateContext();
-	[[maybe_unused]] ImGuiIO &io = ImGui::GetIO();
+	[[maybe_unused]] ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
-	// Загружаем и настраиваем шрифт
-	ImFontConfig font_config;
-	font_config.OversampleH = 2;	// Включаем горизонтальный оверсэмплинг для лучшего рендеринга
-	font_config.OversampleV = 2;	// Включаем вертикальный оверсэмплинг
-	font_config.PixelSnapH = false; // Отключаем привязку к пикселям для лучшего дробного масштабирования
-
-	io.Fonts->AddFontFromFileTTF(appData->fontName,
+	/*io.Fonts->AddFontFromFileTTF(appData->fontName,
 								 appData->fontSize,
-								 &font_config);
+								 &font_config);*/
+
+	if (ImFont* font = LoadEmbeddedShareTechMono(io, appData->fontSize))
+		io.FontDefault = font;
 
 	// ImGui::StyleColorsDark();
 	// ImGui::StyleColorsLight();
 	ImGui::StyleColorsClassic();
 
 	// Setup scaling
-	ImGuiStyle &style = ImGui::GetStyle();
+	ImGuiStyle& style = ImGui::GetStyle();
 	style.ScaleAllSizes(appData->mainScale);
 	style.FontScaleDpi = appData->mainScale;
-	style.WindowRounding = 4.0f;
+	style.WindowRounding = appData->windowRounding;
 
 	ImGui_ImplSDL3_InitForSDLRenderer(appData->window, appData->renderer);
 	ImGui_ImplSDLRenderer3_Init(appData->renderer);
@@ -43,7 +41,7 @@ void Gui::InitImGui()
 	SDL_Log("ImGui initialized successfully.");
 }
 
-void Gui::ProcessEventImGui(const SDL_Event *event)
+void Gui::ProcessEventImGui(const SDL_Event* event)
 {
 	ImGui_ImplSDL3_ProcessEvent(event);
 }
@@ -80,10 +78,10 @@ void Gui::IterateImGui()
 	//---------------------------------
 
 	// Для работы с HiDPI
-	ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 	SDL_SetRenderScale(appData->renderer,
-					   io.DisplayFramebufferScale.x,
-					   io.DisplayFramebufferScale.y);
+		io.DisplayFramebufferScale.x,
+		io.DisplayFramebufferScale.y);
 }
 
 // Добавить перед SDL_RenderPresent
@@ -95,7 +93,7 @@ void Gui::RenderImGui()
 
 void Gui::DebugWindow()
 {
-	ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 	ImGui::Begin("DebugWindow", &showDebugWindow);
 	{
 		ImGui::Text("API: %s", SDL_GetRendererName(appData->renderer));
@@ -104,9 +102,9 @@ void Gui::DebugWindow()
 		fpsUpdateTimer += io.DeltaTime;
 		if (fpsUpdateTimer >= 0.5f)
 		{
-			currentFrametime = {1000.f / io.Framerate};
-			framerate = {io.Framerate};
-			fpsUpdateTimer = {0.f};
+			currentFrametime = { 1000.f / io.Framerate };
+			framerate = { io.Framerate };
+			fpsUpdateTimer = { 0.f };
 		}
 		ImGui::Text("Application average %.2f ms/frame (%.0f FPS)", currentFrametime, framerate);
 
@@ -130,13 +128,13 @@ void Gui::FullscreenWindow()
 		ImGuiWindowFlags_NoSavedSettings |
 		ImGuiWindowFlags_NoBringToFrontOnFocus; */
 
-	// Кнопка без окна///////////////////////////////////////////////
+		// Кнопка без окна///////////////////////////////////////////////
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration |
-									// ImGuiWindowFlags_NoMove |
-									ImGuiWindowFlags_AlwaysAutoResize |
-									// ImGuiWindowFlags_NoSavedSettings |
-									ImGuiWindowFlags_NoBringToFrontOnFocus |
-									ImGuiWindowFlags_NoBackground;
+		// ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_AlwaysAutoResize |
+		// ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_NoBringToFrontOnFocus |
+		ImGuiWindowFlags_NoBackground;
 
 	ImGui::Begin("Main Window", &showFullscreenWindow, window_flags);
 

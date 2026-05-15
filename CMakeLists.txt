@@ -37,3 +37,4 @@ endif()
 
 add_subdirectory(engine)
 add_subdirectory(external EXCLUDE_FROM_ALL)
+add_subdirectory(resources)

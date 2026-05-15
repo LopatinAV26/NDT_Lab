@@ -13,24 +13,26 @@ FetchContent_Declare(SDL3
 FetchContent_MakeAvailable(SDL3)
 
 # PoDoFo ------------------------------------------------------------------------------------
-if(WIN32)
-find_package(PoDoFo CONFIG REQUIRED)
-target_compile_definitions(${PROJECT_NAME} PRIVATE PODOFO_STATIC)
+#if(WIN32)
+#find_package(PoDoFo 1.1.0 REQUIRED)
+#target_compile_definitions(${PROJECT_NAME} PRIVATE PODOFO_STATIC)
 
-elseif(UNIX)
-set(PODOFO_BUILD_LIB_ONLY TRUE CACHE BOOL "" FORCE)
-set(PODOFO_BUILD_STATIC TRUE CACHE BOOL "" FORCE)
+#elseif(UNIX)
+#set(PODOFO_BUILD_LIB_ONLY TRUE CACHE BOOL "" FORCE)
+#set(PODOFO_BUILD_STATIC TRUE CACHE BOOL "" FORCE)
 
-FetchContent_Declare(podofo
-    GIT_REPOSITORY https://github.com/podofo/podofo.git
-    GIT_TAG 1.0.3
-)
+#FetchContent_Declare(podofo
+#    GIT_REPOSITORY https://github.com/podofo/podofo.git
+#    GIT_TAG 1.1.0
+#)
 
-FetchContent_MakeAvailable(podofo)
+#FetchContent_MakeAvailable(podofo)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${PODOFO_INCLUDE_DIRS})
-target_compile_definitions(${PROJECT_NAME} PRIVATE PODOFO_STATIC)
-endif()
+#target_include_directories(${PROJECT_NAME} PRIVATE ${PODOFO_INCLUDE_DIRS})
+#target_compile_definitions(${PROJECT_NAME} PRIVATE PODOFO_STATIC)
+#endif()
+
+
 
 # toml++ ------------------------------------------------------------------------------------
 FetchContent_Declare(tomlplusplus
@@ -88,7 +90,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
                                     implot
                                     sqlite3
                                     tomlplusplus::tomlplusplus
-                                    podofo::podofo
+                                    #podofo::podofo
                                     SDL3::SDL3-static)   # If using satelite libraries, SDL must be the last item in the list
 
 #target_precompile_headers(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/source/pch.hpp)

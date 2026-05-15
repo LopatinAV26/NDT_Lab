@@ -1,7 +1,6 @@
 #pragma once
 
 #include "protocolBase.hpp"
-#include "pdfCreator.hpp"
 
 class ProtocolVMC : public ProtocolBase
 {

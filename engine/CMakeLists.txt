@@ -1,6 +1,9 @@
-file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS source/*.cpp)
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
+    source/*.cpp
+    resources/fonts/*.cpp
+)
 
-add_executable(${PROJECT_NAME} ${SRC_FILES} )
+add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 if(MSVC)
     if(NOT CMAKE_GENERATOR STREQUAL "Ninja")

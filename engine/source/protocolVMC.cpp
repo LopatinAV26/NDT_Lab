@@ -44,12 +44,6 @@ void ProtocolVMC::WindowProtocol(bool &showProtocol)
         ImGui::InputText("Номер сварного соединения", &protocolData->weldNumber);
     }
 
-    if (ImGui::Button("Создать PDF"))
-    {
-        PdfCreator pdf;
-        pdf.CreateTable();
-    }
-
     ImGui::End();
 }
 
