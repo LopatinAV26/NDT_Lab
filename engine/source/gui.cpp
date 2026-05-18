@@ -4,9 +4,10 @@
 
 #include "embeddedFonts.hpp"
 
-Gui::Gui(const std::shared_ptr<ApplicationData> appData)
-	: appData{ appData }
-{}
+Gui::Gui(ApplicationData &coreAppData)
+	: appData{coreAppData}
+{
+}
 
 void Gui::InitImGui()
 {
@@ -14,34 +15,41 @@ void Gui::InitImGui()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImPlot::CreateContext();
-	[[maybe_unused]] ImGuiIO& io = ImGui::GetIO();
+	[[maybe_unused]] ImGuiIO &io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
-	/*io.Fonts->AddFontFromFileTTF(appData->fontName,
-								 appData->fontSize,
-								 &font_config);*/
-
-	if (ImFont* font = LoadEmbeddedShareTechMono(io, appData->fontSize))
+	if (ImFont *font = LoadEmbeddedShareTechMono(io, appData.fontSize * appData.mainScale))
 		io.FontDefault = font;
 
-	// ImGui::StyleColorsDark();
-	// ImGui::StyleColorsLight();
-	ImGui::StyleColorsClassic();
+	switch (appData.style)
+	{
+	case GuiStyle::Dark:
+		ImGui::StyleColorsDark();
+		break;
 
-	// Setup scaling
-	ImGuiStyle& style = ImGui::GetStyle();
-	style.ScaleAllSizes(appData->mainScale);
-	style.FontScaleDpi = appData->mainScale;
-	style.WindowRounding = appData->windowRounding;
+	case GuiStyle::Light:
+		ImGui::StyleColorsLight();
+		break;
 
-	ImGui_ImplSDL3_InitForSDLRenderer(appData->window, appData->renderer);
-	ImGui_ImplSDLRenderer3_Init(appData->renderer);
+	case GuiStyle::Classic:
+		ImGui::StyleColorsClassic();
+		break;
+	}
+
+	ImGuiStyle &style = ImGui::GetStyle();
+	style.ScaleAllSizes(appData.mainScale);
+	style.WindowRounding = appData.windowRounding;
+	style.FrameRounding = appData.frameRounding;
+	style.GrabRounding = appData.grabRounding;
+
+	ImGui_ImplSDL3_InitForSDLRenderer(appData.window, appData.renderer);
+	ImGui_ImplSDLRenderer3_Init(appData.renderer);
 
 	SDL_Log("ImGui initialized successfully.");
 }
 
-void Gui::ProcessEventImGui(const SDL_Event* event)
+void Gui::ProcessEventImGui(const SDL_Event *event)
 {
 	ImGui_ImplSDL3_ProcessEvent(event);
 }
@@ -57,11 +65,13 @@ void Gui::IterateImGui()
 	// ImGui::ShowDemoWindow();
 
 	//---------------------------------
-	if (showDebugWindow)
-		DebugWindow();
+	if (showSettingsWindow)
+	{
+		settingsWindow.Show(showSettingsWindow);
+	}
 
 	if (showFullscreenWindow)
-		FullscreenWindow();
+		ButtonsWindow();
 
 	if (showProtocolVMC)
 		protocolVMC->WindowProtocol(showProtocolVMC);
@@ -78,45 +88,20 @@ void Gui::IterateImGui()
 	//---------------------------------
 
 	// Для работы с HiDPI
-	ImGuiIO& io = ImGui::GetIO();
-	SDL_SetRenderScale(appData->renderer,
-		io.DisplayFramebufferScale.x,
-		io.DisplayFramebufferScale.y);
+	ImGuiIO &io = ImGui::GetIO();
+	SDL_SetRenderScale(appData.renderer,
+					   io.DisplayFramebufferScale.x,
+					   io.DisplayFramebufferScale.y);
 }
 
 // Добавить перед SDL_RenderPresent
 void Gui::RenderImGui()
 {
 	ImGui::Render();
-	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), appData->renderer);
+	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), appData.renderer);
 }
 
-void Gui::DebugWindow()
-{
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui::Begin("DebugWindow", &showDebugWindow);
-	{
-		ImGui::Text("API: %s", SDL_GetRendererName(appData->renderer));
-		ImGui::Text("Driver: %s", appData->driverName ? appData->driverName : "unknown");
-
-		fpsUpdateTimer += io.DeltaTime;
-		if (fpsUpdateTimer >= 0.5f)
-		{
-			currentFrametime = { 1000.f / io.Framerate };
-			framerate = { io.Framerate };
-			fpsUpdateTimer = { 0.f };
-		}
-		ImGui::Text("Application average %.2f ms/frame (%.0f FPS)", currentFrametime, framerate);
-
-		if (ImGui::IsMousePosValid())
-			ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y);
-		else
-			ImGui::Text("Mouse pos: <INVALID>");
-	}
-	ImGui::End();
-}
-
-void Gui::FullscreenWindow()
+void Gui::ButtonsWindow()
 {
 	/* ImGuiViewport *viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
@@ -128,21 +113,19 @@ void Gui::FullscreenWindow()
 		ImGuiWindowFlags_NoSavedSettings |
 		ImGuiWindowFlags_NoBringToFrontOnFocus; */
 
-		// Кнопка без окна///////////////////////////////////////////////
+	// Кнопка без окна///////////////////////////////////////////////
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration |
-		// ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_AlwaysAutoResize |
-		// ImGuiWindowFlags_NoSavedSettings |
-		ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoBackground;
+									// ImGuiWindowFlags_NoMove |
+									ImGuiWindowFlags_AlwaysAutoResize |
+									// ImGuiWindowFlags_NoSavedSettings |
+									ImGuiWindowFlags_NoBringToFrontOnFocus |
+									ImGuiWindowFlags_NoBackground;
 
 	ImGui::Begin("Main Window", &showFullscreenWindow, window_flags);
 
-	if (ImGui::Button("Создать заключение ВИК"))
+	if (ImGui::Button("Настройки"))
 	{
-		showProtocolVMC = true;
-		if (protocolVMC == nullptr)
-			protocolVMC = std::make_unique<ProtocolVMC>();
+		showSettingsWindow = true;
 	}
 
 	if (ImGui::Button("Открыть номограмму РК"))
@@ -150,6 +133,13 @@ void Gui::FullscreenWindow()
 		showNomogram = true;
 		if (nomogram == nullptr)
 			nomogram = std::make_unique<Nomogram>();
+	}
+
+	if (ImGui::Button("Создать заключение ВИК"))
+	{
+		showProtocolVMC = true;
+		if (protocolVMC == nullptr)
+			protocolVMC = std::make_unique<ProtocolVMC>();
 	}
 
 	ImGui::End();

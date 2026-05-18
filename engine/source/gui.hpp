@@ -9,14 +9,16 @@
 
 #include "implot.h"
 
-#include "applicationData.hpp"
+// #include "applicationData.hpp"
 #include "protocolVMC.hpp"
 #include "nomogram.hpp"
+
+#include "appWindows.hpp"
 
 class Gui
 {
 public:
-	explicit Gui(const std::shared_ptr<ApplicationData> appData);
+	explicit Gui(ApplicationData &coreAppData);
 	~Gui();
 
 	void InitImGui();
@@ -25,15 +27,16 @@ public:
 	void RenderImGui();
 
 private:
-	void FullscreenWindow();
-	void DebugWindow();
+	void ButtonsWindow();
 
-	std::shared_ptr<ApplicationData> appData;
+	ApplicationData &appData;
+
+	SettingsWindow settingsWindow{appData};
 	std::unique_ptr<ProtocolVMC> protocolVMC;
 	std::unique_ptr<Nomogram> nomogram;
 
 	bool showFullscreenWindow{true};
-	bool showDebugWindow{true};
+	bool showSettingsWindow{false};
 
 	bool showProtocolVMC{false};
 	bool showNomogram{false};

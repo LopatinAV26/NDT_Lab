@@ -19,17 +19,17 @@ void Nomogram::NomogramWindow(bool &isOpen)
 {
     // ImPlot::ShowDemoWindow();
 
-    /* ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    ImGuiWindowFlags window_flags = // ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoSavedSettings; */
+    ImGuiWindowFlags window_flags = //ImGuiWindowFlags_NoDecoration |
+                                    ImGuiWindowFlags_NoMove |
+                                    ImGuiWindowFlags_NoResize |
+                                    ImGuiWindowFlags_NoCollapse |
+                                    ImGuiWindowFlags_NoSavedSettings;
 
-    if (ImGui::Begin("Расчёт экспозиции", &isOpen /*window_flags*/))
+    if (ImGui::Begin("Расчёт экспозиции", &isOpen, window_flags))
     {
         for (size_t i = 0; i < xray.size(); ++i)
         {

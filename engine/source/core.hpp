@@ -22,6 +22,6 @@ public:
 	SDL_AppResult ProcessEvent(const SDL_Event *event);
 
 private:
-	std::shared_ptr<ApplicationData> appData = std::make_shared<ApplicationData>();
+	ApplicationData appData;
 	std::unique_ptr<Gui> imWindow;
 };

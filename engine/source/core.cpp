@@ -8,31 +8,34 @@ SDL_AppResult Core::Init()
 		return SDL_APP_FAILURE;
 	}
 
-	appData->mainScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+	appData.window = SDL_CreateWindow("NDT",
+									   appData.windowWidth,
+									   appData.windowHeight,
+									   appData.windowFlags);
 
-	appData->window = SDL_CreateWindow("NDT",
-									   (appData->windowWidth * appData->mainScale),
-									   (appData->windowHeight * appData->mainScale),
-									   appData->windowFlags);
-	if (!appData->window)
+	appData.mainScale = SDL_GetWindowDisplayScale(appData.window);
+	if (appData.mainScale <= 0.0f)
+		appData.mainScale = 1.0f;
+
+	if (!appData.window)
 	{
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
 	}
 
-	appData->renderer = SDL_CreateRenderer(appData->window, NULL); // openGL; vulkan; direct3d12
-	if (!appData->renderer)
+	appData.renderer = SDL_CreateRenderer(appData.window, NULL); // openGL; vulkan; direct3d12
+	if (!appData.renderer)
 	{
-		SDL_DestroyWindow(appData->window);
-		appData->window = nullptr;
+		SDL_DestroyWindow(appData.window);
+		appData.window = nullptr;
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create renderer: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
 	}
 
 	SDL_Log("SDL initialized successfully.");
-	appData->driverName = SDL_GetCurrentVideoDriver();
+	appData.driverName = SDL_GetCurrentVideoDriver();
 
-	// SDL_SetRenderVSync(coreData->renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
+	// SDL_SetRenderVSync(appData->renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
 
 	imWindow = std::make_unique<Gui>(appData);
 	imWindow->InitImGui();
@@ -42,22 +45,26 @@ SDL_AppResult Core::Init()
 
 SDL_AppResult Core::Iterate()
 {
-	// Если окно свёрнуто или не в фокусе - приостанавливаем основной цикл
-	if (appData->isWindowMinimized || !appData->isWindowFocused)
+	if (appData.isWindowMinimized)
 	{
-		SDL_Delay(100); // Задержка 100мс для снижения нагрузки на CPU
+		SDL_Delay(100);
 		return SDL_APP_CONTINUE;
+	}
+
+	if (!appData.isWindowFocused)
+	{
+		SDL_Delay(66);
 	}
 
 	imWindow->IterateImGui();
 	// SDL_SetRenderDrawColor(appData->renderer, 64, 64, 64, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(appData->renderer);
+	SDL_RenderClear(appData.renderer);
 
 	// Update();
 	// Render();
 
 	imWindow->RenderImGui();
-	SDL_RenderPresent(appData->renderer);
+	SDL_RenderPresent(appData.renderer);
 
 	return SDL_APP_CONTINUE;
 }
@@ -72,19 +79,25 @@ SDL_AppResult Core::ProcessEvent(const SDL_Event *event)
 		return SDL_APP_SUCCESS;
 
 	case SDL_EVENT_WINDOW_MINIMIZED:
-		appData->isWindowMinimized = true;
+		appData.isWindowMinimized = true;
 		break;
 
 	case SDL_EVENT_WINDOW_RESTORED:
-		appData->isWindowMinimized = false;
+		appData.isWindowMinimized = false;
 		break;
 
 	case SDL_EVENT_WINDOW_FOCUS_GAINED:
-		appData->isWindowFocused = true;
+		appData.isWindowFocused = true;
 		break;
 
 	case SDL_EVENT_WINDOW_FOCUS_LOST:
-		appData->isWindowFocused = false;
+		appData.isWindowFocused = false;
+		break;
+
+	case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
+		appData.mainScale = SDL_GetWindowDisplayScale(appData.window);
+		if (appData.mainScale <= 0.0f)
+			appData.mainScale = 1.0f;
 		break;
 	}
 
@@ -94,8 +107,8 @@ SDL_AppResult Core::ProcessEvent(const SDL_Event *event)
 Core::~Core()
 {
 	imWindow.reset();
-	SDL_DestroyRenderer(appData->renderer);
-	SDL_DestroyWindow(appData->window);
+	SDL_DestroyRenderer(appData.renderer);
+	SDL_DestroyWindow(appData.window);
 	SDL_Quit();
 
 	SDL_Log("SDL shutdown complete.");
