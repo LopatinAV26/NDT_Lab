@@ -23,7 +23,6 @@ struct ApplicationData
 	float windowRounding{0.0f};
 	float frameRounding{0.0f};
 	float grabRounding{0.0f};
-	// const char *fontName{"resources/fonts/ShareTechMonoRegular.ttf"};
 	float fontSize{13.0f};
 	GuiStyle style{GuiStyle::Classic};
 
