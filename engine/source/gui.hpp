@@ -9,7 +9,6 @@
 
 #include "implot.h"
 
-// #include "applicationData.hpp"
 #include "protocolVMC.hpp"
 #include "nomogram.hpp"
 

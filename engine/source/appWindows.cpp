@@ -42,10 +42,6 @@ void SettingsWindow::Show(bool &isOpen)
 
 		if (ImGui::SliderFloat("GrabRounding", &appData.grabRounding, 0.f, 12.f, "%.0f"))
 			ImGui::GetStyle().GrabRounding = appData.grabRounding;
-
-		/////////////////временно/////////////////////
-		
-		////////////////////////////////////
 	}
 	ImGui::End();
 }

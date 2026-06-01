@@ -1,8 +1,8 @@
 #include "gui.hpp"
-
 #include <SDL3/SDL.h>
-
 #include "embeddedFonts.hpp"
+
+#include "resourceManager.hpp"
 
 Gui::Gui(ApplicationData &coreAppData)
 	: appData{coreAppData}
@@ -38,7 +38,7 @@ void Gui::InitImGui()
 	}
 
 	ImGuiStyle &style = ImGui::GetStyle();
-	style.ScaleAllSizes(appData.mainScale);
+	//style.ScaleAllSizes(appData.mainScale);
 	style.WindowRounding = appData.windowRounding;
 	style.FrameRounding = appData.frameRounding;
 	style.GrabRounding = appData.grabRounding;
@@ -141,7 +141,12 @@ void Gui::ButtonsWindow()
 		if (protocolVMC == nullptr)
 			protocolVMC = std::make_unique<ProtocolVMC>();
 	}
-
+///////////временно//////////////
+	if (ImGui::Button("Парсинг"))
+	{
+		LoadDevices(appData.pathToDevices);
+	}
+///////////////////////////////////
 	ImGui::End();
 }
 

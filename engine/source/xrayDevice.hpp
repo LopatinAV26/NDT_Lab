@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <toml++/toml.hpp>
 
 struct Point
 {
@@ -25,13 +24,6 @@ struct DeviceData
 class XrayDevice
 {
 public:
-    void SetDeviceData()
-    {
-        data = toml::parse_file("resources/xray_devices.toml");
-    };
 
 private:
-
-    toml::table data;
-    std::vector<Point> points;
 };
