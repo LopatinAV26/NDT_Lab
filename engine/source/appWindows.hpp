@@ -6,8 +6,8 @@
 #include "imgui_stdlib.h"
 #include "implot.h"
 
+#include "resourceManager.hpp"
 #include "applicationData.hpp"
-#include "xrayDevice.hpp"
 
 class SettingsWindow
 {
@@ -24,15 +24,13 @@ private:
     float framerate{0.f};
 };
 
-class NomogramWindow{
+class NomogramWindow
+{
 public:
     explicit NomogramWindow();
     void Show(bool &isOpen);
 
 private:
-    std::string plotTitle{"Диаграмма экспозиции РА"};
-    std::string nameAxisY{""};
-    std::string xrayInfo{""};
-
-    //std::vector<std::unique_ptr<XrayBase>> xray;
+    ResourceManager manager;
+    std::vector<XrayDevice> devices;
 };

@@ -17,8 +17,6 @@ Nomogram::Nomogram()
 
 void Nomogram::NomogramWindow(bool &isOpen)
 {
-    // ImPlot::ShowDemoWindow();
-
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);

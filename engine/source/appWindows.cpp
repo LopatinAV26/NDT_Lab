@@ -76,3 +76,42 @@ void SettingsWindow::SetGuiStyle()
 		break;
 	}
 }
+
+NomogramWindow::NomogramWindow()
+{
+	devices = manager.LoadDevices();
+}
+
+void NomogramWindow::Show(bool &isOpen)
+{
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+
+	ImGuiWindowFlags window_flags = // ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoSavedSettings;
+
+	if (ImGui::Begin("Расчёт экспозиции", &isOpen, window_flags))
+	{
+		static int deviceIndex{0};
+		if (ImGui::BeginCombo("Аппарат", devices[deviceIndex].name.data()))
+		{
+			for (int i = 0; i < std::ssize(devices); ++i)
+			{
+				const bool isSelected = (deviceIndex == i);
+				if (ImGui::Selectable(devices[i].name.data(), isSelected))
+					deviceIndex = i;
+
+				if (isSelected)
+					ImGui::SetItemDefaultFocus();
+			}
+
+			ImGui::EndCombo();
+		}
+
+		ImGui::End();
+	}
+}

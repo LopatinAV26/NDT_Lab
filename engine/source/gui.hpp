@@ -31,11 +31,15 @@ private:
 	ApplicationData &appData;
 
 	SettingsWindow settingsWindow{appData};
+	NomogramWindow nomogramWindow;
+
 	std::unique_ptr<ProtocolVMC> protocolVMC;
 	std::unique_ptr<Nomogram> nomogram;
 
-	bool showFullscreenWindow{true};
+	bool showButtonsWindow{true};
 	bool showSettingsWindow{false};
+	bool showNomogramWindow{false};
+
 
 	bool showProtocolVMC{false};
 	bool showNomogram{false};

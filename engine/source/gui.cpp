@@ -2,8 +2,6 @@
 #include <SDL3/SDL.h>
 #include "embeddedFonts.hpp"
 
-#include "resourceManager.hpp"
-
 Gui::Gui(ApplicationData &coreAppData)
 	: appData{coreAppData}
 {
@@ -11,7 +9,6 @@ Gui::Gui(ApplicationData &coreAppData)
 
 void Gui::InitImGui()
 {
-	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImPlot::CreateContext();
@@ -38,7 +35,7 @@ void Gui::InitImGui()
 	}
 
 	ImGuiStyle &style = ImGui::GetStyle();
-	//style.ScaleAllSizes(appData.mainScale);
+	// style.ScaleAllSizes(appData.mainScale);
 	style.WindowRounding = appData.windowRounding;
 	style.FrameRounding = appData.frameRounding;
 	style.GrabRounding = appData.grabRounding;
@@ -65,13 +62,14 @@ void Gui::IterateImGui()
 	// ImGui::ShowDemoWindow();
 
 	//---------------------------------
-	if (showSettingsWindow)
-	{
-		settingsWindow.Show(showSettingsWindow);
-	}
-
-	if (showFullscreenWindow)
+	if (showButtonsWindow)
 		ButtonsWindow();
+
+	if (showSettingsWindow)
+		settingsWindow.Show(showSettingsWindow);
+
+	if (showNomogramWindow)
+		nomogramWindow.Show(showNomogramWindow);
 
 	if (showProtocolVMC)
 		protocolVMC->WindowProtocol(showProtocolVMC);
@@ -121,14 +119,15 @@ void Gui::ButtonsWindow()
 									ImGuiWindowFlags_NoBringToFrontOnFocus |
 									ImGuiWindowFlags_NoBackground;
 
-	ImGui::Begin("Main Window", &showFullscreenWindow, window_flags);
+	ImGui::Begin("Main Window", &showButtonsWindow, window_flags);
 
 	if (ImGui::Button("Настройки"))
-	{
 		showSettingsWindow = true;
-	}
 
-	if (ImGui::Button("Открыть номограмму РК"))
+	if (ImGui::Button("Номограмма"))
+		showNomogramWindow = true;
+
+	if (ImGui::Button("Номограмма старая"))
 	{
 		showNomogram = true;
 		if (nomogram == nullptr)
@@ -141,12 +140,7 @@ void Gui::ButtonsWindow()
 		if (protocolVMC == nullptr)
 			protocolVMC = std::make_unique<ProtocolVMC>();
 	}
-///////////временно//////////////
-	if (ImGui::Button("Парсинг"))
-	{
-		LoadDevices(appData.pathToDevices);
-	}
-///////////////////////////////////
+
 	ImGui::End();
 }
 

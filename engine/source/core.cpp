@@ -35,7 +35,7 @@ SDL_AppResult Core::Init()
 	SDL_Log("SDL initialized successfully.");
 	appData.driverName = SDL_GetCurrentVideoDriver();
 
-	// SDL_SetRenderVSync(appData->renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
+	//SDL_SetRenderVSync(appData.renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
 
 	imWindow = std::make_unique<Gui>(appData);
 	imWindow->InitImGui();
@@ -57,7 +57,7 @@ SDL_AppResult Core::Iterate()
 	}
 
 	imWindow->IterateImGui();
-	// SDL_SetRenderDrawColor(appData->renderer, 64, 64, 64, SDL_ALPHA_OPAQUE);
+	SDL_SetRenderDrawColor(appData.renderer, 64, 64, 64, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(appData.renderer);
 
 	// Update();
