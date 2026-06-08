@@ -76,7 +76,7 @@ void SettingsWindow::SetGuiStyle()
 		break;
 	}
 }
-
+/////////////////////////////////////////////
 NomogramWindow::NomogramWindow()
 {
 	devices = manager.LoadDevices();
@@ -97,12 +97,12 @@ void NomogramWindow::Show(bool &isOpen)
 	if (ImGui::Begin("Расчёт экспозиции", &isOpen, window_flags))
 	{
 		static int deviceIndex{0};
-		if (ImGui::BeginCombo("Аппарат", devices[deviceIndex].name.data()))
+		if (ImGui::BeginCombo("Аппарат", devices[deviceIndex].name.c_str()))
 		{
 			for (int i = 0; i < std::ssize(devices); ++i)
 			{
 				const bool isSelected = (deviceIndex == i);
-				if (ImGui::Selectable(devices[i].name.data(), isSelected))
+				if (ImGui::Selectable(devices[i].name.c_str(), isSelected))
 					deviceIndex = i;
 
 				if (isSelected)
@@ -112,6 +112,22 @@ void NomogramWindow::Show(bool &isOpen)
 			ImGui::EndCombo();
 		}
 
-		ImGui::End();
+		if (ImPlot::BeginPlot("Диаграмма экспозиции РА",
+							  ImVec2(-1, ImGui::GetContentRegionAvail().y - 100)
+							  // ImPlotFlags_NoLegend
+							  ))
+		{
+			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
+			for (int i = 0; i < std::ssize(devices[deviceIndex].curveVector); ++i)
+			{
+				ImPlot::PlotLine(devices[deviceIndex].curveVector[i].label.c_str(),
+								 devices[deviceIndex].curveVector[i].xData.data(),
+								 devices[deviceIndex].curveVector[i].yData.data(),
+								 devices[deviceIndex].curveVector[i].xData.size());
+			}
+		}
+		ImPlot::EndPlot();
 	}
+
+	ImGui::End();
 }
