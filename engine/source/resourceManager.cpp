@@ -40,31 +40,34 @@ std::vector<XrayDevice> ResourceManager::LoadDevices()
             device.name = value->value_or("");
 
         if (auto *value = deviceTable->get("information"))
-            device.information = {value->value_or("")};
+            device.information = value->value_or("");
 
         if (auto *value = deviceTable->get("electricPower"))
-            device.electricPower = {value->value_or(0)};
+            device.electricPower = value->value_or(0);
 
         if (auto *value = deviceTable->get("voltageMaximum"))
-            device.voltageMaximum = {value->value_or(0)};
+            device.voltageMaximum = value->value_or(0);
 
         if (auto *value = deviceTable->get("currentAdjustment"))
-            device.currentAdjustment = {value->value_or(false)};
+            device.currentAdjustment = value->value_or(false);
 
         if (auto *value = deviceTable->get("currentMinimum"))
-            device.currentMinimum = {value->value_or(0.f)};
+            device.currentMinimum = value->value_or(0.f);
 
         if (auto *value = deviceTable->get("currentMaximum"))
-            device.currentMaximum = {value->value_or(0.f)};
+            device.currentMaximum = value->value_or(0.f);
 
         if (auto *value = deviceTable->get("focusDistanceDefault"))
-            device.focusDistanceDefault = {value->value_or(0)};
+            device.focusDistanceDefault = value->value_or(0);
 
         if (auto *value = deviceTable->get("focalSpotSize"))
-            device.focalSpotSize = {value->value_or(0.f)};
+            device.focalSpotSize = value->value_or(0.f);
 
         if (auto *value = deviceTable->get("exposureMultiplier"))
-            device.exposureMultiplier = {value->value_or(1.f)};
+            device.exposureMultiplier = value->value_or(1.f);
+
+        if (auto *value = deviceTable->get("steelThicknessMax"))
+            device.steelThicknessMax = value->value_or(1.f);
 
         auto *curvesArray = deviceTable->get_as<toml::array>("curves");
         if (!curvesArray)

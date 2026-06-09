@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <cmath>
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "implot.h"
@@ -33,4 +34,11 @@ public:
 private:
     ResourceManager manager;
     std::vector<XrayDevice> devices;
+    std::vector<XrayDevice> calculatedDevices;
+    int deviceIndex{0};
+    int focusDistance{700};
+    float steelThickness{10.f};
+
+    std::vector<XrayDevice> ExposureRecalculation(const std::vector<XrayDevice> &deviceVector,
+                                           int distance);
 };

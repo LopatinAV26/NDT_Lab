@@ -80,11 +80,12 @@ void SettingsWindow::SetGuiStyle()
 NomogramWindow::NomogramWindow()
 {
 	devices = manager.LoadDevices();
+	calculatedDevices = devices;
 }
 
 void NomogramWindow::Show(bool &isOpen)
 {
-	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	/* ImGuiViewport *viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
 	ImGui::SetNextWindowSize(viewport->Size);
 
@@ -92,11 +93,17 @@ void NomogramWindow::Show(bool &isOpen)
 		ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoSavedSettings;
+		ImGuiWindowFlags_NoSavedSettings; */
 
-	if (ImGui::Begin("Расчёт экспозиции", &isOpen, window_flags))
+	if (ImGui::Begin("Расчёт экспозиции", &isOpen /*, window_flags*/))
 	{
-		static int deviceIndex{0};
+		if (devices.empty() && calculatedDevices.empty())
+		{
+			ImGui::Text("No devices loaded.");
+			ImGui::End();
+			return;
+		}
+
 		if (ImGui::BeginCombo("Аппарат", devices[deviceIndex].name.c_str()))
 		{
 			for (int i = 0; i < std::ssize(devices); ++i)
@@ -112,22 +119,45 @@ void NomogramWindow::Show(bool &isOpen)
 			ImGui::EndCombo();
 		}
 
+		ImGui::Text("%s", devices[deviceIndex].information.c_str());
+
+		if (ImGui::DragInt("Фокусное расстояние", &focusDistance, 1, 0, 2000))
+			calculatedDevices = ExposureRecalculation(devices, focusDistance);
+
+		ImGui::DragFloat("Толщина стали, мм", &steelThickness, 0.1f, 0.5f, devices[deviceIndex].steelThicknessMax, "%.1f");
+
 		if (ImPlot::BeginPlot("Диаграмма экспозиции РА",
 							  ImVec2(-1, ImGui::GetContentRegionAvail().y - 100)
 							  // ImPlotFlags_NoLegend
 							  ))
 		{
 			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-			for (int i = 0; i < std::ssize(devices[deviceIndex].curveVector); ++i)
+			for (int i = 0; i < std::ssize(calculatedDevices[deviceIndex].curveVector); ++i)
 			{
-				ImPlot::PlotLine(devices[deviceIndex].curveVector[i].label.c_str(),
-								 devices[deviceIndex].curveVector[i].xData.data(),
-								 devices[deviceIndex].curveVector[i].yData.data(),
-								 devices[deviceIndex].curveVector[i].xData.size());
+				ImPlot::PlotLine(calculatedDevices[deviceIndex].curveVector[i].label.c_str(),
+								 calculatedDevices[deviceIndex].curveVector[i].xData.data(),
+								 calculatedDevices[deviceIndex].curveVector[i].yData.data(),
+								 calculatedDevices[deviceIndex].curveVector[i].xData.size());
 			}
+			ImPlot::EndPlot();
 		}
-		ImPlot::EndPlot();
 	}
-
 	ImGui::End();
+}
+
+std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<XrayDevice> &deviceVector,
+													   int distance)
+{
+	std::vector<XrayDevice> result = deviceVector;
+	for (int i = 0; i < std::ssize(result[deviceIndex].curveVector); ++i)
+	{
+		for (int j = 0; j < std::ssize(result[deviceIndex].curveVector[i].yData); ++j)
+		{
+			result[deviceIndex].curveVector[i].yData[j] /=
+				std::pow((static_cast<float>(deviceVector[deviceIndex].focusDistanceDefault) /
+						  static_cast<float>(distance)),
+						 2);
+		}
+	}
+	return result;
 }

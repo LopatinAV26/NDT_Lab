@@ -25,6 +25,7 @@ struct XrayDevice
     int focusDistanceDefault{700};
     float focalSpotSize{1.0f};
     float exposureMultiplier{1.f};
+    float steelThicknessMax{1.f};
 
     std::vector<Curve> curveVector;
 };
