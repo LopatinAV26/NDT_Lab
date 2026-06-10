@@ -1,11 +1,8 @@
 #include "resourceManager.hpp"
 #include <SDL3/SDL.h>
+#include <toml++/toml.hpp>
 
-ResourceManager::ResourceManager()
-{
-}
-
-std::vector<XrayDevice> ResourceManager::LoadDevices()
+std::vector<NDT::XrayDevice> NDT::LoadDevices(const std::filesystem::path &pathToDevices)
 {
     std::vector<XrayDevice> devices;
     toml::table tbl;

@@ -33,9 +33,11 @@ public:
 	bool isWindowFocused{true};
 	bool isWindowMinimized{false};
 
+	std::filesystem::path pathToDevices = "resources/xray_devices.toml";
+
 private:
 	toml::table tbl;
-	const std::filesystem::path pathToSettings{"resources/settings.toml"};
+	std::filesystem::path pathToSettings = "resources/settings.toml";
 
 	void LoadSettings();
 	void SaveSettings();

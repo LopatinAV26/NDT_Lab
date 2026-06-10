@@ -1,4 +1,5 @@
 #include "appWindows.hpp"
+#include <cmath>
 
 SettingsWindow::SettingsWindow(ApplicationData &coreAppData)
 	: appData{coreAppData}
@@ -8,7 +9,7 @@ SettingsWindow::SettingsWindow(ApplicationData &coreAppData)
 void SettingsWindow::Show(bool &isOpen)
 {
 	ImGuiIO &io = ImGui::GetIO();
-	ImGui::Begin("Settings", &isOpen);
+	if (ImGui::Begin("Settings", &isOpen))
 	{
 		ImGui::SeparatorText("Info");
 		ImGui::Text("API: %s", SDL_GetRendererName(appData.renderer));
@@ -42,8 +43,9 @@ void SettingsWindow::Show(bool &isOpen)
 
 		if (ImGui::SliderFloat("GrabRounding", &appData.grabRounding, 0.f, 12.f, "%.0f"))
 			ImGui::GetStyle().GrabRounding = appData.grabRounding;
+
+		ImGui::End();
 	}
-	ImGui::End();
 }
 
 void SettingsWindow::SetGuiStyle()
@@ -77,26 +79,40 @@ void SettingsWindow::SetGuiStyle()
 	}
 }
 /////////////////////////////////////////////
-NomogramWindow::NomogramWindow()
+NomogramWindow::NomogramWindow(ApplicationData &coreAppData)
+	: appData{coreAppData}
 {
-	devices = manager.LoadDevices();
+	devices = NDT::LoadDevices(appData.pathToDevices);
 	calculatedDevices = devices;
 }
 
 void NomogramWindow::Show(bool &isOpen)
 {
-	/* ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
 	ImGui::SetNextWindowSize(viewport->Size);
 
-	ImGuiWindowFlags window_flags = // ImGuiWindowFlags_NoDecoration |
-		ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoSavedSettings; */
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration;
+	// ImGuiWindowFlags_NoTitleBar |
+	// ImGuiWindowFlags_NoMove |
+	// ImGuiWindowFlags_NoResize |
+	// ImGuiWindowFlags_NoCollapse |
+	// ImGuiWindowFlags_NoSavedSettings;
 
-	if (ImGui::Begin("Расчёт экспозиции", &isOpen /*, window_flags*/))
+	if (ImGui::Begin("Диаграмма экспозиции", &isOpen, window_flags))
 	{
+		ImGui::BeginChild("Header", ImVec2(0, 30));
+
+		ImGui::Text("Диаграмма экспозиции");
+
+		ImGui::SameLine(
+			ImGui::GetWindowWidth() - 60);
+
+		if (ImGui::Button("Выход"))
+			isOpen = false;
+
+		ImGui::EndChild();
+
 		if (devices.empty() && calculatedDevices.empty())
 		{
 			ImGui::Text("No devices loaded.");
@@ -145,10 +161,10 @@ void NomogramWindow::Show(bool &isOpen)
 	ImGui::End();
 }
 
-std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<XrayDevice> &deviceVector,
-													   int distance)
+std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
+																   int distance)
 {
-	std::vector<XrayDevice> result = deviceVector;
+	std::vector<NDT::XrayDevice> result = deviceVector;
 	for (int i = 0; i < std::ssize(result[deviceIndex].curveVector); ++i)
 	{
 		for (int j = 0; j < std::ssize(result[deviceIndex].curveVector[i].yData); ++j)

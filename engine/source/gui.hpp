@@ -31,7 +31,7 @@ private:
 	ApplicationData &appData;
 
 	SettingsWindow settingsWindow{appData};
-	NomogramWindow nomogramWindow;
+	NomogramWindow nomogramWindow{appData};
 
 	std::unique_ptr<ProtocolVMC> protocolVMC;
 	std::unique_ptr<Nomogram> nomogram;

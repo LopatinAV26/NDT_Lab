@@ -1,8 +1,6 @@
 #pragma once
 
-#include <memory>
 #include <vector>
-#include <cmath>
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "implot.h"
@@ -28,17 +26,17 @@ private:
 class NomogramWindow
 {
 public:
-    explicit NomogramWindow();
+    explicit NomogramWindow(ApplicationData &coreAppData);
     void Show(bool &isOpen);
 
 private:
-    ResourceManager manager;
-    std::vector<XrayDevice> devices;
-    std::vector<XrayDevice> calculatedDevices;
+    ApplicationData &appData;
+    std::vector<NDT::XrayDevice> devices;
+    std::vector<NDT::XrayDevice> calculatedDevices;
     int deviceIndex{0};
     int focusDistance{700};
     float steelThickness{10.f};
 
-    std::vector<XrayDevice> ExposureRecalculation(const std::vector<XrayDevice> &deviceVector,
+    std::vector<NDT::XrayDevice> ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
                                            int distance);
 };
