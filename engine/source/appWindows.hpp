@@ -34,9 +34,11 @@ private:
     std::vector<NDT::XrayDevice> devices;
     std::vector<NDT::XrayDevice> calculatedDevices;
     int deviceIndex{0};
+    int measurementUnits_index{0};
     int focusDistance{700};
     float steelThickness{10.f};
-
+    float current{1.f};
+    
     std::vector<NDT::XrayDevice> ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
-                                           int distance);
+                                                       int distance);
 };

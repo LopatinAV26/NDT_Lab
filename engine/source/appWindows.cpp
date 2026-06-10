@@ -113,7 +113,7 @@ void NomogramWindow::Show(bool &isOpen)
 
 		ImGui::EndChild();
 
-		if (devices.empty() && calculatedDevices.empty())
+		if (devices.empty() || calculatedDevices.empty())
 		{
 			ImGui::Text("No devices loaded.");
 			ImGui::End();
@@ -132,28 +132,76 @@ void NomogramWindow::Show(bool &isOpen)
 					ImGui::SetItemDefaultFocus();
 			}
 
+			if (current < devices[deviceIndex].currentMinimum ||
+				current > devices[deviceIndex].currentMaximum)
+				current = devices[deviceIndex].currentMinimum;
+
+			if (steelThickness > devices[deviceIndex].steelThicknessMax)
+				steelThickness = 10.f;
+
 			ImGui::EndCombo();
 		}
 
 		ImGui::Text("%s", devices[deviceIndex].information.c_str());
 
-		if (ImGui::DragInt("Фокусное расстояние", &focusDistance, 1, 0, 2000))
-			calculatedDevices = ExposureRecalculation(devices, focusDistance);
+		ImGui::DragInt("Фокусное расстояние", &focusDistance, 1, 0, 2000);
+		calculatedDevices = ExposureRecalculation(devices, focusDistance);
 
-		ImGui::DragFloat("Толщина стали, мм", &steelThickness, 0.1f, 0.5f, devices[deviceIndex].steelThicknessMax, "%.1f");
+		ImGui::DragFloat("Толщина стали, мм",
+						 &steelThickness, 0.1f, 0.5f,
+						 devices[deviceIndex].steelThicknessMax, "%.1f");
 
-		if (ImPlot::BeginPlot("Диаграмма экспозиции РА",
-							  ImVec2(-1, ImGui::GetContentRegionAvail().y - 100)
-							  // ImPlotFlags_NoLegend
-							  ))
+		ImGui::BeginDisabled(!devices[deviceIndex].currentAdjustment ||
+							 measurementUnits_index == 0);
+		ImGui::SliderFloat("Сила тока",
+						   &current,
+						   devices[deviceIndex].currentMinimum,
+						   devices[deviceIndex].currentMaximum, "%.1f");
+		ImGui::EndDisabled();
+
+		if (!devices[deviceIndex].currentAdjustment &&
+			measurementUnits_index == 0)
+			measurementUnits_index = 1;
+
+		ImGui::BeginDisabled(!devices[deviceIndex].currentAdjustment);
+		ImGui::RadioButton("мА х мин", &measurementUnits_index, 0);
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		ImGui::RadioButton("минуты", &measurementUnits_index, 1);
+		ImGui::SameLine();
+		ImGui::RadioButton("секунды", &measurementUnits_index, 2);
+
+		const char *nameAxisY = "Экспозиция";
+		switch (measurementUnits_index)
 		{
+		case 0:
+			nameAxisY = "Экспозиция, мА х мин";
+			break;
+		case 1:
+			nameAxisY = "Время экспозиции, мин";
+			break;
+		case 2:
+			nameAxisY = "Время экспозиции, с";
+			break;
+		default:
+			break;
+		}
+
+		if (ImPlot::BeginPlot(devices[deviceIndex].name.c_str(),
+							  ImVec2(-1, ImGui::GetContentRegionAvail().y),
+							  ImPlotFlags_NoLegend))
+		{
+			ImPlot::SetupAxes("Толщина стали, мм", nameAxisY,
+							  ImPlotAxisFlags_AutoFit,
+							  ImPlotAxisFlags_AutoFit);
+
 			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-			for (int i = 0; i < std::ssize(calculatedDevices[deviceIndex].curveVector); ++i)
+			for (const auto &curve : calculatedDevices[deviceIndex].curveVector)
 			{
-				ImPlot::PlotLine(calculatedDevices[deviceIndex].curveVector[i].label.c_str(),
-								 calculatedDevices[deviceIndex].curveVector[i].xData.data(),
-								 calculatedDevices[deviceIndex].curveVector[i].yData.data(),
-								 calculatedDevices[deviceIndex].curveVector[i].xData.size());
+				ImPlot::PlotLine(curve.label.c_str(),
+								 curve.xData.data(),
+								 curve.yData.data(),
+								 curve.xData.size());
 			}
 			ImPlot::EndPlot();
 		}
@@ -164,16 +212,32 @@ void NomogramWindow::Show(bool &isOpen)
 std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
 																   int distance)
 {
-	std::vector<NDT::XrayDevice> result = deviceVector;
-	for (int i = 0; i < std::ssize(result[deviceIndex].curveVector); ++i)
+	auto result = deviceVector;
+	auto &device = result[deviceIndex];
+
+	float factor = std::pow((static_cast<float>(deviceVector[deviceIndex].focusDistanceDefault) /
+							 static_cast<float>(distance)),
+							2);
+
+	switch (measurementUnits_index)
 	{
-		for (int j = 0; j < std::ssize(result[deviceIndex].curveVector[i].yData); ++j)
+	case 1:
+		factor /= current; // мА х мин переводим в минуты
+		break;
+	case 2:
+		factor *= 60.f / current; // переводим в секунды
+		break;
+	default:
+		break;
+	}
+
+	for (auto &curve : device.curveVector)
+	{
+		for (auto &y : curve.yData)
 		{
-			result[deviceIndex].curveVector[i].yData[j] /=
-				std::pow((static_cast<float>(deviceVector[deviceIndex].focusDistanceDefault) /
-						  static_cast<float>(distance)),
-						 2);
+			y *= factor;
 		}
 	}
+
 	return result;
 }
