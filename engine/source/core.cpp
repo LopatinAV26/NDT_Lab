@@ -8,7 +8,7 @@ SDL_AppResult Core::Init()
 		return SDL_APP_FAILURE;
 	}
 
-	appData.window = SDL_CreateWindow("NDT",
+	appData.window = SDL_CreateWindow("NDT Lab",
 									   appData.windowWidth,
 									   appData.windowHeight,
 									   appData.windowFlags);

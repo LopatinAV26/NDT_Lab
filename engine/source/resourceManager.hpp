@@ -8,25 +8,25 @@ namespace NDT
 {
     struct Curve
     {
+        float voltage{1.f};
         std::string label;
-        int voltage{0};
         std::vector<float> xData;
         std::vector<float> yData;
     };
 
     struct XrayDevice
     {
-        std::string name;
-        std::string information;
-        int electricPower{0};
-        int voltageMaximum{200};
         bool currentAdjustment{true};
+        float electricPower{1.f};
+        float voltageMaximum{200.f};
         float currentMinimum{0.1f};
         float currentMaximum{1.f};
-        int focusDistanceDefault{700};
-        float focalSpotSize{1.0f};
+        float focusDistanceDefault{700.f};
+        float focalSpotSize{1.f};
         float exposureMultiplier{1.f};
         float steelThicknessMax{1.f};
+        std::string name;
+        std::string information;
 
         std::vector<Curve> curveVector;
     };

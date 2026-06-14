@@ -18,7 +18,9 @@ void SettingsWindow::Show(bool &isOpen)
 		fpsUpdateTimer += io.DeltaTime;
 		if (fpsUpdateTimer >= 0.5f)
 		{
-			currentFrametime = {1000.f / io.Framerate};
+			if (io.Framerate > 0)
+				currentFrametime = {1000.f / io.Framerate};
+
 			framerate = {io.Framerate};
 			fpsUpdateTimer = {0.f};
 		}
@@ -48,7 +50,7 @@ void SettingsWindow::Show(bool &isOpen)
 	}
 }
 
-void SettingsWindow::SetGuiStyle()
+void SettingsWindow::SetGuiStyle() const
 {
 	int currentStyleIndex = static_cast<int>(appData.style);
 
@@ -88,6 +90,8 @@ NomogramWindow::NomogramWindow(ApplicationData &coreAppData)
 
 void NomogramWindow::Show(bool &isOpen)
 {
+#define RECALC calculatedDevices = ExposureRecalculation(devices, focusDistance, deviceCurrent);
+
 	ImGuiViewport *viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
 	ImGui::SetNextWindowSize(viewport->Size);
@@ -132,20 +136,22 @@ void NomogramWindow::Show(bool &isOpen)
 					ImGui::SetItemDefaultFocus();
 			}
 
-			if (current < devices[deviceIndex].currentMinimum ||
-				current > devices[deviceIndex].currentMaximum)
-				current = devices[deviceIndex].currentMinimum;
+			if (deviceCurrent < devices[deviceIndex].currentMinimum ||
+				deviceCurrent > devices[deviceIndex].currentMaximum)
+				deviceCurrent = devices[deviceIndex].currentMinimum;
 
 			if (steelThickness > devices[deviceIndex].steelThicknessMax)
 				steelThickness = 10.f;
+
+			RECALC;
 
 			ImGui::EndCombo();
 		}
 
 		ImGui::Text("%s", devices[deviceIndex].information.c_str());
 
-		ImGui::DragInt("Фокусное расстояние", &focusDistance, 1, 0, 2000);
-		calculatedDevices = ExposureRecalculation(devices, focusDistance);
+		if (ImGui::DragFloat("Фокусное расстояние", &focusDistance, 1.f, 1.f, 2000.f, "%.0f"))
+			RECALC
 
 		ImGui::DragFloat("Толщина стали, мм",
 						 &steelThickness, 0.1f, 0.5f,
@@ -153,10 +159,12 @@ void NomogramWindow::Show(bool &isOpen)
 
 		ImGui::BeginDisabled(!devices[deviceIndex].currentAdjustment ||
 							 measurementUnits_index == 0);
-		ImGui::SliderFloat("Сила тока",
-						   &current,
-						   devices[deviceIndex].currentMinimum,
-						   devices[deviceIndex].currentMaximum, "%.1f");
+		if (ImGui::SliderFloat("Сила тока",
+							   &deviceCurrent,
+							   devices[deviceIndex].currentMinimum,
+							   devices[deviceIndex].currentMaximum, "%.1f"))
+			RECALC
+
 		ImGui::EndDisabled();
 
 		if (!devices[deviceIndex].currentAdjustment &&
@@ -164,12 +172,15 @@ void NomogramWindow::Show(bool &isOpen)
 			measurementUnits_index = 1;
 
 		ImGui::BeginDisabled(!devices[deviceIndex].currentAdjustment);
-		ImGui::RadioButton("мА х мин", &measurementUnits_index, 0);
+		if (ImGui::RadioButton("мА х мин", &measurementUnits_index, 0))
+			RECALC
 		ImGui::EndDisabled();
 		ImGui::SameLine();
-		ImGui::RadioButton("минуты", &measurementUnits_index, 1);
+		if (ImGui::RadioButton("минуты", &measurementUnits_index, 1))
+			RECALC
 		ImGui::SameLine();
-		ImGui::RadioButton("секунды", &measurementUnits_index, 2);
+		if (ImGui::RadioButton("секунды", &measurementUnits_index, 2))
+			RECALC
 
 		const char *nameAxisY = "Экспозиция";
 		switch (measurementUnits_index)
@@ -198,11 +209,18 @@ void NomogramWindow::Show(bool &isOpen)
 			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
 			for (const auto &curve : calculatedDevices[deviceIndex].curveVector)
 			{
-				ImPlot::PlotLine(curve.label.c_str(),
-								 curve.xData.data(),
-								 curve.yData.data(),
-								 curve.xData.size());
+				if (calculatedDevices[deviceIndex].electricPower >= curve.voltage * deviceCurrent)
+				{
+					ImPlot::PlotLine(curve.label.c_str(),
+									 curve.xData.data(),
+									 curve.yData.data(),
+									 curve.xData.size());
+
+					visibleLines.push_back({&curve.xData, &curve.yData, ImPlot::GetLastItemColor(), curve.label});
+				}
 			}
+			DrawMarkers(visibleLines, steelThickness);
+
 			ImPlot::EndPlot();
 		}
 	}
@@ -210,14 +228,12 @@ void NomogramWindow::Show(bool &isOpen)
 }
 
 std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
-																   int distance)
+																   float distance, float current) const
 {
 	auto result = deviceVector;
 	auto &device = result[deviceIndex];
 
-	float factor = std::pow((static_cast<float>(deviceVector[deviceIndex].focusDistanceDefault) /
-							 static_cast<float>(distance)),
-							2);
+	float factor = std::pow((deviceVector[deviceIndex].focusDistanceDefault / distance), 2);
 
 	switch (measurementUnits_index)
 	{
@@ -240,4 +256,23 @@ std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::ve
 	}
 
 	return result;
+}
+
+void NomogramWindow::DrawMarkers(const std::vector<CurvesRef> &curves, float thickness) const
+{
+	if (curves.empty())
+		return;
+	if (!std::isfinite(thickness))
+		return;
+
+	ImPlotSpec lineSpec;
+	lineSpec.LineColor = ImVec4(1.0f, 1.0f, 1.0f, 0.35f);
+
+	ImPlot::PlotInfLines("##thickness-line", &thickness, 2, lineSpec);
+
+	for (const auto &curve : curves)
+	{
+		if (!curve.x || !curve.y)
+			continue;
+	}
 }

@@ -40,25 +40,25 @@ std::vector<NDT::XrayDevice> NDT::LoadDevices(const std::filesystem::path &pathT
             device.information = value->value_or("");
 
         if (auto *value = deviceTable->get("electricPower"))
-            device.electricPower = value->value_or(0);
+            device.electricPower = value->value_or(1.f);
 
         if (auto *value = deviceTable->get("voltageMaximum"))
-            device.voltageMaximum = value->value_or(0);
+            device.voltageMaximum = value->value_or(1.f);
 
         if (auto *value = deviceTable->get("currentAdjustment"))
             device.currentAdjustment = value->value_or(false);
 
         if (auto *value = deviceTable->get("currentMinimum"))
-            device.currentMinimum = value->value_or(0.f);
+            device.currentMinimum = value->value_or(0.1f);
 
         if (auto *value = deviceTable->get("currentMaximum"))
-            device.currentMaximum = value->value_or(0.f);
+            device.currentMaximum = value->value_or(1.f);
 
         if (auto *value = deviceTable->get("focusDistanceDefault"))
-            device.focusDistanceDefault = value->value_or(0);
+            device.focusDistanceDefault = value->value_or(1.f);
 
         if (auto *value = deviceTable->get("focalSpotSize"))
-            device.focalSpotSize = value->value_or(0.f);
+            device.focalSpotSize = value->value_or(1.f);
 
         if (auto *value = deviceTable->get("exposureMultiplier"))
             device.exposureMultiplier = value->value_or(1.f);
@@ -78,10 +78,10 @@ std::vector<NDT::XrayDevice> NDT::LoadDevices(const std::filesystem::path &pathT
 
             Curve curve;
             if (auto *value = curvesTable->get("name"))
-                curve.label = {value->value_or("")};
+                curve.label = value->value_or("");
 
             if (auto *value = curvesTable->get("voltage"))
-                curve.voltage = {value->value_or(0)};
+                curve.voltage = value->value_or(1.f);
 
             if (auto *pointsArray = curvesTable->get_as<toml::array>("points"))
             {

@@ -29,6 +29,15 @@ else()
         -Wnon-virtual-dtor
         -Woverloaded-virtual
         -Wformat=2
+        #-O3
+
+        #векторизация
+        #-march=native  процессорозависимо
+        -march=x86-64-v3
+
+        #отладка оптимизатора
+        -fopt-info-vec
+        #-fopt-info-missed
     )
 endif()
 

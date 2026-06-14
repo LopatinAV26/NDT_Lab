@@ -22,6 +22,6 @@ public:
 	SDL_AppResult ProcessEvent(const SDL_Event *event);
 
 private:
-	ApplicationData appData;
 	std::unique_ptr<Gui> imWindow;
+	ApplicationData appData;
 };

@@ -15,12 +15,20 @@ public:
     void Show(bool &isOpen);
 
 private:
-    void SetGuiStyle();
+    void SetGuiStyle() const;
 
-    ApplicationData &appData;
     float fpsUpdateTimer{0.f};
     float currentFrametime{0.f};
     float framerate{0.f};
+    ApplicationData &appData;
+};
+
+struct CurvesRef
+{
+    const std::vector<float> *x{nullptr};
+    const std::vector<float> *y{nullptr};
+    ImVec4 color{1.0f, 1.0f, 1.0f, 1.0f};
+    std::string label;
 };
 
 class NomogramWindow
@@ -30,15 +38,18 @@ public:
     void Show(bool &isOpen);
 
 private:
-    ApplicationData &appData;
-    std::vector<NDT::XrayDevice> devices;
-    std::vector<NDT::XrayDevice> calculatedDevices;
+    std::vector<NDT::XrayDevice> ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
+                                                       float distance, float current) const;
+
+    void DrawMarkers(const std::vector<CurvesRef> &curves, float thickness) const;
+
     int deviceIndex{0};
     int measurementUnits_index{0};
-    int focusDistance{700};
+    float focusDistance{700.f};
     float steelThickness{10.f};
-    float current{1.f};
-    
-    std::vector<NDT::XrayDevice> ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
-                                                       int distance);
+    float deviceCurrent{1.f};
+    std::vector<NDT::XrayDevice> devices;
+    std::vector<NDT::XrayDevice> calculatedDevices;
+    std::vector<CurvesRef> visibleLines;
+    ApplicationData &appData;
 };
