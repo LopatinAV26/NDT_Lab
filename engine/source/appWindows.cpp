@@ -1,14 +1,14 @@
 #include "appWindows.hpp"
 #include <cmath>
+#include <algorithm>
 
-SettingsWindow::SettingsWindow(ApplicationData &coreAppData)
-	: appData{coreAppData}
-{
-}
+SettingsWindow::SettingsWindow(ApplicationData& coreAppData)
+	: appData{ coreAppData }
+{}
 
-void SettingsWindow::Show(bool &isOpen)
+void SettingsWindow::Show(bool& isOpen)
 {
-	ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 	if (ImGui::Begin("Settings", &isOpen))
 	{
 		ImGui::SeparatorText("Info");
@@ -19,10 +19,10 @@ void SettingsWindow::Show(bool &isOpen)
 		if (fpsUpdateTimer >= 0.5f)
 		{
 			if (io.Framerate > 0)
-				currentFrametime = {1000.f / io.Framerate};
+				currentFrametime = { 1000.f / io.Framerate };
 
-			framerate = {io.Framerate};
-			fpsUpdateTimer = {0.f};
+			framerate = { io.Framerate };
+			fpsUpdateTimer = { 0.f };
 		}
 		ImGui::Text("Application average %.2f ms/frame (%.0f FPS)", currentFrametime, framerate);
 
@@ -81,18 +81,18 @@ void SettingsWindow::SetGuiStyle() const
 	}
 }
 /////////////////////////////////////////////
-NomogramWindow::NomogramWindow(ApplicationData &coreAppData)
-	: appData{coreAppData}
+NomogramWindow::NomogramWindow(ApplicationData& coreAppData)
+	: appData{ coreAppData }
 {
 	devices = NDT::LoadDevices(appData.pathToDevices);
 	calculatedDevices = devices;
 }
 
-void NomogramWindow::Show(bool &isOpen)
+void NomogramWindow::Show(bool& isOpen)
 {
 #define RECALC calculatedDevices = ExposureRecalculation(devices, focusDistance, deviceCurrent);
 
-	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
 	ImGui::SetNextWindowSize(viewport->Size);
 
@@ -153,19 +153,19 @@ void NomogramWindow::Show(bool &isOpen)
 		if (ImGui::DragFloat("Фокусное расстояние", &focusDistance, 1.f, 1.f, 2000.f, "%.0f"))
 			RECALC
 
-		ImGui::DragFloat("Толщина стали, мм",
-						 &steelThickness, 0.1f, 0.5f,
-						 devices[deviceIndex].steelThicknessMax, "%.1f");
+			ImGui::DragFloat("Толщина стали, мм",
+				&steelThickness, 0.1f, 0.5f,
+				devices[deviceIndex].steelThicknessMax, "%.1f");
 
 		ImGui::BeginDisabled(!devices[deviceIndex].currentAdjustment ||
-							 measurementUnits_index == 0);
+			measurementUnits_index == 0);
 		if (ImGui::SliderFloat("Сила тока",
-							   &deviceCurrent,
-							   devices[deviceIndex].currentMinimum,
-							   devices[deviceIndex].currentMaximum, "%.1f"))
+			&deviceCurrent,
+			devices[deviceIndex].currentMinimum,
+			devices[deviceIndex].currentMaximum, "%.1f"))
 			RECALC
 
-		ImGui::EndDisabled();
+			ImGui::EndDisabled();
 
 		if (!devices[deviceIndex].currentAdjustment &&
 			measurementUnits_index == 0)
@@ -174,15 +174,15 @@ void NomogramWindow::Show(bool &isOpen)
 		ImGui::BeginDisabled(!devices[deviceIndex].currentAdjustment);
 		if (ImGui::RadioButton("мА х мин", &measurementUnits_index, 0))
 			RECALC
-		ImGui::EndDisabled();
+			ImGui::EndDisabled();
 		ImGui::SameLine();
 		if (ImGui::RadioButton("минуты", &measurementUnits_index, 1))
 			RECALC
-		ImGui::SameLine();
+			ImGui::SameLine();
 		if (ImGui::RadioButton("секунды", &measurementUnits_index, 2))
 			RECALC
 
-		const char *nameAxisY = "Экспозиция";
+			const char* nameAxisY = "Экспозиция";
 		switch (measurementUnits_index)
 		{
 		case 0:
@@ -199,24 +199,29 @@ void NomogramWindow::Show(bool &isOpen)
 		}
 
 		if (ImPlot::BeginPlot(devices[deviceIndex].name.c_str(),
-							  ImVec2(-1, ImGui::GetContentRegionAvail().y),
-							  ImPlotFlags_NoLegend))
+			ImVec2(-1, ImGui::GetContentRegionAvail().y),
+			ImPlotFlags_NoLegend))
 		{
 			ImPlot::SetupAxes("Толщина стали, мм", nameAxisY,
-							  ImPlotAxisFlags_AutoFit,
-							  ImPlotAxisFlags_AutoFit);
+				ImPlotAxisFlags_AutoFit,
+				ImPlotAxisFlags_AutoFit);
 
 			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-			for (const auto &curve : calculatedDevices[deviceIndex].curveVector)
+
+			std::vector<CurvesRef> visibleLines;
+			visibleLines.reserve(calculatedDevices[deviceIndex].curveVector.size());
+
+			for (const auto& curve : calculatedDevices[deviceIndex].curveVector)
 			{
 				if (calculatedDevices[deviceIndex].electricPower >= curve.voltage * deviceCurrent)
 				{
 					ImPlot::PlotLine(curve.label.c_str(),
-									 curve.xData.data(),
-									 curve.yData.data(),
-									 curve.xData.size());
+						curve.xData.data(),
+						curve.yData.data(),
+						curve.xData.size());
 
-					visibleLines.push_back({&curve.xData, &curve.yData, ImPlot::GetLastItemColor(), curve.label});
+					visibleLines.push_back({ curve.xData, curve.yData,
+						ImPlot::GetLastItemColor(), curve.label });
 				}
 			}
 			DrawMarkers(visibleLines, steelThickness);
@@ -227,11 +232,11 @@ void NomogramWindow::Show(bool &isOpen)
 	ImGui::End();
 }
 
-std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
-																   float distance, float current) const
+std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<NDT::XrayDevice>& deviceVector,
+	float distance, float current) const
 {
 	auto result = deviceVector;
-	auto &device = result[deviceIndex];
+	auto& device = result[deviceIndex];
 
 	float factor = std::pow((deviceVector[deviceIndex].focusDistanceDefault / distance), 2);
 
@@ -247,9 +252,9 @@ std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::ve
 		break;
 	}
 
-	for (auto &curve : device.curveVector)
+	for (auto& curve : device.curveVector)
 	{
-		for (auto &y : curve.yData)
+		for (auto& y : curve.yData)
 		{
 			y *= factor;
 		}
@@ -258,7 +263,8 @@ std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::ve
 	return result;
 }
 
-void NomogramWindow::DrawMarkers(const std::vector<CurvesRef> &curves, float thickness) const
+//AI generated!
+void NomogramWindow::DrawMarkers(const std::vector<CurvesRef>& curves, float thickness) const
 {
 	if (curves.empty())
 		return;
@@ -266,13 +272,65 @@ void NomogramWindow::DrawMarkers(const std::vector<CurvesRef> &curves, float thi
 		return;
 
 	ImPlotSpec lineSpec;
-	lineSpec.LineColor = ImVec4(1.0f, 1.0f, 1.0f, 0.35f);
+	lineSpec.LineColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	ImPlot::PlotInfLines("##thickness-line", &thickness, 2, lineSpec);
+	ImPlot::PlotInfLines("##thickness-line", &thickness, 1, lineSpec);
 
-	for (const auto &curve : curves)
+	for (const auto& line : curves)
 	{
-		if (!curve.x || !curve.y)
+		if (line.x.empty() || line.y.empty())
 			continue;
+
+		const auto& xs = line.x;
+		const auto& ys = line.y;
+
+		if (xs.size() < 2 || xs.size() != ys.size())
+			continue;
+
+		for (size_t i = 0; i + 1 < xs.size(); ++i)
+		{
+			const float x0 = xs.at(i);
+			const float x1 = xs.at(i + 1);
+			const float minX = std::min(x0, x1);
+			const float maxX = std::max(x0, x1);
+
+			if (thickness < minX || thickness > maxX)
+				continue;
+
+			const float delta = x1 - x0;
+			if (std::fabs(delta) <= std::numeric_limits<float>::epsilon())
+				continue;
+
+			const float t = std::clamp((thickness - x0) / delta, 0.0f, 1.0f);
+
+			double px = { thickness };
+
+			const float y0 = ys.at(i);
+			const float y1 = ys.at(i + 1);
+			//интерполяция по логарифму для логарифмической шкалы
+			double py = std::pow(10.0, std::log10(y0) + t * (std::log10(y1) - std::log10(y0)));
+
+			//линейная интерполяция
+			//double py = ys.at(i) + t * (ys.at(i + 1) - ys.at(i));		
+
+			const ImVec4 fillColor = line.color;
+			const ImVec4 outlineColor{ 0.05f, 0.05f, 0.05f, 1.0f };
+
+			std::string markerLabel = "##thickness-marker-" + line.label + "-" + std::to_string(i);
+
+			ImPlotSpec markerSpec;
+			markerSpec.LineWeight = 2.0f;
+			markerSpec.Marker = ImPlotMarker_Diamond;
+			markerSpec.MarkerSize = 6.0f;
+			markerSpec.MarkerLineColor = outlineColor;
+			markerSpec.MarkerFillColor = fillColor;
+			ImPlot::PlotScatter(markerLabel.c_str(), &px, &py, 1, markerSpec);
+
+			char buffer[64];
+			std::snprintf(buffer, sizeof(buffer), "%s S=%.1f  T=%.1f", line.label.c_str(), px, py);
+			ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true, "%s", buffer);
+
+			break;
+		}
 	}
 }

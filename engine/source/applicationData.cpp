@@ -15,13 +15,13 @@ void ApplicationData::LoadSettings()
     try
     {
         tbl = toml::parse_file(pathToSettings.string());
-        SDL_Log("Config file '%s' parsed successfully.\n", pathToSettings.c_str());
+        SDL_Log("Config file '%s' parsed successfully.\n", pathToSettings.string().c_str());
     }
     catch (const toml::parse_error &err)
     {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR,
                      "Failed to parse config file '%s': %s\n",
-                     pathToSettings.c_str(), err.what());
+                     pathToSettings.string().c_str(), err.what());
         return;
     }
 
@@ -46,9 +46,9 @@ void ApplicationData::SaveSettings()
     {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR,
                      "Failed to open '%s' for writing",
-                     pathToSettings.c_str());
+                     pathToSettings.string().c_str());
         return;
     }
     file << tbl;
-    SDL_Log("Settings saved to '%s'", pathToSettings.c_str());
+    SDL_Log("Settings saved to '%s'", pathToSettings.string().c_str());
 }

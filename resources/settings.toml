@@ -1,5 +1,6 @@
-windowRounding = 12.0
-frameRounding = 0.0
-grabRounding = 0.0
 fontSize = 10.0
+frameRounding = 6.0
+grabRounding = 6.0
 guiStyle = 2
+mainScale = 2.0
+windowRounding = 0.0

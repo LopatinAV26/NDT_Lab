@@ -16,7 +16,7 @@ void Gui::InitImGui()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
-	if (ImFont *font = LoadEmbeddedShareTechMono(io, appData.fontSize * appData.mainScale))
+	if (ImFont *font = LoadEmbeddedShareTechMono(io, (appData.fontSize * appData.mainScale)))
 		io.FontDefault = font;
 
 	switch (appData.style)
@@ -35,7 +35,7 @@ void Gui::InitImGui()
 	}
 
 	ImGuiStyle &style = ImGui::GetStyle();
-	// style.ScaleAllSizes(appData.mainScale);
+	style.ScaleAllSizes(appData.mainScale);
 	style.WindowRounding = appData.windowRounding;
 	style.FrameRounding = appData.frameRounding;
 	style.GrabRounding = appData.grabRounding;
@@ -70,19 +70,6 @@ void Gui::IterateImGui()
 
 	if (showNomogramWindow)
 		nomogramWindow.Show(showNomogramWindow);
-
-	if (showProtocolVMC)
-		protocolVMC->WindowProtocol(showProtocolVMC);
-
-	if (!showProtocolVMC && protocolVMC != nullptr)
-		protocolVMC.reset();
-
-	if (showNomogram)
-		nomogram->NomogramWindow(showNomogram);
-
-	if (!showNomogram && nomogram != nullptr)
-		nomogram.reset();
-
 	//---------------------------------
 
 	// Для работы с HiDPI
@@ -126,20 +113,6 @@ void Gui::ButtonsWindow()
 
 	if (ImGui::Button("Номограмма"))
 		showNomogramWindow = true;
-
-	if (ImGui::Button("Номограмма старая"))
-	{
-		showNomogram = true;
-		if (nomogram == nullptr)
-			nomogram = std::make_unique<Nomogram>();
-	}
-
-	if (ImGui::Button("Создать заключение ВИК"))
-	{
-		showProtocolVMC = true;
-		if (protocolVMC == nullptr)
-			protocolVMC = std::make_unique<ProtocolVMC>();
-	}
 
 	ImGui::End();
 }

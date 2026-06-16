@@ -25,8 +25,8 @@ private:
 
 struct CurvesRef
 {
-    const std::vector<float> *x{nullptr};
-    const std::vector<float> *y{nullptr};
+    const std::vector<float> x;
+    const std::vector<float> y;
     ImVec4 color{1.0f, 1.0f, 1.0f, 1.0f};
     std::string label;
 };
@@ -50,6 +50,5 @@ private:
     float deviceCurrent{1.f};
     std::vector<NDT::XrayDevice> devices;
     std::vector<NDT::XrayDevice> calculatedDevices;
-    std::vector<CurvesRef> visibleLines;
     ApplicationData &appData;
 };
