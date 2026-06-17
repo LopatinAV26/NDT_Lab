@@ -1,7 +1,7 @@
 [[devices]]
-id = "eresco_32_mf4_c"
+#id = "eresco_32_mf4_c"
 name = "Eresco 32 MF4-C"
-information = "тип РА: постоянный\nнапряжение: 5-200 кВ\nдиаметр фокусного пятна: 0.4 х 4.0 мм"
+information = "тип РА: постоянный; напряжение: 5-200 кВ; диаметр фокусного пятна: 0.4 х 4.0 мм"
 electricPower = 600.0
 currentAdjustment = true
 voltageMaximum = 200.0
@@ -10,110 +10,47 @@ currentMaximum = 7.5
 focusDistanceDefault = 700.0
 focalSpotSize = 4.0
 exposureMultiplier = 1.0
-steelThicknessMax = 36.0
+#steelThicknessMax = 36.0
 
 [[devices.curves]]
 name = "80 кВ"
 voltage = 80.0
-points = [
-  [0.5, 2],
-  [1.0, 3],
-  [1.9, 6],
-  [2.55, 10],
-  [3.05, 15],
-  [3.45, 20],
-  [4.0, 30],
-  [4.7, 50]
-]
+points = [[0.5, 2], [4.7, 50]]
 
 [[devices.curves]]
 name = "100 кВ"
 voltage = 100.0
-points = [
-  [1.1, 2],
-  [2.05, 3],
-  [3.6, 6],
-  [4.9, 10],
-  [5.7, 15],
-  [6.5, 20],
-  [7.45, 30],
-  [8.65, 50]
-]
+points = [[1.1, 2], [8.65, 50]]
 
 [[devices.curves]]
 name = "120 кВ"
 voltage = 120.0
-points = [
-  [3.0, 2],
-  [4.3, 3],
-  [6.5, 6],
-  [8.2, 10],
-  [9.4, 15],
-  [10.45, 20],
-  [11.8, 30],
-  [13.5, 50]
-]
+points = [[3.0, 2], [13.5, 50]]
 
 [[devices.curves]]
 name = "140 кВ"
 voltage = 140.0
-points = [
-  [3.7, 2],
-  [5.7, 3],
-  [9.0, 6],
-  [11.6, 10],
-  [13.3, 15],
-  [14.9, 20],
-  [17.0, 30],
-  [19.55, 50]
-]
+points = [[3.7, 2], [19.55, 50]]
 
 [[devices.curves]]
 name = "160 кВ"
 voltage = 160.0
-points = [
-  [6.0, 2],
-  [8.35, 3],
-  [12.25, 6],
-  [15.4, 10],
-  [17.4, 15],
-  [19.2, 20],
-  [21.65, 30],
-  [24.6, 50]
-]
+points = [[6.0, 2], [24.6, 50]]
 
 [[devices.curves]]
 name = "180 кВ"
 voltage = 180.0
-points = [
-  [7.4, 2],
-  [10.35, 3],
-  [15.2, 6],
-  [19.0, 10],
-  [21.6, 15],
-  [23.9, 20],
-  [26.85, 30],
-  [30.6, 50]
-]
+points = [[7.4, 2], [30.6, 50]]
 
 [[devices.curves]]
 name = "200 кВ"
 voltage = 200.0
-points = [
-  [11.1, 2],
-  [14.2, 3],
-  [19.45, 6],
-  [23.55, 10],
-  [26.3, 15],
-  [28.8, 20],
-  [31.9, 30],
-  [36.0, 50]
-]
+points = [[11.1, 2], [36.0, 50]]
 
 [[devices]]
-id = "eresco_65_mf4_c"
+#id = "eresco_65_mf4_c"
 name = "Eresco 65 MF4-C"
-information = "тип РА: постоянный\nнапряжение: 5-300 кВ\nдиаметр фокусного пятна: 3.0 мм"
+information = "тип РА: постоянный; напряжение: 5-300 кВ; диаметр фокусного пятна: 3.0 мм"
 electricPower = 900.0
 currentAdjustment = true
 voltageMaximum = 300.0
@@ -122,202 +59,163 @@ currentMaximum = 6.0
 focusDistanceDefault = 700.0
 focalSpotSize = 3.0
 exposureMultiplier = 1.0
-steelThicknessMax = 70.0
+#steelThicknessMax = 70.0
 
 [[devices.curves]]
 name = "80 кВ"
 voltage = 80.0
-points = [
-  [0.1, 1],
-  [1.0, 2],
-  [1.6, 3],
-  [1.9, 4],
-  [2.3, 5],
-  [2.5, 6],
-  [2.7, 7],
-  [2.9, 8],
-  [3.0, 9],
-  [3.1, 10],
-  [3.9, 20],
-  [4.4, 30],
-  [4.75, 40],
-  [5.2, 50],
-  [5.35, 60],
-  [5.55, 70],
-  [5.7, 80],
-  [5.9, 90],
-  [6.1, 100],
-  [7.0, 200]
-]
+points = [[0.1, 1], [7.0, 200]]
 
 [[devices.curves]]
 name = "100 кВ"
 voltage = 100.0
-points = [
-  [0.6, 1],
-  [2.3, 2],
-  [4.6, 5],
-  [6.3, 10],
-  [7.7, 20],
-  [9.9, 50],
-  [11.6, 100],
-  [13.4, 200]
-]
+points = [[0.6, 1], [13.4, 200]]
 
 [[devices.curves]]
 name = "120 кВ"
 voltage = 120.0
-points = [
-  [2.1, 1],
-  [4.75, 2],
-  [8.1, 5],
-  [10.7, 10],
-  [12.8, 20],
-  [16.3, 50],
-  [18.85, 100],
-  [21.95, 200]
-]
+points = [[2.1, 1], [21.95, 200]]
 
 [[devices.curves]]
 name = "140 кВ"
 voltage = 140.0
-points = [
-  [4.3, 1],
-  [7.8, 2],
-  [12.2, 5],
-  [15.7, 10],
-  [18.5, 20],
-  [22.9, 50],
-  [26.2, 100],
-  [29.7, 200]
-]
+points = [[4.3, 1], [29.7, 200]]
 
 [[devices.curves]]
 name = "160 кВ"
 voltage = 160.0
-points = [
-  [6.8, 1],
-  [10.9, 2],
-  [16.3, 5],
-  [20.3, 10],
-  [23.6, 20],
-  [28.8, 50],
-  [32.9, 100],
-  [36.9, 200]
-]
+points = [[6.8, 1], [36.9, 200]]
 
 [[devices.curves]]
 name = "180 кВ"
 voltage = 180.0
-points = [
-  [9.5, 1],
-  [14.2, 2],
-  [20.3, 5],
-  [24.9, 10],
-  [28.6, 20],
-  [34.8, 50],
-  [39.2, 100],
-  [43.9, 200]
-]
+points = [[9.5, 1], [43.9, 200]]
 
 [[devices.curves]]
 name = "200 кВ"
 voltage = 200.0
-points = [
-  [11.8, 1],
-  [17.4, 2],
-  [24.4, 5],
-  [29.5, 10],
-  [34.1, 20],
-  [41.1, 50],
-  [46.9, 100],
-  [52.0, 200]
-]
+points = [[11.8, 1], [52.0, 200]]
 
 [[devices.curves]]
 name = "220 кВ"
 voltage = 220.0
-points = [
-  [14.1, 1],
-  [20.5, 2],
-  [28.5, 5],
-  [34.6, 10],
-  [39.7, 20],
-  [47.8, 50],
-  [54.0, 100],
-  [60.4, 200]
-]
+points = [[14.1, 1], [60.4, 200]]
 
 [[devices.curves]]
 name = "240 кВ"
 voltage = 240.0
-points = [
-  [16.7, 1],
-  [23.9, 2],
-  [33.2, 5],
-  [40.1, 10],
-  [46.1, 20],
-  [55.5, 50],
-  [62.3, 100],
-  [69.5, 200]
-]
+points = [[16.7, 1], [69.5, 200]]
 
 [[devices.curves]]
 name = "275 кВ"
 voltage = 275.0
-points = [
-  [20.0, 1],
-  [28.6, 2],
-  [39.4, 5],
-  [47.8, 10],
-  [54.8, 20],
-  [65.7, 50],
-  [68.0, 60],
-  [69.5, 70]
-]
+points = [[20.0, 1], [69.5, 70]]
 
 [[devices.curves]]
 name = "300 кВ"
 voltage = 300.0
-points = [
-  [23.2, 1],
-  [32.2, 2],
-  [43.8, 5],
-  [52.7, 10],
-  [60.1, 20],
-  [65.2, 30],
-  [68.3, 40],
-  [70.0, 45]
-]
+points = [[23.2, 1], [70.0, 45]]
 
 [[devices]]
-id = "arina_9"
+#id = "eresco_65_mf4_c"
+name = "Comet EVO 300D"
+information = "тип РА: постоянный; напряжение: 60-300 кВ; диаметр фокусного пятна: 3.0 мм"
+electricPower = 1200.0
+currentAdjustment = true
+voltageMaximum = 300.0
+currentMinimum = 0.5
+currentMaximum = 6.5
+focusDistanceDefault = 700.0
+focalSpotSize = 3.0
+exposureMultiplier = 1.0
+#steelThicknessMax = 70.0
+
+[[devices.curves]]
+name = "100 кВ"
+voltage = 100.0
+points = [[1.0, 1], [12.0, 100]]
+
+[[devices.curves]]
+name = "150 кВ"
+voltage = 150.0
+points = [[5.0, 1], [29.0, 100]]
+
+[[devices.curves]]
+name = "200 кВ"
+voltage = 200.0
+points = [[12.4, 1], [46.5, 100]]
+
+[[devices.curves]]
+name = "250 кВ"
+voltage = 250.0
+points = [[19.0, 1], [62.5, 100]]
+
+[[devices.curves]]
+name = "300 кВ"
+voltage = 300.0
+points = [[27.0, 1], [70.0, 60]]
+
+[[devices]]
+#id = "eresco_32_mf4_c"
+name = "МАРТ-200"
+information = "тип РА: постоянный; напряжение: 105-200 кВ; диаметр фокусного пятна: 2.2 мм"
+electricPower = 450.0
+currentAdjustment = false
+voltageMaximum = 200.0
+currentMinimum = 0.5
+currentMaximum = 0.5
+focusDistanceDefault = 700.0
+focalSpotSize = 2.2
+exposureMultiplier = 1.0
+#steelThicknessMax = 20.0
+
+[[devices.curves]]
+name = "105 кВ фронтально"
+voltage = 105.0
+points = [[0.85, 0.7], [4.35, 20]]
+
+[[devices.curves]]
+name = "140 кВ фронтально"
+voltage = 140.0
+points = [[1.00, 0.7], [10.80, 20]]
+
+[[devices.curves]]
+name = "170 кВ фронтально"
+voltage = 170.0
+points = [[0.70, 0.7], [16.50, 20]]
+
+[[devices.curves]]
+name = "200 кВ фронтально"
+voltage = 200.0
+points = [[1.9, 0.7], [24.5, 20]]
+
+[[devices]]
+#id = "arina_9"
 name = "АРИНА-9"
-information = "тип РА: импульсный\nнапряжение: 300 кВ\nдиаметр фокусного пятна: 2.5 мм"
+information = "тип РА: импульсный; напряжение: 300 кВ; диаметр фокусного пятна: 2.5 мм"
 electricPower = 300.0
 voltageMaximum = 300.0
 currentAdjustment = false
-currentMinimum = 0.1
-currentMaximum = 0.1
+currentMinimum = 1.0
+currentMaximum = 1.0
 focusDistanceDefault = 700.0
 focalSpotSize = 2.5
 exposureMultiplier = 1.0
-steelThicknessMax = 20.0
+#steelThicknessMax = 23.0
 
 [[devices.curves]]
-name = "d7"
+name = "D7+Pb0,027мм"
 voltage = 300
-points = [
-  [4.9, 2.0],
-  [8.2, 3.0],
-  [10.6, 4.0],
-  [12.4, 5.0],
-  [14.0, 6.0],
-  [15.2, 7.0],
-  [16.4, 8.0],
-  [17.4, 9.0],
-  [18.2, 10.0],
-  [20.0, 12.5]
-]
+points = [[1.0, 1.254], [23.0, 17.85]]
+
+[[devices.curves]]
+name = "F8+RCF"
+voltage = 300
+points = [[1.0, 0.375], [33.0, 17.85]]
+
+[[devices.curves]]
+name = "F8+NDT1200"
+voltage = 300
+points = [[1.0, 0.112], [43.0, 17.85]]
 
 notation = "Необходимо понимать, что рентгеновские плёнки и, особенно экраны имеют разброс по чувствительности, а рентгеновские аппараты - неизбежный технологический разброс параметров, поэтому рассчитанное по номограммам время не является точным, а служит только для предварительной оценки. При расчёте номограмм используются усреднённые паспортные значения чувствительности плёнок и экранов, а также линейных коэффициентов ослабления рентгеновского излучения в материалах. В каждом конкретном случае сочетание параметров может быть иным и время экспозиции может несколько отличаться от рассчитанного по номограммам. Также на итоговую оптическую плотность рентгеновского снимка влияет тип/марка проявителя, его концентрация, температура и время проявки."
