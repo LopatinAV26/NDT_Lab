@@ -2,7 +2,7 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
     source/*.cpp
 )
 
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+add_executable(${PROJECT_NAME} WIN32 ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     imgui
