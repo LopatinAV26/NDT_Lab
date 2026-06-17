@@ -17,9 +17,6 @@ public:
 private:
     void SetGuiStyle() const;
 
-    float fpsUpdateTimer{0.f};
-    float currentFrametime{0.f};
-    float framerate{0.f};
     ApplicationData &appData;
 };
 
@@ -48,6 +45,8 @@ private:
     float focusDistance{700.f};
     float steelThickness{10.f};
     float deviceCurrent{1.f};
+    float steelThicknessMin{1.f};
+    float steelThicknessMax{10.f};
     std::vector<NDT::XrayDevice> devices;
     std::vector<NDT::XrayDevice> calculatedDevices;
     ApplicationData &appData;

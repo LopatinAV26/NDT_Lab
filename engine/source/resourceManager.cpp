@@ -63,9 +63,6 @@ std::vector<NDT::XrayDevice> NDT::LoadDevices(const std::filesystem::path &pathT
         if (auto *value = deviceTable->get("exposureMultiplier"))
             device.exposureMultiplier = value->value_or(1.f);
 
-        if (auto *value = deviceTable->get("steelThicknessMax"))
-            device.steelThicknessMax = value->value_or(1.f);
-
         auto *curvesArray = deviceTable->get_as<toml::array>("curves");
         if (!curvesArray)
             return devices;

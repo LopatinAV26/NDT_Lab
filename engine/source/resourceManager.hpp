@@ -25,7 +25,7 @@ namespace NDT
 		float focusDistanceDefault{ 700.f };
 		float focalSpotSize{ 1.f };
 		float exposureMultiplier{ 1.f };
-		float steelThicknessMax{ 1.f };
+		//float steelThicknessMax{ 1.f };
 		bool currentAdjustment{ true };
 		std::vector<Curve> curveVector;
 	};
