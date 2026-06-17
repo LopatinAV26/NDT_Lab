@@ -10,18 +10,19 @@ ApplicationData::~ApplicationData()
     SaveSettings();
 }
 
-void ApplicationData::LoadSettings()
+void ApplicationData::LoadSettings(const std::filesystem::path &path)
 {
+    toml::table tbl;
     try
     {
-        tbl = toml::parse_file(pathToSettings.string());
-        SDL_Log("Config file '%s' parsed successfully.\n", pathToSettings.string().c_str());
+        tbl = toml::parse_file(path.string());
+        SDL_Log("Config file '%s' parsed successfully.\n", path.string().c_str());
     }
     catch (const toml::parse_error &err)
     {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR,
                      "Failed to parse config file '%s': %s\n",
-                     pathToSettings.string().c_str(), err.what());
+                     path.string().c_str(), err.what());
         return;
     }
 
@@ -33,22 +34,23 @@ void ApplicationData::LoadSettings()
     style = tbl["guiStyle"].value_or(style);
 }
 
-void ApplicationData::SaveSettings()
+void ApplicationData::SaveSettings(const std::filesystem::path &path)
 {
+    toml::table tbl;
     tbl.insert_or_assign("mainScale", mainScale);
     tbl.insert_or_assign("windowRounding", windowRounding);
     tbl.insert_or_assign("frameRounding", frameRounding);
     tbl.insert_or_assign("grabRounding", grabRounding);
     tbl.insert_or_assign("fontSize", fontSize);
     tbl.insert_or_assign("guiStyle", style);
-    std::ofstream file(pathToSettings);
+    std::ofstream file(path);
     if (!file)
     {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR,
                      "Failed to open '%s' for writing",
-                     pathToSettings.string().c_str());
+                     path.string().c_str());
         return;
     }
     file << tbl;
-    SDL_Log("Settings saved to '%s'", pathToSettings.string().c_str());
+    SDL_Log("Settings saved to '%s'", path.string().c_str());
 }

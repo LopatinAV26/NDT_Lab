@@ -14,7 +14,7 @@ void SettingsWindow::Show(bool &isOpen)
 	{
 		ImGui::SeparatorText("Info");
 		ImGui::Text("API: %s", SDL_GetRendererName(appData.renderer));
-		ImGui::Text("Driver: %s", appData.driverName ? appData.driverName : "unknown");
+		ImGui::Text("Driver: %s", appData.driverName.c_str() ? appData.driverName.c_str() : "unknown");
 
 		static float fpsUpdateTimer{0.f};
 		static float currentFrametime{0.f};
@@ -95,8 +95,6 @@ NomogramWindow::NomogramWindow(ApplicationData &coreAppData)
 
 void NomogramWindow::Show(bool &isOpen)
 {
-#define RECALC calculatedDevices = ExposureRecalculation(devices, focusDistance, deviceCurrent);
-
 	ImGuiViewport *viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
 	ImGui::SetNextWindowSize(viewport->Size);
@@ -129,31 +127,28 @@ void NomogramWindow::Show(bool &isOpen)
 			return;
 		}
 
-		if (ImGui::BeginCombo("Аппарат", devices[deviceIndex].name.c_str()))
+		if (ImGui::BeginCombo("Аппарат", calculatedDevices[deviceIndex].name.c_str()))
 		{
-			for (int i = 0; i < std::ssize(devices); ++i)
+			for (int i = 0; i < std::ssize(calculatedDevices); ++i)
 			{
 				const bool isSelected = (deviceIndex == i);
-				if (ImGui::Selectable(devices[i].name.c_str(), isSelected))
+				if (ImGui::Selectable(calculatedDevices[i].name.c_str(), isSelected))
 					deviceIndex = i;
 
 				if (isSelected)
 					ImGui::SetItemDefaultFocus();
 			}
 
-			if (deviceCurrent < devices[deviceIndex].currentMinimum ||
-				deviceCurrent > devices[deviceIndex].currentMaximum)
-				deviceCurrent = devices[deviceIndex].currentMinimum;
-
-			RECALC;
+			if (deviceCurrent < calculatedDevices[deviceIndex].currentMinimum ||
+				deviceCurrent > calculatedDevices[deviceIndex].currentMaximum)
+				deviceCurrent = calculatedDevices[deviceIndex].currentMinimum;
 
 			ImGui::EndCombo();
 		}
 
-		ImGui::Text("%s", devices[deviceIndex].information.c_str());
+		ImGui::Text("%s", calculatedDevices[deviceIndex].information.c_str());
 
-		if (ImGui::DragFloat("Фокусное расстояние", &focusDistance, 1.f, 1.f, 2000.f, "%.0f мм"))
-			RECALC
+		ImGui::DragFloat("Фокусное расстояние", &focusDistance, 1.f, 1.f, 2000.f, "%.0f мм");
 
 		if (steelThickness > steelThicknessMax)
 			steelThickness = steelThicknessMax;
@@ -168,30 +163,27 @@ void NomogramWindow::Show(bool &isOpen)
 						 steelThicknessMax,
 						 "%.1f мм");
 
-		ImGui::BeginDisabled(!devices[deviceIndex].currentAdjustment ||
+		ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment ||
 							 measurementUnits_index == 0);
-		if (ImGui::SliderFloat("Сила тока",
-							   &deviceCurrent,
-							   devices[deviceIndex].currentMinimum,
-							   devices[deviceIndex].currentMaximum,
-							   "%.1f мА"))
-			RECALC
+		ImGui::SliderFloat("Сила тока",
+						   &deviceCurrent,
+						   calculatedDevices[deviceIndex].currentMinimum,
+						   calculatedDevices[deviceIndex].currentMaximum,
+						   "%.1f мА");
+
 		ImGui::EndDisabled();
 
-		if (!devices[deviceIndex].currentAdjustment &&
+		if (!calculatedDevices[deviceIndex].currentAdjustment &&
 			measurementUnits_index == 0)
 			measurementUnits_index = 1;
 
-		ImGui::BeginDisabled(!devices[deviceIndex].currentAdjustment);
-		if (ImGui::RadioButton("мА х мин", &measurementUnits_index, 0))
-			RECALC
+		ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment);
+		ImGui::RadioButton("мА х мин", &measurementUnits_index, 0);
 		ImGui::EndDisabled();
 		ImGui::SameLine();
-		if (ImGui::RadioButton("минуты", &measurementUnits_index, 1))
-			RECALC
+		ImGui::RadioButton("минуты", &measurementUnits_index, 1);
 		ImGui::SameLine();
-		if (ImGui::RadioButton("секунды", &measurementUnits_index, 2))
-			RECALC
+		ImGui::RadioButton("секунды", &measurementUnits_index, 2);
 
 		const char *nameAxisY = "Экспозиция";
 		switch (measurementUnits_index)
@@ -209,7 +201,7 @@ void NomogramWindow::Show(bool &isOpen)
 			break;
 		}
 
-		if (ImPlot::BeginPlot(devices[deviceIndex].name.c_str(),
+		if (ImPlot::BeginPlot(calculatedDevices[deviceIndex].name.c_str(),
 							  ImVec2(-1, ImGui::GetContentRegionAvail().y),
 							  ImPlotFlags_NoLegend))
 		{
@@ -219,6 +211,8 @@ void NomogramWindow::Show(bool &isOpen)
 
 			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
 
+			calculatedDevices = ExposureRecalculation(devices, focusDistance, deviceCurrent);
+			
 			std::vector<CurvesRef> visibleLines;
 			visibleLines.reserve(calculatedDevices[deviceIndex].curveVector.size());
 
@@ -229,7 +223,7 @@ void NomogramWindow::Show(bool &isOpen)
 					ImPlot::PlotLine(curve.label.c_str(),
 									 curve.xData.data(),
 									 curve.yData.data(),
-									 curve.xData.size());
+									 static_cast<int>(curve.xData.size()));
 
 					visibleLines.push_back({curve.xData, curve.yData,
 											ImPlot::GetLastItemColor(), curve.label});
@@ -251,7 +245,10 @@ std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::ve
 	auto result = deviceVector;
 	auto &device = result[deviceIndex];
 
-	float factor = std::pow((distance / deviceVector[deviceIndex].focusDistanceDefault), 2);
+	float factor = std::powf((distance / deviceVector[deviceIndex].focusDistanceDefault), 2);
+
+	if (!result[deviceIndex].currentAdjustment)
+		current = 1.f;
 
 	switch (measurementUnits_index)
 	{

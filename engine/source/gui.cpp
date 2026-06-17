@@ -32,10 +32,13 @@ void Gui::InitImGui()
 	case GuiStyle::Classic:
 		ImGui::StyleColorsClassic();
 		break;
+	default:
+		ImGui::StyleColorsClassic();
+		break;
 	}
 
 	ImGuiStyle &style = ImGui::GetStyle();
-	//style.ScaleAllSizes(appData.mainScale);
+	// style.ScaleAllSizes(appData.mainScale);
 	style.WindowRounding = appData.windowRounding;
 	style.FrameRounding = appData.frameRounding;
 	style.GrabRounding = appData.grabRounding;
