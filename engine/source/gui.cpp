@@ -62,14 +62,14 @@ void Gui::IterateImGui()
 	// ImGui::ShowDemoWindow();
 
 	//---------------------------------
-	if (showButtonsWindow)
+	if (buttonsWindowOpen)
 		ButtonsWindow();
 
-	if (showSettingsWindow)
-		settingsWindow.Show(showSettingsWindow);
+	if (settingsWindowOpen)
+		settingsWindow.Show(settingsWindowOpen);
 
-	if (showNomogramWindow)
-		nomogramWindow.Show(showNomogramWindow);
+	if (nomogramWindowOpen)
+		nomogramWindow.Show(nomogramWindowOpen);
 	//---------------------------------
 
 	// Для работы с HiDPI
@@ -106,13 +106,13 @@ void Gui::ButtonsWindow()
 									ImGuiWindowFlags_NoBringToFrontOnFocus |
 									ImGuiWindowFlags_NoBackground;
 
-	ImGui::Begin("Main Window", &showButtonsWindow, window_flags);
+	ImGui::Begin("Main Window", &buttonsWindowOpen, window_flags);
 
 	if (ImGui::Button("Настройки"))
-		showSettingsWindow = true;
+		settingsWindowOpen = true;
 
 	if (ImGui::Button("Номограмма"))
-		showNomogramWindow = true;
+		nomogramWindowOpen = true;
 
 	ImGui::End();
 }

@@ -11,43 +11,43 @@
 class SettingsWindow
 {
 public:
-    explicit SettingsWindow(ApplicationData &coreAppData);
-    void Show(bool &isOpen);
+	explicit SettingsWindow(ApplicationData& coreAppData);
+	void Show(bool& isOpen);
 
 private:
-    void SetGuiStyle() const;
+	void SetGuiStyle() const;
 
-    ApplicationData &appData;
-};
-
-struct CurvesRef
-{
-    const std::vector<float> x;
-    const std::vector<float> y;
-    ImVec4 color{1.0f, 1.0f, 1.0f, 1.0f};
-    std::string label;
+	ApplicationData& appData;
 };
 
 class NomogramWindow
 {
 public:
-    explicit NomogramWindow(ApplicationData &coreAppData);
-    void Show(bool &isOpen);
+	explicit NomogramWindow(ApplicationData& coreAppData);
+	void Show(bool& isOpen);
 
 private:
-    std::vector<NDT::XrayDevice> ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
-                                                       float distance, float current) const;
+	struct CurvesRef
+	{
+		const std::vector<float> x;
+		const std::vector<float> y;
+		ImVec4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+		std::string label;
+	};
 
-    void DrawMarkers(const std::vector<CurvesRef> &curves, float thickness) const;
+	std::vector<NDT::XrayDevice> ExposureRecalculation(const std::vector<NDT::XrayDevice>& deviceVector,
+		float distance, float current) const;
 
-    int deviceIndex{0};
-    int measurementUnits_index{0};
-    float focusDistance{700.f};
-    float steelThickness{10.f};
-    float deviceCurrent{1.f};
-    float steelThicknessMin{1.f};
-    float steelThicknessMax{10.f};
-    std::vector<NDT::XrayDevice> devices;
-    std::vector<NDT::XrayDevice> calculatedDevices;
-    ApplicationData &appData;
+	void DrawMarkers(const std::vector<CurvesRef>& curves, float thickness) const;
+
+	int deviceIndex{ 0 };
+	int measurementUnits_index{ 0 };
+	float focusDistance{ 700.f };
+	float steelThickness{ 10.f };
+	float deviceCurrent{ 1.f };
+	float steelThicknessMin{ 1.f };
+	float steelThicknessMax{ 10.f };
+	std::vector<NDT::XrayDevice> devices;
+	std::vector<NDT::XrayDevice> calculatedDevices;
+	ApplicationData& appData;
 };

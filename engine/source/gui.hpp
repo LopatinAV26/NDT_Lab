@@ -28,7 +28,7 @@ private:
 	NomogramWindow nomogramWindow{appData};
 
 
-	bool showButtonsWindow{true};
-	bool showSettingsWindow{false};
-	bool showNomogramWindow{false};
+	bool buttonsWindowOpen{true};
+	bool settingsWindowOpen{false};
+	bool nomogramWindowOpen{false};
 };
