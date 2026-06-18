@@ -15,7 +15,7 @@ class Protocol
 public:
     virtual ~Protocol() = default;
 
-    virtual void WindowProtocol(bool &showProtocol) = 0;
+    virtual void protocolWindow(bool &showProtocol) = 0;
     virtual void SaveProtocol() = 0;
 
 protected:
@@ -46,28 +46,27 @@ struct ProtocolData
     int technologicalControlMapIndex{0};
 
     std::string equipment{"Средства контроля"};
-
     std::string normativeDoc{"РД-25.160.10-КТН-0016-23 с Изм.1"};
-    std::string weldType{"Тип сварного соединения"};
-    std::string weldingMethod{"Способ сварки"};
-    int diameter{0};
-    float thicknes_1{0.f};
-    float thicknes_2{0.f};
+    std::vector<std::string> weldType{"Стыковое", "Стыковое кольцевое", "Угловое"};
+    std::vector<std::string> weldingMethod{"ручная дуговая"};
+    float diameter{0.f};
+    float thicknes1{0.f};
+    float thicknes2{0.f};
     float perimeter{0.f};
-    std::array<std::string_view, 3> typeOfSection_1 {"Одношовная", "Двухшовная", "Бесшовная"};
-    std::string typeOfSection_2{"Тип секции 2"};
-    std::string numberOfSection_1{"-"};
-    std::string numberOfSection_2{"-"};
-    int coordSec_1Weld_1{0};
-    int coordSec_1Weld_2{0};
-    int coordSec_2Weld_1{0};
-    int coordSec_2Weld_2{0};
-    std::string weldersMark_1{"Клеймо сварщика 1"};
-    std::string weldersMark_2{"Клеймо сварщика 2"};
+    std::array<std::string_view, 3> sectionType1{"Одношовная", "Двухшовная", "Бесшовная"};
+    std::array<std::string_view, 3> sectionType2{"Одношовная", "Двухшовная", "Бесшовная"};
+    std::string sectionNumber1;
+    std::string sectionNumber2;
+    int coordSec1Weld1{0};
+    int coordSec1Weld2{0};
+    int coordSec2Weld1{0};
+    int coordSec2Weld2{0};
+    std::vector<std::string> weldersMark1{"Клеймо сварщика 1"};
+    std::vector<std::string> weldersMark2{"Клеймо сварщика 2"};
     int brightness{0};
     int temperature{0};
 
-    std::vector<std::string> roughness{"Rz20", "Rz40", "Rz60"};
+    std::array<std::string_view, 4> roughness{"Rz20", "Rz40", "Rz60", "Rz80"};
     int roughnessIndex{0};
 
     // std::string stringOfDefects{""};
@@ -86,5 +85,5 @@ struct ProtocolData
     std::string inspectorName{"Надзор"};
     std::string masterName{"Производитель работ"};
 
-    std::vector<std::string> resultOfControl{"годен", "ремонт", "вырезать", "повторный контроль"};
+    std::vector<std::string> controlResult{"годен", "ремонт", "вырезать", "повторный контроль"};
 };

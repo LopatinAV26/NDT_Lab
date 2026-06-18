@@ -1,7 +1,7 @@
 [[devices]]
 #id = "eresco_32_mf4_c"
 name = "Eresco 32 MF4-C"
-information = "тип РА: постоянный; напряжение: 5-200 кВ; диаметр фокусного пятна: 0.4 х 4.0 мм"
+information = "тип РА: постоянный\nнапряжение: 5-200 кВ\nдиаметр фокусного пятна: 0.4 х 4.0 мм"
 electricPower = 600.0
 currentAdjustment = true
 voltageMaximum = 200.0
@@ -50,7 +50,7 @@ points = [[11.1, 2], [36.0, 50]]
 [[devices]]
 #id = "eresco_65_mf4_c"
 name = "Eresco 65 MF4-C"
-information = "тип РА: постоянный; напряжение: 5-300 кВ; диаметр фокусного пятна: 3.0 мм"
+information = "тип РА: постоянный\nнапряжение: 5-300 кВ\nдиаметр фокусного пятна: 3.0 мм"
 electricPower = 900.0
 currentAdjustment = true
 voltageMaximum = 300.0
@@ -119,7 +119,7 @@ points = [[23.2, 1], [70.0, 45]]
 [[devices]]
 #id = "eresco_65_mf4_c"
 name = "Comet EVO 300D"
-information = "тип РА: постоянный; напряжение: 60-300 кВ; диаметр фокусного пятна: 3.0 мм"
+information = "тип РА: постоянный\nнапряжение: 60-300 кВ\nдиаметр фокусного пятна: 3.0 мм"
 electricPower = 1200.0
 currentAdjustment = true
 voltageMaximum = 300.0
@@ -158,7 +158,7 @@ points = [[27.0, 1], [70.0, 60]]
 [[devices]]
 #id = "eresco_32_mf4_c"
 name = "МАРТ-200"
-information = "тип РА: постоянный; напряжение: 105-200 кВ; диаметр фокусного пятна: 2.2 мм"
+information = "тип РА: постоянный\nнапряжение: 105-200 кВ\nдиаметр фокусного пятна: 2.2 мм"
 electricPower = 450.0
 currentAdjustment = false
 voltageMaximum = 200.0
@@ -192,7 +192,7 @@ points = [[1.9, 0.7], [24.5, 20]]
 [[devices]]
 #id = "arina_9"
 name = "АРИНА-9"
-information = "тип РА: импульсный; напряжение: 300 кВ; диаметр фокусного пятна: 2.5 мм"
+information = "тип РА: импульсный\nнапряжение: 300 кВ\nдиаметр фокусного пятна: 2.5 мм"
 electricPower = 300.0
 voltageMaximum = 300.0
 currentAdjustment = false

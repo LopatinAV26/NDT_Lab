@@ -137,7 +137,7 @@ void NomogramWindow::Show(bool &isOpen)
 			return;
 		}
 
-		if (ImGui::BeginCombo("Аппарат", calculatedDevices[deviceIndex].name.c_str()))
+		if (ImGui::BeginCombo("##Аппарат#", calculatedDevices[deviceIndex].name.c_str()))
 		{
 			for (int i = 0; i < std::ssize(calculatedDevices); ++i)
 			{
@@ -159,6 +159,8 @@ void NomogramWindow::Show(bool &isOpen)
 
 		ImGui::Button("?");
 		ImGui::SetItemTooltip("%s", calculatedDevices[deviceIndex].information.c_str());
+		ImGui::SameLine();
+		ImGui::TextLinkOpenURL("Паспорт", "resources/devices_manual/Arina.pdf");
 
 		ImGui::DragFloat("##Фокусное расстояние#", &focusDistance, 1.f, 1.f, 2000.f, "Фокусное расстояние: %.0f мм");
 
