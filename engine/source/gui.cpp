@@ -38,7 +38,7 @@ void Gui::InitImGui()
 	}
 
 	ImGuiStyle &style = ImGui::GetStyle();
-	// style.ScaleAllSizes(appData.mainScale);
+	style.ScaleAllSizes(appData.mainScale);
 	style.WindowRounding = appData.windowRounding;
 	style.FrameRounding = appData.frameRounding;
 	style.GrabRounding = appData.grabRounding;
