@@ -38,7 +38,9 @@ void Gui::InitImGui()
 	}
 
 	ImGuiStyle &style = ImGui::GetStyle();
+#ifdef WIN32
 	style.ScaleAllSizes(appData.mainScale);
+#endif
 	style.WindowRounding = appData.windowRounding;
 	style.FrameRounding = appData.frameRounding;
 	style.GrabRounding = appData.grabRounding;

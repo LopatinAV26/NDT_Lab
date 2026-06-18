@@ -6,7 +6,7 @@
 
 enum class GuiStyle
 {
-	Dark = 0,
+	Dark,
 	Light,
 	Classic
 };
@@ -32,7 +32,7 @@ public:
 	int windowHeight{1080};
 	bool isWindowFocused{true};
 	bool isWindowMinimized{false};
-	
+
 private:
 	void LoadSettings(const std::filesystem::path &path = "resources/settings.toml");
 	void SaveSettings(const std::filesystem::path &path = "resources/settings.toml");

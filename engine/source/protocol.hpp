@@ -1,34 +1,25 @@
 #pragma once
 
-#include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
+#include <array>
 #include <optional>
-#include <iostream>
-#include <toml++/toml.hpp>
 #include "imgui.h"
 #include "imgui_stdlib.h"
-#include <SDL3/SDL.h>
 
 struct ProtocolData;
 
-class ProtocolBase
+class Protocol
 {
 public:
-    virtual ~ProtocolBase() = default;
+    virtual ~Protocol() = default;
 
     virtual void WindowProtocol(bool &showProtocol) = 0;
     virtual void SaveProtocol() = 0;
 
 protected:
-    void ParseConfig(std::string_view pathToConfig, toml::table &tbl);
-    void GetDefaultProtocolData();
-
-    std::shared_ptr<ProtocolData> baseProtocolData = std::make_shared<ProtocolData>();
-
 private:
-    std::string_view pathToDefaultProtocol{"resources/config/base_protocol_data.toml"};
-    toml::table baseTable;
 };
 
 struct ProtocolData
@@ -38,14 +29,14 @@ struct ProtocolData
     std::string weldNumber{"Номер сварного соединения"};
     std::string protocolNumber{"Номер заключения"};
     std::string controlDate{"Дата проведения контроля"};
-    std::string dateOfIssue{"15.03.1989"};
+    std::string dateOfIssue{"Дата выдачи заключения"};
 
-    std::vector<std::string> nameOfMethod{"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
-    int nameOfMethodIndex{0};
+    std::array<std::string_view, 8> methods = {"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
+    int methodIndex{0};
 
     std::string objectName{"Объект контроля"};
 
-    std::vector<std::string> pipeCategoryVector{"В", "I", "II", "III", "-"};
+    std::array<std::string_view, 6> pipeCategory = {"В", "I", "II", "III", "IV", "-"};
     int pipeCategoryIndex{0};
 
     std::string contractorOrganization{"Подрядная организация"};
@@ -63,7 +54,7 @@ struct ProtocolData
     float thicknes_1{0.f};
     float thicknes_2{0.f};
     float perimeter{0.f};
-    std::string typeOfSection_1{"Тип секции 1"};
+    std::array<std::string_view, 3> typeOfSection_1 {"Одношовная", "Двухшовная", "Бесшовная"};
     std::string typeOfSection_2{"Тип секции 2"};
     std::string numberOfSection_1{"-"};
     std::string numberOfSection_2{"-"};
