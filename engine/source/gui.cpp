@@ -63,9 +63,6 @@ void Gui::IterateImGui()
 	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 
-	// ImGui::ShowMetricsWindow();
-	// ImGui::ShowDemoWindow();
-
 	//---------------------------------
 	if (buttonsWindowOpen)
 		ButtonsWindow();
@@ -93,17 +90,16 @@ void Gui::RenderImGui()
 
 void Gui::ButtonsWindow()
 {
-	/* ImGuiViewport *viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize(viewport->Size);
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->GetCenter());
 
-	ImGuiWindowFlags window_flags = // ImGuiWindowFlags_NoDecoration |
+	/*ImGuiWindowFlags window_flags = // ImGuiWindowFlags_NoDecoration |
 		ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoSavedSettings |
 		ImGuiWindowFlags_NoBringToFrontOnFocus; */
 
-	// Кнопка без окна///////////////////////////////////////////////
+	// Кнопки без окна
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration |
 									// ImGuiWindowFlags_NoMove |
 									ImGuiWindowFlags_AlwaysAutoResize |
@@ -111,14 +107,14 @@ void Gui::ButtonsWindow()
 									ImGuiWindowFlags_NoBringToFrontOnFocus |
 									ImGuiWindowFlags_NoBackground;
 
-	ImGui::Begin("Main Window", &buttonsWindowOpen, window_flags);
+	if (ImGui::Begin("Main Window", &buttonsWindowOpen, window_flags))
+	{
+		if (ImGui::Button("Настройки"))
+			settingsWindowOpen = true;
 
-	if (ImGui::Button("Настройки"))
-		settingsWindowOpen = true;
-
-	if (ImGui::Button("Номограмма"))
-		nomogramWindowOpen = true;
-
+		if (ImGui::Button("Номограмма"))
+			nomogramWindowOpen = true;
+	}
 	ImGui::End();
 }
 

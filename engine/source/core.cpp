@@ -1,13 +1,9 @@
 #include "core.hpp"
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 #define SDL_HINT_WINDOWS_DPI_AWARENESS "SDL_WINDOWS_DPI_AWARENESS"
 
 SDL_AppResult Core::Init()
 {
-	//SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	if (!SDL_Init(SDL_INIT_VIDEO))
 	{
 		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error %s", SDL_GetError());
@@ -15,9 +11,9 @@ SDL_AppResult Core::Init()
 	}
 
 	appData.window = SDL_CreateWindow("NDT Lab",
-									   appData.windowWidth,
-									   appData.windowHeight,
-									   appData.windowFlags);
+									  appData.windowWidth,
+									  appData.windowHeight,
+									  appData.windowFlags);
 
 	appData.mainScale = SDL_GetWindowDisplayScale(appData.window);
 	if (appData.mainScale <= 0.0f)
@@ -40,8 +36,26 @@ SDL_AppResult Core::Init()
 
 	SDL_Log("SDL initialized successfully.");
 	appData.driverName = SDL_GetCurrentVideoDriver();
+	appData.rendererName = SDL_GetRendererName(appData.renderer);
 
-	//SDL_SetRenderVSync(appData.renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
+	if (!SDL_SetRenderVSync(appData.renderer, static_cast<int>(appData.mode)))
+	{
+		SDL_Log("Failed to set VSync: %s", SDL_GetError());
+		appData.mode = Vsync::disabled;
+	}
+
+	switch (appData.mode)
+	{
+	case Vsync::disabled:
+		appData.vsyncModeName = "Vsync: disabled";
+		break;
+	case Vsync::enabled:
+		appData.vsyncModeName = "Vsync: enabled";
+		break;
+	case Vsync::adaptive:
+		appData.vsyncModeName = "Vsync: adaptive";
+		break;
+	}
 
 	imWindow = std::make_unique<Gui>(appData);
 	imWindow->InitImGui();

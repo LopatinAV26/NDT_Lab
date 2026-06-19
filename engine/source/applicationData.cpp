@@ -1,4 +1,5 @@
 #include "applicationData.hpp"
+#include <toml++/toml.hpp>
 
 ApplicationData::ApplicationData()
 {
@@ -32,6 +33,7 @@ void ApplicationData::LoadSettings(const std::filesystem::path &path)
     grabRounding = tbl["grabRounding"].value_or(grabRounding);
     fontSize = tbl["fontSize"].value_or(fontSize);
     style = tbl["guiStyle"].value_or(style);
+    mode = tbl["vsyncMode"].value_or(mode);
 }
 
 void ApplicationData::SaveSettings(const std::filesystem::path &path)
@@ -43,6 +45,7 @@ void ApplicationData::SaveSettings(const std::filesystem::path &path)
     tbl.insert_or_assign("grabRounding", grabRounding);
     tbl.insert_or_assign("fontSize", fontSize);
     tbl.insert_or_assign("guiStyle", style);
+    tbl.insert_or_assign("vsyncMode", mode);
     std::ofstream file(path);
     if (!file)
     {

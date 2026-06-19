@@ -9,53 +9,103 @@ SettingsWindow::SettingsWindow(ApplicationData &coreAppData)
 
 void SettingsWindow::Show(bool &isOpen)
 {
-	ImGuiIO &io = ImGui::GetIO();
-	if (ImGui::Begin("Settings", &isOpen))
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+
+	if (ImGui::Begin("Settings", &isOpen, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		ImGui::SeparatorText("Info");
-		ImGui::Text("API: %s", SDL_GetRendererName(appData.renderer));
-		ImGui::Text("Driver: %s", appData.driverName.c_str() ? appData.driverName.c_str() : "unknown");
+		GetAppInformation();
 
-		static float fpsUpdateTimer{0.f};
-		static float currentFrametime{0.f};
-		static float framerate{0.f};
-
-		fpsUpdateTimer += io.DeltaTime;
-		if (fpsUpdateTimer >= 0.5f)
-		{
-			if (io.Framerate > 0)
-				currentFrametime = {1000.f / io.Framerate};
-
-			framerate = {io.Framerate};
-			fpsUpdateTimer = {0.f};
-		}
-		ImGui::Text("Application average %.2f ms/frame (%.0f FPS)", currentFrametime, framerate);
-
-		if (ImGui::IsMousePosValid())
-			ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y);
-		else
-			ImGui::Text("Mouse pos: <INVALID>");
+		SetVsyncMode();
 
 		ImGui::Spacing();
-		ImGui::SeparatorText("GUI Style");
+
 		SetGuiStyle();
 
 		ImGui::Spacing();
+
 		ImGui::SeparatorText("Rounding");
-		if (ImGui::SliderFloat("WindowRounding", &appData.windowRounding, 0.f, 12.f, "%.0f"))
+		if (ImGui::SliderFloat("##WindowRounding#", &appData.windowRounding, 0.f, 12.f, "Window rounding: %.0f"))
 			ImGui::GetStyle().WindowRounding = appData.windowRounding;
 
-		if (ImGui::SliderFloat("FrameRounding", &appData.frameRounding, 0.f, 12.f, "%.0f"))
+		if (ImGui::SliderFloat("##FrameRounding#", &appData.frameRounding, 0.f, 12.f, "Frame rounding: %.0f"))
 			ImGui::GetStyle().FrameRounding = appData.frameRounding;
 
-		if (ImGui::SliderFloat("GrabRounding", &appData.grabRounding, 0.f, 12.f, "%.0f"))
+		if (ImGui::SliderFloat("##GrabRounding#", &appData.grabRounding, 0.f, 12.f, "Grab rounding: %.0f"))
 			ImGui::GetStyle().GrabRounding = appData.grabRounding;
 	}
 	ImGui::End();
 }
 
-void SettingsWindow::SetGuiStyle() const
+void SettingsWindow::GetAppInformation() const
 {
+	ImGuiIO &io = ImGui::GetIO();
+
+	ImGui::SeparatorText("Info");
+	ImGui::Text("API: %s", appData.rendererName.c_str());
+	ImGui::Text("Driver: %s", appData.driverName.c_str());
+
+	static float fpsUpdateTimer{0.f};
+	static float currentFrametime{0.f};
+	static float framerate{0.f};
+
+	fpsUpdateTimer += io.DeltaTime;
+	if (fpsUpdateTimer >= 0.5f)
+	{
+		if (io.Framerate > 0)
+			currentFrametime = {1000.f / io.Framerate};
+
+		framerate = {io.Framerate};
+		fpsUpdateTimer = {0.f};
+	}
+	ImGui::Text("Application average %.2f ms/frame (%.0f FPS)", currentFrametime, framerate);
+
+	if (ImGui::IsMousePosValid())
+		ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y);
+	else
+		ImGui::Text("Mouse pos: <INVALID>");
+}
+
+void SettingsWindow::SetVsyncMode()
+{
+	int vsyncMode = static_cast<int>(appData.mode);
+	if (ImGui::SliderInt("##Vsync#", &vsyncMode, -1, 1, appData.vsyncModeName.c_str()))
+	{
+		appData.mode = static_cast<Vsync>(vsyncMode);
+		switch (appData.mode)
+		{
+		case Vsync::disabled:
+			if (!SDL_SetRenderVSync(appData.renderer, SDL_RENDERER_VSYNC_DISABLED))
+				SDL_Log("Failed to set VSync: %s", SDL_GetError());
+			appData.vsyncModeName = "Vsync: disabled";
+			break;
+		case Vsync::enabled:
+			if (!SDL_SetRenderVSync(appData.renderer, 1))
+			{
+				SDL_Log("Failed to set VSync: %s", SDL_GetError());
+				appData.mode = Vsync::disabled;
+			}
+			appData.vsyncModeName = "Vsync: enabled";
+			break;
+		case Vsync::adaptive:
+			if (!SDL_SetRenderVSync(appData.renderer, SDL_RENDERER_VSYNC_ADAPTIVE))
+			{
+				SDL_Log("Failed to set VSync: %s", SDL_GetError());
+				appData.mode = Vsync::disabled;
+			}
+			appData.vsyncModeName = "Vsync: adaptive";
+			break;
+		default:
+			SDL_SetRenderVSync(appData.renderer, SDL_RENDERER_VSYNC_DISABLED);
+			appData.vsyncModeName = "Vsync: disabled";
+			break;
+		}
+	}
+}
+
+void SettingsWindow::SetGuiStyle()
+{
+	ImGui::SeparatorText("GUI Style");
 	int currentStyleIndex = static_cast<int>(appData.style);
 
 	ImGui::RadioButton("Dark", &currentStyleIndex, static_cast<int>(GuiStyle::Dark));
@@ -107,28 +157,7 @@ void NomogramWindow::Show(bool &isOpen)
 
 	if (ImGui::Begin("Диаграмма экспозиции", &isOpen, window_flags))
 	{
-#if defined(_WIN32)
-		ImGui::BeginChild("Header", ImVec2(0, 30 * appData.mainScale));
-#elif defined(__linux__)
-		ImGui::BeginChild("Header", ImVec2(0, 30));
-#else
-		ImGui::BeginChild("Header", ImVec2(0, 30));
-#endif
-
-		ImGui::Text("Диаграмма экспозиции");
-
-#if defined(_WIN32)
-		ImGui::SameLine(ImGui::GetWindowWidth() - 60 * appData.mainScale);
-#elif defined(__linux__)
-		ImGui::SameLine(ImGui::GetWindowWidth() - 60);
-#else
-		ImGui::SameLine(ImGui::GetWindowWidth() - 60);
-#endif
-
-		if (ImGui::Button("Выход"))
-			isOpen = false;
-
-		ImGui::EndChild();
+		SetCustomHeader(isOpen, "Диаграмма экспозиции");
 
 		if (devices.empty() || calculatedDevices.empty())
 		{
@@ -279,7 +308,7 @@ std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::ve
 	for (auto &curve : device.curveVector)
 	{
 		for (auto &y : curve.yData)
-		{
+		{ // cppcheck-suppress useStlAlgorithm
 			y *= factor;
 		}
 	}
