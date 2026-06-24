@@ -1,6 +1,7 @@
 #include "gui.hpp"
 #include <SDL3/SDL.h>
 #include "embeddedFonts.hpp"
+#include "applicationData.hpp"
 
 Gui::Gui(ApplicationData &coreAppData)
 	: appData{coreAppData}
@@ -72,6 +73,9 @@ void Gui::IterateImGui()
 
 	if (nomogramWindowOpen)
 		nomogramWindow.Show(nomogramWindowOpen);
+
+	if (protocolWindowOpen)
+		protocolWindow.Show(protocolWindowOpen);
 	//---------------------------------
 
 	// Для работы с HiDPI
@@ -114,6 +118,9 @@ void Gui::ButtonsWindow()
 
 		if (ImGui::Button("Номограмма"))
 			nomogramWindowOpen = true;
+
+		if (ImGui::Button("Протокол"))
+			protocolWindowOpen = true;
 	}
 	ImGui::End();
 }

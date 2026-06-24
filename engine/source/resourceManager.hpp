@@ -4,30 +4,37 @@
 #include <filesystem>
 #include <string>
 
-namespace NDT
-{
-	struct Curve
-	{
-		std::string label;
-		std::vector<float> xData;
-		std::vector<float> yData;
-		float voltage = {1.f};
-	};
+class ApplicationData;
 
-	struct XrayDevice
-	{
-		std::string name;
-		std::string information;
-		std::vector<Curve> curveVector;
-		float electricPower = {1.f};
-		float voltageMaximum = {200.f};
-		float currentMinimum = {0.1f};
-		float currentMaximum = {1.f};
-		float focusDistanceDefault = {700.f};
-		float focalSpotSize = {1.f};
-		float exposureMultiplier = {1.f};
-		bool currentAdjustment = {true};
-	};
+struct Curve
+{
+	std::string label;
+	std::vector<float> xData;
+	std::vector<float> yData;
+	float voltage = {1.f};
+};
+
+struct XrayDevice
+{
+	std::string name;
+	std::string information;
+	std::vector<Curve> curveVector;
+	float electricPower = {1.f};
+	float voltageMaximum = {200.f};
+	float currentMinimum = {0.1f};
+	float currentMaximum = {1.f};
+	float focusDistanceDefault = {700.f};
+	float focalSpotSize = {1.f};
+	float exposureMultiplier = {1.f};
+	bool currentAdjustment = {true};
+};
+
+class ResourceManager
+{
+public:
+	//ResourceManager(ApplicationData &appData);
 
 	std::vector<XrayDevice> LoadDevices(const std::filesystem::path &pathToDevices);
-}
+
+private:
+};

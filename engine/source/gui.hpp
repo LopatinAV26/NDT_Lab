@@ -8,6 +8,8 @@
 #include "implot.h"
 #include "appWindows.hpp"
 
+class ApplicationData;
+
 class Gui
 {
 public:
@@ -26,8 +28,10 @@ private:
 
 	SettingsWindow settingsWindow{appData};
 	NomogramWindow nomogramWindow{appData};
+	ProtocolWindow protocolWindow{appData};
 
 	bool buttonsWindowOpen = {true};
 	bool settingsWindowOpen = {false};
 	bool nomogramWindowOpen = {false};
+	bool protocolWindowOpen = {false};
 };

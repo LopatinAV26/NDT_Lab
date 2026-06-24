@@ -9,8 +9,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     implot
     sqlite3
     tomlplusplus::tomlplusplus
+    SDL3_image::SDL3_image-static
     SDL3::SDL3-static
     resources
+    ${PQXX_LIB}
+    ${PQ_LIB}
 )
 
 if(MSVC)

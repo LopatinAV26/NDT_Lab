@@ -12,6 +12,18 @@ FetchContent_Declare(SDL3
 )
 FetchContent_MakeAvailable(SDL3)
 
+# SDL_image ---------------------------------------------------------------------------------------
+set(SDL3IMAGE_INSTALL OFF CACHE BOOL "" FORCE)
+set(SDL3IMAGE_SAMPLES OFF CACHE BOOL "" FORCE)
+set(SDL3IMAGE_TESTS OFF CACHE BOOL "" FORCE)
+set(SDL3IMAGE_VENDORED ON CACHE BOOL "" FORCE)
+
+FetchContent_Declare(SDL3_image
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
+    GIT_TAG release-3.4.4
+)
+FetchContent_MakeAvailable(SDL3_image)
+
 # toml++ ------------------------------------------------------------------------------------
 FetchContent_Declare(tomlplusplus
     GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
@@ -46,7 +58,6 @@ add_library(implot STATIC)
 target_sources(implot PRIVATE
     implot/implot.cpp
     implot/implot_items.cpp
-    # implot/implot_demo.cpp
 )
 
 target_include_directories(implot SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/implot")
@@ -67,3 +78,7 @@ target_compile_options(sqlite3 PRIVATE
     $<$<C_COMPILER_ID:MSVC>:/W0>
     $<$<NOT:$<C_COMPILER_ID:MSVC>>:-w>
 )
+
+# libpqxx ----------------------------------------------------------------------------------
+find_library(PQXX_LIB pqxx REQUIRED)
+find_library(PQ_LIB pq REQUIRED)

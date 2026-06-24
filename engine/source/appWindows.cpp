@@ -1,6 +1,7 @@
 #include "appWindows.hpp"
 #include <cmath>
 #include <algorithm>
+#include "applicationData.hpp"
 
 SettingsWindow::SettingsWindow(ApplicationData &coreAppData)
 	: appData{coreAppData}
@@ -138,7 +139,7 @@ void SettingsWindow::SetGuiStyle()
 NomogramWindow::NomogramWindow(ApplicationData &coreAppData)
 	: appData{coreAppData}
 {
-	devices = NDT::LoadDevices(appData.pathToDevices);
+	devices = resourceManager.LoadDevices(appData.pathToDevices);
 	calculatedDevices = devices;
 }
 
@@ -157,7 +158,28 @@ void NomogramWindow::Show(bool &isOpen)
 
 	if (ImGui::Begin("Диаграмма экспозиции", &isOpen, window_flags))
 	{
-		SetCustomHeader(isOpen, "Диаграмма экспозиции");
+#if defined(_WIN32)
+		ImGui::BeginChild("Header", ImVec2(0, 30 * appData.mainScale));
+#elif defined(__linux__)
+		ImGui::BeginChild("Header", ImVec2(0, 30));
+#else
+		ImGui::BeginChild("Header", ImVec2(0, 30));
+#endif
+
+		ImGui::Text("Диаграмма экпозиции");
+
+#if defined(_WIN32)
+		ImGui::SameLine(ImGui::GetWindowWidth() - 60 * appData.mainScale);
+#elif defined(__linux__)
+		ImGui::SameLine(ImGui::GetWindowWidth() - 60);
+#else
+		ImGui::SameLine(ImGui::GetWindowWidth() - 60);
+#endif
+
+		if (ImGui::Button("Выход"))
+			isOpen = false;
+
+		ImGui::EndChild();
 
 		if (devices.empty() || calculatedDevices.empty())
 		{
@@ -282,8 +304,8 @@ void NomogramWindow::Show(bool &isOpen)
 	ImGui::End();
 }
 
-std::vector<NDT::XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<NDT::XrayDevice> &deviceVector,
-																   float distance, float current) const
+std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<XrayDevice> &deviceVector,
+															  float distance, float current) const
 {
 	auto result = deviceVector;
 	auto &device = result[deviceIndex];
@@ -395,8 +417,53 @@ void NomogramWindow::DrawMarkers(const std::vector<CurvesRef> &curves, float thi
 								   "%s S=%.1f  T=%.1f", line.label.c_str(), px, py);
 				break;
 			}
-
 			break;
 		}
 	}
+}
+
+void ProtocolWindow::Show(bool &isOpen)
+{
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration;
+	// ImGuiWindowFlags_NoTitleBar |
+	// ImGuiWindowFlags_NoMove |
+	// ImGuiWindowFlags_NoResize |
+	// ImGuiWindowFlags_NoCollapse |
+	// ImGuiWindowFlags_NoSavedSettings;
+
+	if (ImGui::Begin("Протокол контроля", &isOpen, window_flags))
+	{
+#if defined(_WIN32)
+		ImGui::BeginChild("Header", ImVec2(0, 30 * appData.mainScale));
+#elif defined(__linux__)
+		ImGui::BeginChild("Header", ImVec2(0, 30));
+#else
+		ImGui::BeginChild("Header", ImVec2(0, 30));
+#endif
+
+		ImGui::Text("Протокол контроля");
+
+#if defined(_WIN32)
+		ImGui::SameLine(ImGui::GetWindowWidth() - 60 * appData.mainScale);
+#elif defined(__linux__)
+		ImGui::SameLine(ImGui::GetWindowWidth() - 60);
+#else
+		ImGui::SameLine(ImGui::GetWindowWidth() - 60);
+#endif
+
+		if (ImGui::Button("Выход"))
+			isOpen = false;
+
+		ImGui::EndChild();
+	}
+	ImGui::End();
+}
+
+ProtocolWindow::ProtocolWindow(ApplicationData &coreAppData)
+	: appData{coreAppData}
+{
 }
