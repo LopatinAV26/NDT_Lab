@@ -136,10 +136,11 @@ void SettingsWindow::SetGuiStyle()
 	}
 }
 /////////////////////////////////////////////
-NomogramWindow::NomogramWindow(ApplicationData &coreAppData)
-	: appData{coreAppData}
+NomogramWindow::NomogramWindow(ApplicationData &coreAppData, ResourceManager &resManager)
+	: appData{coreAppData},
+	  resMgr{resManager}
 {
-	devices = resourceManager.LoadDevices(appData.pathToDevices);
+	devices = resMgr.LoadDevices(appData.pathToDevices);
 	calculatedDevices = devices;
 }
 

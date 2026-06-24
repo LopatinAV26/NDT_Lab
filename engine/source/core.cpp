@@ -1,7 +1,5 @@
 #include "core.hpp"
 
-//#define SDL_HINT_WINDOWS_DPI_AWARENESS "SDL_WINDOWS_DPI_AWARENESS"
-
 SDL_AppResult Core::Init()
 {
 	if (!SDL_Init(SDL_INIT_VIDEO))
@@ -57,7 +55,8 @@ SDL_AppResult Core::Init()
 		break;
 	}
 
-	imWindow = std::make_unique<Gui>(appData);
+	resManager = std::make_unique<ResourceManager>(appData.renderer);
+	imWindow = std::make_unique<Gui>(appData, *resManager);
 	imWindow->InitImGui();
 
 	return SDL_APP_CONTINUE;

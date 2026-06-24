@@ -1,19 +1,18 @@
 #pragma once
 
-#include <memory>
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 #include "imgui_stdlib.h"
-#include "implot.h"
 #include "appWindows.hpp"
 
 class ApplicationData;
+class ResourceManager;
 
 class Gui
 {
 public:
-	explicit Gui(ApplicationData &coreAppData);
+	explicit Gui(ApplicationData &coreAppData, ResourceManager &resourceManager);
 	~Gui();
 
 	void InitImGui();
@@ -25,10 +24,11 @@ private:
 	void ButtonsWindow();
 
 	ApplicationData &appData;
+	ResourceManager &resManager;
 
-	SettingsWindow settingsWindow{appData};
-	NomogramWindow nomogramWindow{appData};
-	ProtocolWindow protocolWindow{appData};
+	SettingsWindow settingsWindow;
+	NomogramWindow nomogramWindow;
+	ProtocolWindow protocolWindow;
 
 	bool buttonsWindowOpen = {true};
 	bool settingsWindowOpen = {false};

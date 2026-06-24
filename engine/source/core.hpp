@@ -3,6 +3,7 @@
 #include <memory>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_render.h>
+#include "resourceManager.hpp"
 #include "applicationData.hpp"
 #include "gui.hpp"
 
@@ -21,6 +22,7 @@ public:
 	SDL_AppResult ProcessEvent(const SDL_Event *event);
 
 private:
-	std::unique_ptr<Gui> imWindow;
 	ApplicationData appData;
+	std::unique_ptr<ResourceManager>resManager;
+	std::unique_ptr<Gui> imWindow;
 };

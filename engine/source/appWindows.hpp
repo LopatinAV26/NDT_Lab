@@ -27,7 +27,7 @@ private:
 class NomogramWindow
 {
 public:
-	explicit NomogramWindow(ApplicationData &coreAppData);
+	explicit NomogramWindow(ApplicationData &coreAppData, ResourceManager& resManager);
 	void Show(bool &isOpen);
 
 private:
@@ -62,7 +62,7 @@ private:
 	std::vector<XrayDevice> devices;
 	std::vector<XrayDevice> calculatedDevices;
 	ApplicationData &appData;
-	ResourceManager resourceManager;
+	ResourceManager &resMgr;
 };
 
 struct ProtocolData;

@@ -1,10 +1,16 @@
 #include "gui.hpp"
 #include <SDL3/SDL.h>
+#include "implot.h"
 #include "embeddedFonts.hpp"
 #include "applicationData.hpp"
+#include "resourceManager.hpp"
 
-Gui::Gui(ApplicationData &coreAppData)
-	: appData{coreAppData}
+Gui::Gui(ApplicationData &coreAppData, ResourceManager &resourceManager)
+	: appData{coreAppData},
+	  resManager{resourceManager},
+	  settingsWindow{appData},
+	  nomogramWindow{appData, resManager},
+	  protocolWindow{appData}
 {
 }
 
