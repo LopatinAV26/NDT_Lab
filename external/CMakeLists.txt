@@ -82,3 +82,5 @@ target_compile_options(sqlite3 PRIVATE
 # libpqxx ----------------------------------------------------------------------------------
 find_library(PQXX_LIB pqxx REQUIRED)
 find_library(PQ_LIB pq REQUIRED)
+
+find_package(podofo REQUIRED)

@@ -37,6 +37,7 @@ public:
 	~ResourceManager();
 
 	std::vector<XrayDevice> LoadDevices(const std::filesystem::path &pathToDevices);
+	//std::vector<SDL_Texture> LoadTextures(SDL_Renderer *ren);
 
 private:
 	SDL_Renderer *renderer = nullptr;

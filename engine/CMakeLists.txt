@@ -14,6 +14,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     resources
     ${PQXX_LIB}
     ${PQ_LIB}
+    podofo
 )
 
 if(MSVC)

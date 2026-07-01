@@ -3,7 +3,11 @@
 #include <toml++/toml.hpp>
 
 ResourceManager::ResourceManager(SDL_Renderer *ren)
-    :renderer{ren}
+    : renderer{ren}
+{
+}
+
+ResourceManager::~ResourceManager()
 {
 }
 
@@ -111,9 +115,4 @@ std::vector<XrayDevice> ResourceManager::LoadDevices(const std::filesystem::path
         devices.push_back(device);
     }
     return devices;
-}
-
-ResourceManager::~ResourceManager()
-{
-    renderer = nullptr;
 }
