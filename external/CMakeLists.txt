@@ -9,25 +9,38 @@ set(SDL_STATIC ON CACHE BOOL "" FORCE)
 FetchContent_Declare(SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
     GIT_TAG release-3.4.10
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(SDL3)
 
 # SDL_image ---------------------------------------------------------------------------------------
-set(SDL3IMAGE_INSTALL OFF CACHE BOOL "" FORCE)
-set(SDL3IMAGE_SAMPLES OFF CACHE BOOL "" FORCE)
-set(SDL3IMAGE_TESTS OFF CACHE BOOL "" FORCE)
-set(SDL3IMAGE_VENDORED ON CACHE BOOL "" FORCE)
+#set(SDLIMAGE_INSTALL OFF CACHE BOOL "" FORCE)
+#set(SDLIMAGE_SAMPLES OFF CACHE BOOL "" FORCE)
+#set(SDLIMAGE_TESTS OFF CACHE BOOL "" FORCE)
+#set(SDLIMAGE_VENDORED ON CACHE BOOL "" FORCE)
 
-FetchContent_Declare(SDL3_image
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
-    GIT_TAG release-3.4.4
-)
-FetchContent_MakeAvailable(SDL3_image)
+# TIFF отключаем: движок его не грузит через SDL_image, а вендоренный libtiff
+# создаёт таргет TIFF::TIFF, который конфликтует с TIFF::TIFF из vcpkg (нужен podofo).
+#set(SDLIMAGE_TIF OFF CACHE BOOL "" FORCE)
+
+# Реальный libpng тоже отключаем по той же причине: SDL_image создаёт свой
+# PNG::PNG (алиас на вендоренный shared png), который тихо (без ошибки конфигурации)
+# подменяет собой PNG::PNG из vcpkg, нужный podofo/freetype - в итоге в бинарник
+# просачивается динамическая libpng16.so. PNG всё равно грузится через встроенный stb.
+#set(SDLIMAGE_PNG_LIBPNG OFF CACHE BOOL "" FORCE)
+
+#FetchContent_Declare(SDL3_image
+#    GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
+#    GIT_TAG release-3.4.4
+#    GIT_SHALLOW TRUE
+#)
+#FetchContent_MakeAvailable(SDL3_image)
 
 # toml++ ------------------------------------------------------------------------------------
 FetchContent_Declare(tomlplusplus
     GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
     GIT_TAG v3.4.0
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(tomlplusplus)
 
@@ -79,8 +92,9 @@ target_compile_options(sqlite3 PRIVATE
     $<$<NOT:$<C_COMPILER_ID:MSVC>>:-w>
 )
 
-# libpqxx ----------------------------------------------------------------------------------
-find_library(PQXX_LIB pqxx REQUIRED)
-find_library(PQ_LIB pq REQUIRED)
+# libpqxx (vcpkg) ----------------------------------------------------------------------------
+# GLOBAL нужен, чтобы IMPORTED-таргет был виден в engine/ (соседняя, не дочерняя директория)
+find_package(libpqxx CONFIG REQUIRED GLOBAL)
 
-find_package(podofo REQUIRED)
+# podofo (vcpkg) -------------------------------------------------------------------------------
+find_package(podofo CONFIG REQUIRED GLOBAL)

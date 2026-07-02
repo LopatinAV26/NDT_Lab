@@ -9,12 +9,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     implot
     sqlite3
     tomlplusplus::tomlplusplus
-    SDL3_image::SDL3_image-static
+    #SDL3_image::SDL3_image-static
     SDL3::SDL3-static
     resources
-    ${PQXX_LIB}
-    ${PQ_LIB}
-    podofo
+    libpqxx::pqxx
+    podofo::podofo
 )
 
 if(MSVC)
@@ -37,14 +36,12 @@ else()
 
         #векторизация
         #-march=native  процессорозависимо
-        -march=x86-64-v3
-
+        -march=x86-64-v3 #(процессоры не старше Haswell, ~2013+)
+    )
         #отладка оптимизатора
-        -fopt-info-vec
-        #-fopt-info-missed
+        # -fopt-info-vec есть только у GCC, clang падает с "unknown argument"
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CXX_COMPILER_ID:GNU>:-fopt-info-vec>
+        #$<$<CXX_COMPILER_ID:GNU>:-fopt-info-missed>
     )
 endif()
-
-set_property(TARGET ${PROJECT_NAME} PROPERTY
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
-)

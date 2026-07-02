@@ -1,6 +1,10 @@
 build/
 .cache/
+.deps_cache/
 .vs/
 out/
 .vscode/
 .codex
+.claude
+normative/
+devices_manual/

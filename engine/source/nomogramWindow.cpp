@@ -36,7 +36,7 @@ void NomogramWindow::Show(bool &isOpen)
 		ImGui::BeginChild("Header", ImVec2(0, 30));
 #endif
 
-		ImGui::Text("Диаграмма экпозиции");
+		ImGui::Text("Диаграмма экспозиции");
 
 #if defined(_WIN32)
 		ImGui::SameLine(ImGui::GetWindowWidth() - 60 * appData.mainScale);

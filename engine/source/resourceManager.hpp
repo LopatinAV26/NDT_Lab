@@ -3,7 +3,6 @@
 #include <vector>
 #include <filesystem>
 #include <string>
-#include <SDL3_image/SDL_image.h>
 
 struct SDL_Renderer;
 
@@ -37,7 +36,6 @@ public:
 	~ResourceManager();
 
 	std::vector<XrayDevice> LoadDevices(const std::filesystem::path &pathToDevices);
-	//std::vector<SDL_Texture> LoadTextures(SDL_Renderer *ren);
 
 private:
 	SDL_Renderer *renderer = nullptr;
