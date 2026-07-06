@@ -39,6 +39,11 @@ void ProtocolWindow::Show(bool &isOpen)
 			isOpen = false;
 
 		ImGui::EndChild();
+
+	if (ImGui::Button("Создать PDF")){
+		pdf.CreateTable();
+	}
+
 	}
 	ImGui::End();
 }
