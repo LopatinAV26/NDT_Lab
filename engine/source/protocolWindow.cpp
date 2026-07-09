@@ -1,6 +1,11 @@
 #include "protocolWindow.hpp"
-
+#include "applicationData.hpp"
 #include "imgui.h"
+
+ProtocolWindow::ProtocolWindow(ApplicationData &coreAppData)
+	: appData{coreAppData}
+{
+}
 
 void ProtocolWindow::Show(bool &isOpen)
 {
@@ -46,9 +51,4 @@ void ProtocolWindow::Show(bool &isOpen)
 
 	}
 	ImGui::End();
-}
-
-ProtocolWindow::ProtocolWindow(ApplicationData &coreAppData)
-	: appData{coreAppData}
-{
 }
