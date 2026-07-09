@@ -41,7 +41,7 @@ void ProtocolWindow::Show(bool &isOpen)
 		ImGui::EndChild();
 
 	if (ImGui::Button("Создать PDF")){
-		pdf.CreateTable();
+		pdf.CreateTableRGC(protocolData);
 	}
 
 	}

@@ -7,7 +7,7 @@
 class ProtocolData
 {
 public:
-    std::string nameLab{"ЛНК"};
+    std::string nameLab{"Лаборатория неразрушающего контроля БПО Белогорск"};
     std::string numberAttestation{"Номер свидетельства об аттестации"};
     std::string weldNumber{"Номер сварного соединения"};
     std::string protocolNumber{"Номер заключения"};
