@@ -50,9 +50,6 @@ SDL_AppResult Core::Init()
 	case Vsync::enabled:
 		appData.vsyncModeName = "Vsync: enabled";
 		break;
-	case Vsync::adaptive:
-		appData.vsyncModeName = "Vsync: adaptive";
-		break;
 	}
 
 	resManager = std::make_unique<ResourceManager>(appData.renderer);

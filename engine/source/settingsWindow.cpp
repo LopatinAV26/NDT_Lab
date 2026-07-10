@@ -70,7 +70,7 @@ void SettingsWindow::GetAppInformation() const
 void SettingsWindow::SetVsyncMode()
 {
 	int vsyncMode = static_cast<int>(appData.mode);
-	if (ImGui::SliderInt("##Vsync#", &vsyncMode, -1, 1, appData.vsyncModeName.c_str()))
+	if (ImGui::SliderInt("##Vsync#", &vsyncMode, 0, 1, appData.vsyncModeName.c_str()))
 	{
 		appData.mode = static_cast<Vsync>(vsyncMode);
 		switch (appData.mode)
@@ -87,14 +87,6 @@ void SettingsWindow::SetVsyncMode()
 				appData.mode = Vsync::disabled;
 			}
 			appData.vsyncModeName = "Vsync: enabled";
-			break;
-		case Vsync::adaptive:
-			if (!SDL_SetRenderVSync(appData.renderer, SDL_RENDERER_VSYNC_ADAPTIVE))
-			{
-				SDL_Log("Failed to set VSync: %s", SDL_GetError());
-				appData.mode = Vsync::disabled;
-			}
-			appData.vsyncModeName = "Vsync: adaptive";
 			break;
 		default:
 			SDL_SetRenderVSync(appData.renderer, SDL_RENDERER_VSYNC_DISABLED);

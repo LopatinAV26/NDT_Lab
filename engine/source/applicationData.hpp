@@ -13,7 +13,6 @@ enum class GuiStyle
 
 enum class Vsync
 {
-	adaptive = -1,
 	disabled,
 	enabled
 };
