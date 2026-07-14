@@ -27,6 +27,10 @@ public:
 	SDL_Renderer *renderer = {nullptr};
 	SDL_WindowFlags windowFlags{SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY};
 	std::filesystem::path pathToDevices = "resources/xray_devices.toml";
+	std::filesystem::path pdfFontRegular = "resources/fonts/NotoSans-Regular.ttf";
+	std::filesystem::path pdfFontBold = "resources/fonts/NotoSans-Bold.ttf";
+	std::filesystem::path pdfFontItalic = "resources/fonts/NotoSans-Italic.ttf";
+	std::filesystem::path pdfFontBoldItalic = "resources/fonts/NotoSans-BoldItalic.ttf";
 	std::string driverName;
 	std::string rendererName;
 	GuiStyle style = GuiStyle::Classic;

@@ -15,6 +15,20 @@ endif()
 # picks up vcpkg's static libtiff.a.
 set(CMAKE_DISABLE_FIND_PACKAGE_Tiff ON CACHE BOOL "")
 
+# На Windows дефолтный триплет vcpkg (x64-windows) линкует зависимости динамически (DLL),
+# в отличие от Linux/macOS, где дефолтные триплеты статические. Чтобы получить статическую
+# сборку podofo/libpqxx и их зависимостей на Windows, переключаемся на x64-windows-static
+# и синхронизируем с ним статический MSVC-рантайм. На Linux/macOS не влияет.
+if(WIN32)
+    if(NOT DEFINED VCPKG_TARGET_TRIPLET)
+        set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
+    endif()
+
+    # MSVC (переменная, отличающая cl.exe от clang-cl) определяется только внутри
+    # project()/enable_language(), поэтому здесь до project() её ещё не существует -
+    # используем WIN32, а не MSVC, чтобы блок реально сработал.
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 project(ImGUI_NDT VERSION 0.1.0 LANGUAGES C CXX)
 

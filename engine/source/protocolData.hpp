@@ -63,10 +63,21 @@ public:
     float minWidthOfWeld{0.f};
     float edgeDisplacement{0.f};
 
-    std::string controllerName{"Контроль провёл"};
-    std::string conclusionCreateName{"Заключение выдал"};
-    std::string inspectorName{"Надзор"};
-    std::string masterName{"Производитель работ"};
+    std::string controllerNameTitle{"Контроль провёл"};
+    int controllerNameIndex{0};
+    std::vector<std::string> controllerNameList{"Лопатин А.В.", "Кухаренко И.А.", "Крылов А.Н.", "Федоренко А.Н."};
+
+    std::string protocolCreateNameTitle{"Заключение выдал"};
+    int protocolCreateNameIndex{0};
+    std::vector<std::string> protocolCreateNameList{"Лопатин А.В.", "Кухаренко И.А.", "Крылов А.Н.", "Федоренко А.Н."};
+
+    std::string inspectorNameTitle{"Надзор"};
+    int inspectorNameIndex{0};
+    std::vector<std::string> inspectorNameList{"Караблин Ю.Н."};
+
+    std::string masterNameTitle{"Производитель сварочно-монтажных работ с результатами контроля ознакомлен и заключение получил"};
+    int masterNameIndex{0};
+    std::vector<std::string> masterNameList{"Протасевич А.А."};
 
     std::vector<std::string> controlResult{"годен", "ремонт", "вырезать", "повторный контроль"};
 };

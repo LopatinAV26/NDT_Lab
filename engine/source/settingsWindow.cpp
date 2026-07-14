@@ -3,17 +3,20 @@
 //#include "imgui_stdlib.h"
 #include "applicationData.hpp"
 
-SettingsWindow::SettingsWindow(ApplicationData &coreAppData)
-	: appData{coreAppData}
-{
-}
+SettingsWindow::SettingsWindow(ApplicationData& coreAppData)
+	: appData{ coreAppData }
+{}
 
-void SettingsWindow::Show(bool &isOpen)
+void SettingsWindow::Show(bool& isOpen)
 {
-	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
 
-	if (ImGui::Begin("Settings", &isOpen, ImGuiWindowFlags_AlwaysAutoResize))
+	ImGuiWindowFlags window_flags =
+		ImGuiWindowFlags_AlwaysAutoResize |
+		ImGuiWindowFlags_NoSavedSettings;
+
+	if (ImGui::Begin("Settings", &isOpen, window_flags))
 	{
 		GetAppInformation();
 
@@ -40,24 +43,24 @@ void SettingsWindow::Show(bool &isOpen)
 
 void SettingsWindow::GetAppInformation() const
 {
-	ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 
 	ImGui::SeparatorText("Info");
 	ImGui::Text("API: %s", appData.rendererName.c_str());
 	ImGui::Text("Driver: %s", appData.driverName.c_str());
 
-	static float fpsUpdateTimer{0.f};
-	static float currentFrametime{0.f};
-	static float framerate{0.f};
+	static float fpsUpdateTimer{ 0.f };
+	static float currentFrametime{ 0.f };
+	static float framerate{ 0.f };
 
 	fpsUpdateTimer += io.DeltaTime;
 	if (fpsUpdateTimer >= 0.5f)
 	{
 		if (io.Framerate > 0)
-			currentFrametime = {1000.f / io.Framerate};
+			currentFrametime = { 1000.f / io.Framerate };
 
-		framerate = {io.Framerate};
-		fpsUpdateTimer = {0.f};
+		framerate = { io.Framerate };
+		fpsUpdateTimer = { 0.f };
 	}
 	ImGui::Text("Application average %.2f ms/frame (%.0f FPS)", currentFrametime, framerate);
 
