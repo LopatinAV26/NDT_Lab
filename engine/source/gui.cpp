@@ -5,25 +5,26 @@
 #include "applicationData.hpp"
 #include "resourceManager.hpp"
 
-Gui::Gui(ApplicationData& coreAppData, ResourceManager& resourceManager)
-	: appData{ coreAppData },
-	resManager{ resourceManager },
-	settingsWindow{ appData },
-	nomogramWindow{ appData, resManager },
-	protocolWindow{ appData }
-{}
+Gui::Gui(ApplicationData &coreAppData, ResourceManager &resourceManager)
+	: appData{coreAppData},
+	  resManager{resourceManager},
+	  settingsWindow{appData},
+	  nomogramWindow{appData, resManager},
+	  protocolWindow{appData}
+{
+}
 
 void Gui::InitImGui()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImPlot::CreateContext();
-	[[maybe_unused]] ImGuiIO& io = ImGui::GetIO();
+	[[maybe_unused]] ImGuiIO &io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 	io.IniFilename = nullptr;
 
-	if (ImFont* font = LoadEmbeddedShareTechMono(io, (appData.fontSize * appData.mainScale)))
+	if (ImFont *font = LoadEmbeddedShareTechMono(io, (appData.fontSize * appData.mainScale)))
 		io.FontDefault = font;
 
 	switch (appData.style)
@@ -44,7 +45,7 @@ void Gui::InitImGui()
 		break;
 	}
 
-	ImGuiStyle& style = ImGui::GetStyle();
+	ImGuiStyle &style = ImGui::GetStyle();
 #ifdef WIN32
 	style.ScaleAllSizes(appData.mainScale);
 #endif
@@ -58,7 +59,7 @@ void Gui::InitImGui()
 	SDL_Log("ImGui initialized successfully.");
 }
 
-void Gui::ProcessEventImGui(const SDL_Event* event)
+void Gui::ProcessEventImGui(const SDL_Event *event)
 {
 	ImGui_ImplSDL3_ProcessEvent(event);
 }
@@ -85,10 +86,10 @@ void Gui::IterateImGui()
 	//---------------------------------
 
 	// Для работы с HiDPI
-	ImGuiIO& io = ImGui::GetIO();
+	ImGuiIO &io = ImGui::GetIO();
 	SDL_SetRenderScale(appData.renderer,
-		io.DisplayFramebufferScale.x,
-		io.DisplayFramebufferScale.y);
+					   io.DisplayFramebufferScale.x,
+					   io.DisplayFramebufferScale.y);
 }
 
 // Добавить перед SDL_RenderPresent
@@ -100,10 +101,10 @@ void Gui::RenderImGui()
 
 void Gui::ButtonsWindow()
 {
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->GetCenter());
 
-		// Кнопки без окна
+	// Кнопки без окна
 	ImGuiWindowFlags window_flags =
 		ImGuiWindowFlags_NoDecoration |
 		// ImGuiWindowFlags_NoMove |

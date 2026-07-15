@@ -67,8 +67,7 @@ void NomogramWindow::Show(bool& isOpen)
 		}
 		ImGui::SameLine();
 
-		ImGui::Button("?");
-		ImGui::SetItemTooltip("%s", calculatedDevices[deviceIndex].information.c_str());
+		HelpMarker(calculatedDevices[deviceIndex].information.c_str());
 		ImGui::SameLine();
 		ImGui::TextLinkOpenURL("Паспорт", "resources/devices_manual/Arina.pdf");
 

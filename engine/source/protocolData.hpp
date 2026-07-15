@@ -8,11 +8,11 @@ class ProtocolData
 {
 public:
     std::string nameLab{"Лаборатория неразрушающего контроля БПО Белогорск"};
-    std::string numberAttestation{"Номер свидетельства об аттестации"};
+    std::string numberAttestation{"Номер свидетельства об аттестации лаборатории"};
     std::string weldNumber{"Номер сварного соединения"};
     std::string protocolNumber{"Номер заключения"};
-    std::string controlDate{"Дата проведения контроля"};
-    std::string dateOfIssue{"Дата выдачи заключения"};
+    std::string controlDate{"15.07.2026"};
+    std::string protocolDate{"15.07.2026"};
 
     std::array<std::string_view, 8> methods = {"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
     int methodIndex{0};
@@ -63,21 +63,29 @@ public:
     float minWidthOfWeld{0.f};
     float edgeDisplacement{0.f};
 
-    std::string controllerNameTitle{"Контроль провёл"};
+    std::string controllerNameTitle{"Контроль произвёл"};
     int controllerNameIndex{0};
     std::vector<std::string> controllerNameList{"Лопатин А.В.", "Кухаренко И.А.", "Крылов А.Н.", "Федоренко А.Н."};
+    std::string controllerOrganization = {};
+    std::string controllerCertNumber = {};
 
     std::string protocolCreateNameTitle{"Заключение выдал"};
     int protocolCreateNameIndex{0};
     std::vector<std::string> protocolCreateNameList{"Лопатин А.В.", "Кухаренко И.А.", "Крылов А.Н.", "Федоренко А.Н."};
+    std::string protocolCreateOrganizationName = {};
+    std::string protocolCreatoeCertNumber = {};
 
-    std::string inspectorNameTitle{"Надзор"};
+    std::string inspectorNameTitle{"Подтвердил полноту проведенного контроля и соответствие оценки качества проконтролированных соединений требованиям НД"};
     int inspectorNameIndex{0};
     std::vector<std::string> inspectorNameList{"Караблин Ю.Н."};
+    std::string inspectorOrganization = {};
+    std::string inspectorCertNumber = {};
 
     std::string masterNameTitle{"Производитель сварочно-монтажных работ с результатами контроля ознакомлен и заключение получил"};
     int masterNameIndex{0};
     std::vector<std::string> masterNameList{"Протасевич А.А."};
+    std::string masterOrganization = {};
+    std::string masterCertNumber = {};
 
-    std::vector<std::string> controlResult{"годен", "ремонт", "вырезать", "повторный контроль"};
+    std::array<std::string, 4> controlResult{"годен", "ремонт", "вырезать", "повторный контроль"};
 };

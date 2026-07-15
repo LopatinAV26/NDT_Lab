@@ -39,6 +39,7 @@ void ProtocolWindow::Show(bool &isOpen)
 		{
 			pdf.CreateTableRGC(protocolData);
 		}
+		ImGui::TextLinkOpenURL("Открыть протокол", "test.pdf");
 	}
 	ImGui::End();
 }

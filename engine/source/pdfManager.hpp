@@ -17,10 +17,13 @@ enum class FontStyle : uint8_t
 
 struct CellStyle
 {
-    PoDoFo::PdfHorizontalAlignment hAlign = PoDoFo::PdfHorizontalAlignment::Left;
-    PoDoFo::PdfVerticalAlignment vAlign = PoDoFo::PdfVerticalAlignment::Center;
+    double width = 5.0;
+    std::string text{};
     double fontSize = 8.0;
     FontStyle fontStyle = FontStyle::Regular;
+    bool rectVisible = true;
+    PoDoFo::PdfHorizontalAlignment hAlign = PoDoFo::PdfHorizontalAlignment::Left;
+    PoDoFo::PdfVerticalAlignment vAlign = PoDoFo::PdfVerticalAlignment::Center;
 };
 
 struct Cell
@@ -30,25 +33,43 @@ struct Cell
     double y;
     double w;
     double h;
-    PoDoFo::PdfDrawTextMultiLineParams params;
     double fontSize;
     FontStyle fontStyle;
+    PoDoFo::PdfDrawTextMultiLineParams params;
+    double indent;
 };
 
 class PdfManager
 {
 public:
     PdfManager(ApplicationData &coreAppData);
+
     void CreateTableRGC(const ProtocolData &data);
-    Cell CreateCell(PoDoFo::PdfPainter &painter,
-                    std::string str,
-                    double x, double y, double w, double h,
-                    CellStyle style = {});
+    Cell CreateCell(double x, double y, double w, double h,
+                    std::string str = {},
+                    double fontSize = 8.0,
+                    FontStyle fontStyle = FontStyle::Regular,
+                    bool rect = true,
+                    PoDoFo::PdfHorizontalAlignment hAlign = PoDoFo::PdfHorizontalAlignment::Left,
+                    PoDoFo::PdfVerticalAlignment vAlign = PoDoFo::PdfVerticalAlignment::Center,
+                    double indent = 1.0);
+
+    void CreateRow(double height = 5.0, std::initializer_list<CellStyle> cells = {});
 
 private:
+    PoDoFo::Rect MmToPt(double x_mm, double y_mm, double w_mm, double h_mm);
+
     ApplicationData &appData;
     std::array<PoDoFo::PdfFont *, 4> fonts;
-    // PoDoFo::PdfFont &GetFont(FontStyle style) const;
-    PoDoFo::Rect MmToPt(double x_mm, double y_mm,
-                        double w_mm, double h_mm);
+
+    PoDoFo::PdfMemDocument doc;
+    PoDoFo::Rect pageRect;
+    PoDoFo::PdfPainter painter;
+
+    const double topIndent = 20.0;
+    const double bottomIndent = 10.0;
+    const double lateralIndent = 5.0;
+    const double hEnd = 297.0 - lateralIndent;
+    const double vEnd = 210.0 - bottomIndent;
+    double cursorY = bottomIndent;
 };
