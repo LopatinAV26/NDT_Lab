@@ -1,7 +1,7 @@
 #pragma once
 
 #include "protocolData.hpp"
-#include "pdfManager.hpp"
+#include "reportBuilder.hpp"
 
 class ApplicationData;
 
@@ -13,6 +13,6 @@ public:
 
 private:
 	ApplicationData &appData;
-	ProtocolData protocolData;
-	PdfManager pdf;
+	ProtocolData data;
+	ReportBuilder builder;
 };

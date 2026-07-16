@@ -1,80 +1,72 @@
 #include "pdfManager.hpp"
-#include <stdexcept>
-#include <cmath>
+// #include <stdexcept>
+//  #include <cmath>
 #include <SDL3/SDL.h>
 #include "applicationData.hpp"
-#include "protocolData.hpp"
+// #include "protocolData.hpp"
 
 PdfManager::PdfManager(ApplicationData &coreAppData)
 	: appData{coreAppData}
 {
-	pageRect = PoDoFo::PdfPage::CreateStandardPageSize(PoDoFo::PdfPageSize::A4, true);
+	pageRect = PoDoFo::PdfPage::CreateStandardPageSize(PoDoFo::PdfPageSize::A4, isLandscape);
 	fonts.at(static_cast<uint8_t>(FontStyle::Regular)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontRegular.string());
 	fonts.at(static_cast<uint8_t>(FontStyle::Bold)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontBold.string());
 	fonts.at(static_cast<uint8_t>(FontStyle::Italic)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontItalic.string());
 	fonts.at(static_cast<uint8_t>(FontStyle::BoldItalic)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontBoldItalic.string());
+
+	mmToPt = 72.0 / 25.4;
+	hEnd = pageRect.Width / mmToPt - rightIndent;
+	vEnd = pageRect.Height / mmToPt - topIndent;
+	cursorY = bottomIndent;
+	dX = hEnd - 2.0;
 }
 
-void PdfManager::CreateTableRGC(const ProtocolData &data)
+void PdfManager::StartTable()
 {
 	PoDoFo::PdfPage &page = doc.GetPages().CreatePage(pageRect);
 	painter.SetCanvas(page);
-	painter.GraphicsState.SetLineWidth(0.1);
+	painter.GraphicsState.SetLineWidth(lineWidth);
+}
 
-	CreateRow(10, {{100, data.masterNameTitle},
-				   {40, data.masterNameList.at(data.masterNameIndex)},
-				   {80, data.masterOrganization + ", " + data.masterCertNumber},
-				   {20},
-				   {25, data.protocolDate}});
-
+void PdfManager::EndTable()
+{
 	painter.FinishDrawing();
-
 	doc.Save("test.pdf");
 }
 
-Cell PdfManager::CreateCell(double x, double y, double w, double h,
-							std::string str,
-							double fontSize,
-							FontStyle fontStyle,
-							bool rect,
-							PoDoFo::PdfHorizontalAlignment hAlign,
-							PoDoFo::PdfVerticalAlignment vAlign,
-							double indent)
+Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 {
-	constexpr double mmToPt = 72.0 / 25.4;
 	Cell cell;
-	cell.strData = std::move(str);
+	cell.text = std::move(cStyle.text);
 	cell.x = x;
 	cell.y = y;
-	cell.w = w;
+	cell.w = cStyle.width;
 	cell.h = h;
-	cell.fontSize = {fontSize};
-	cell.fontStyle = fontStyle;
-	cell.params.HorizontalAlignment = hAlign;
-	cell.params.VerticalAlignment = vAlign;
-	cell.indent = indent;
+	cell.fontSize = cStyle.fontSize;
+	cell.fontStyle = cStyle.fontStyle;
+	cell.params.HorizontalAlignment = cStyle.hAlign;
+	cell.params.VerticalAlignment = cStyle.vAlign;
+	cell.rectVisible = cStyle.rectVisible;
 	painter.TextState.SetFont(*fonts.at(static_cast<uint8_t>(cell.fontStyle)), cell.fontSize);
-	if (rect)
-		painter.DrawRectangle(cell.x * mmToPt, cell.y * mmToPt, cell.w * mmToPt, cell.h * mmToPt);
-	painter.DrawTextMultiLine(cell.strData, (cell.x + cell.indent) * mmToPt, cell.y * mmToPt, (cell.w - cell.indent * 2.0) * mmToPt, cell.h * mmToPt, cell.params);
+	if (cStyle.rectVisible)
+		painter.DrawRectangle(MmToPt(cell.x, cell.y, cell.w, cell.h));
+	painter.DrawTextMultiLine(cell.text, MmToPt(cell.x + textRectIndent, cell.y, cell.w - textRectIndent * 2.0, cell.h), cell.params);
 	return cell;
 }
 
 void PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells)
 {
-	double cursorX = lateralIndent;
-	for (const auto &cell : cells)
+	double cursorX = leftIndent;
+	for (auto cell : cells)
 	{
-		if (cursorX > hEnd - 3.0)
+		if (cursorX >= dX)
 		{
-			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Невозможно создать всю строку. Превышение ширины страницы. Уменьшите ширину ячеек");
-			cursorY += height;
+			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Невозможно создать все ячейки. Превышение ширины страницы. Уменьшите ширину ячеек");
 			return;
 		}
-		double width = cell.width;
-		if (cursorX + width > hEnd)
-			width = hEnd - cursorX; // Корректировка границы последней ячейки по правому краю, если её граница заходит дальше
-		CreateCell(cursorX, cursorY, width, height, cell.text, cell.fontSize, cell.fontStyle, cell.rectVisible, cell.hAlign, cell.vAlign);
+		if (cursorX + cell.width > hEnd)
+			cell.width = hEnd - cursorX; // Корректировка границы последней ячейки по правому краю, если её граница заходит дальше
+		CreateCell(cursorX, cursorY, height, cell);
 		cursorX += cell.width;
 	}
 	cursorY += height;
@@ -82,7 +74,6 @@ void PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells
 
 PoDoFo::Rect PdfManager::MmToPt(double x_mm, double y_mm, double w_mm, double h_mm)
 {
-	constexpr double mmToPt = 72.0 / 25.4;
 	return PoDoFo::Rect(x_mm * mmToPt, y_mm * mmToPt,
 						w_mm * mmToPt, h_mm * mmToPt);
 }

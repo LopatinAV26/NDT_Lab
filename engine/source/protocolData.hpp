@@ -14,12 +14,12 @@ public:
     std::string controlDate{"15.07.2026"};
     std::string protocolDate{"15.07.2026"};
 
-    std::array<std::string_view, 8> methods = {"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
+    std::array<std::string, 8> methods = {"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
     int methodIndex{0};
 
     std::string objectName{"Объект контроля"};
 
-    std::array<std::string_view, 6> pipeCategory = {"В", "I", "II", "III", "IV", "-"};
+    std::array<std::string, 6> pipeCategory = {"В", "I", "II", "III", "IV", "-"};
     int pipeCategoryIndex{0};
 
     std::string contractorOrganization{"Подрядная организация"};
@@ -36,8 +36,8 @@ public:
     float thicknes1{0.f};
     float thicknes2{0.f};
     float perimeter{0.f};
-    std::array<std::string_view, 3> sectionType1{"Одношовная", "Двухшовная", "Бесшовная"};
-    std::array<std::string_view, 3> sectionType2{"Одношовная", "Двухшовная", "Бесшовная"};
+    std::array<std::string, 3> sectionType1{"Одношовная", "Двухшовная", "Бесшовная"};
+    std::array<std::string, 3> sectionType2{"Одношовная", "Двухшовная", "Бесшовная"};
     std::string sectionNumber1;
     std::string sectionNumber2;
     int coordSec1Weld1{0};
@@ -49,7 +49,7 @@ public:
     int brightness{0};
     int temperature{0};
 
-    std::array<std::string_view, 4> roughness{"Rz20", "Rz40", "Rz60", "Rz80"};
+    std::array<std::string, 4> roughness{"Rz20", "Rz40", "Rz60", "Rz80"};
     int roughnessIndex{0};
 
     // std::string stringOfDefects{""};
