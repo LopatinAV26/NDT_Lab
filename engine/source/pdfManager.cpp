@@ -1,9 +1,6 @@
 #include "pdfManager.hpp"
-// #include <stdexcept>
-//  #include <cmath>
 #include <SDL3/SDL.h>
 #include "applicationData.hpp"
-// #include "protocolData.hpp"
 
 PdfManager::PdfManager(ApplicationData &coreAppData)
 	: appData{coreAppData}
@@ -15,20 +12,21 @@ PdfManager::PdfManager(ApplicationData &coreAppData)
 	fonts.at(static_cast<uint8_t>(FontStyle::BoldItalic)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontBoldItalic.string());
 
 	mmToPt = 72.0 / 25.4;
-	hEnd = pageRect.Width / mmToPt - rightIndent;
-	vEnd = pageRect.Height / mmToPt - topIndent;
-	cursorY = bottomIndent;
-	dX = hEnd - 2.0;
+	xEnd = pageRect.Width / mmToPt - rightIndent;
+	yStart = pageRect.Height / mmToPt - topIndent;
+	dX = xEnd - 2.0;
+	FULL = xEnd - leftIndent;
 }
 
-void PdfManager::StartTable()
+void PdfManager::NewPage()
 {
 	PoDoFo::PdfPage &page = doc.GetPages().CreatePage(pageRect);
 	painter.SetCanvas(page);
 	painter.GraphicsState.SetLineWidth(lineWidth);
+	cursorRowY = 0.0;
 }
 
-void PdfManager::EndTable()
+void PdfManager::SaveDocument()
 {
 	painter.FinishDrawing();
 	doc.Save("test.pdf");
@@ -38,38 +36,74 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 {
 	Cell cell;
 	cell.text = std::move(cStyle.text);
-	cell.x = x;
-	cell.y = y;
+	cell.x = x + leftIndent;
+	cell.y = yStart - y - h;
 	cell.w = cStyle.width;
+	if (cell.x + cell.w > xEnd)
+	{
+		cell.w = xEnd - cell.x;
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Ячейка была обрезана по правому краю до правого отступа");
+	}
 	cell.h = h;
-	cell.fontSize = cStyle.fontSize;
-	cell.fontStyle = cStyle.fontStyle;
-	cell.params.HorizontalAlignment = cStyle.hAlign;
-	cell.params.VerticalAlignment = cStyle.vAlign;
-	cell.rectVisible = cStyle.rectVisible;
-	painter.TextState.SetFont(*fonts.at(static_cast<uint8_t>(cell.fontStyle)), cell.fontSize);
-	if (cStyle.rectVisible)
-		painter.DrawRectangle(MmToPt(cell.x, cell.y, cell.w, cell.h));
-	painter.DrawTextMultiLine(cell.text, MmToPt(cell.x + textRectIndent, cell.y, cell.w - textRectIndent * 2.0, cell.h), cell.params);
+	painter.Save();
+	painter.GraphicsState.SetNonStrokingColor(PoDoFo::PdfColor(cStyle.fillColor));	// предустановка цвета заливки
+	painter.GraphicsState.SetStrokingColor(PoDoFo::PdfColor(cStyle.strokingColor)); // цвет рамки таблицы
+	painter.TextState.SetFont(*fonts.at(static_cast<uint8_t>(cStyle.fontStyle)), cStyle.fontSize);
+
+	if (cStyle.isRectVisible)
+	{
+		painter.DrawRectangle(MmToPt(cell.x, cell.y, cell.w, cell.h), PoDoFo::PdfPathDrawMode::StrokeFill);
+	}
+
+	painter.GraphicsState.SetNonStrokingColor(PoDoFo::PdfColor(cStyle.textColor)); // вернуть цвет текста перед рисованием текста(он же цвет заливки)
+	painter.DrawTextMultiLine(cell.text, MmToPt(cell.x + textRectIndent, cell.y, cell.w - textRectIndent * 2.0, cell.h),
+							  {.HorizontalAlignment = cStyle.hAlign, .VerticalAlignment = cStyle.vAlign});
+
+	painter.Restore();
 	return cell;
+}
+
+Cell PdfManager::CreateCell(double x, double y, double w, double h, std::string text)
+{
+
+	return Cell();
 }
 
 void PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells)
 {
-	double cursorX = leftIndent;
-	for (auto cell : cells)
+	double cursorX = 0.0;
+	for (const auto &cell : cells)
 	{
 		if (cursorX >= dX)
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Невозможно создать все ячейки. Превышение ширины страницы. Уменьшите ширину ячеек");
+			cursorRowY += height;
 			return;
 		}
-		if (cursorX + cell.width > hEnd)
-			cell.width = hEnd - cursorX; // Корректировка границы последней ячейки по правому краю, если её граница заходит дальше
-		CreateCell(cursorX, cursorY, height, cell);
-		cursorX += cell.width;
+
+		Cell drawn = CreateCell(cursorX, cursorRowY, height, cell);
+		cursorX += drawn.w;
 	}
-	cursorY += height;
+	cursorRowY += height;
+}
+
+PoDoFo::PdfColor PdfManager::Color(NDTColor c) const
+{
+	switch (c)
+	{
+	case NDTColor::White:
+		return PoDoFo::PdfColor(1.0);
+	case NDTColor::Black:
+		return PoDoFo::PdfColor(0.0);
+	case NDTColor::Red:
+		return PoDoFo::PdfColor(1.0, 0.0, 0.0);
+	case NDTColor::Green:
+		return PoDoFo::PdfColor(0.0, 1.0, 0.0);
+	case NDTColor::Blue:
+		return PoDoFo::PdfColor(0.0, 0.0, 1.0);
+	default:
+		return PoDoFo::PdfColor(0.0);
+	}
 }
 
 PoDoFo::Rect PdfManager::MmToPt(double x_mm, double y_mm, double w_mm, double h_mm)
