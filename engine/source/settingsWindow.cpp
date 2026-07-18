@@ -28,6 +28,12 @@ void SettingsWindow::Show(bool& isOpen)
 
 		ImGui::Spacing();
 
+		ImGui::SeparatorText("Font");
+		if (ImGui::SliderFloat("##FontSize#", &appData.fontSize, 6.0f, appData.fontSizeMax, "Font size: %.0f"))
+			ImGui::GetIO().FontGlobalScale = appData.fontSize / appData.fontSizeMax;
+
+		ImGui::Spacing();
+
 		ImGui::SeparatorText("Rounding");
 		if (ImGui::SliderFloat("##WindowRounding#", &appData.windowRounding, 0.f, 12.f, "Window rounding: %.0f"))
 			ImGui::GetStyle().WindowRounding = appData.windowRounding;

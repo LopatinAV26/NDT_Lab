@@ -20,16 +20,16 @@ void NomogramWindow::Show(bool& isOpen)
 	ImGui::SetNextWindowSize(viewport->Size);
 
 	ImGuiWindowFlags window_flags =
-		ImGuiWindowFlags_NoDecoration |
-		// ImGuiWindowFlags_NoTitleBar |
+		//ImGuiWindowFlags_NoDecoration |
+		 ImGuiWindowFlags_NoTitleBar |
 		// ImGuiWindowFlags_NoMove |
-		// ImGuiWindowFlags_NoResize |
-		// ImGuiWindowFlags_NoCollapse |
+		 ImGuiWindowFlags_NoResize |
+		 ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoSavedSettings;
 
 	if (ImGui::Begin("Диаграмма экспозиции", &isOpen, window_flags))
 	{
-		ImGui::BeginChild("Header", ImVec2(0, 30));
+		/* ImGui::BeginChild("Header", ImVec2(0, 30));
 
 		ImGui::Text("Диаграмма экспозиции");
 
@@ -38,7 +38,7 @@ void NomogramWindow::Show(bool& isOpen)
 		if (ImGui::Button("Выход"))
 			isOpen = false;
 
-		ImGui::EndChild();
+		ImGui::EndChild(); */
 
 		if (devices.empty() || calculatedDevices.empty())
 		{

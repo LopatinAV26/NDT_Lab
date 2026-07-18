@@ -15,7 +15,6 @@ PdfManager::PdfManager(ApplicationData &coreAppData)
 	xEnd = pageRect.Width / mmToPt - rightIndent;
 	yStart = pageRect.Height / mmToPt - topIndent;
 	dX = xEnd - 2.0;
-	FULL = xEnd - leftIndent;
 }
 
 void PdfManager::NewPage()
@@ -38,45 +37,43 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 	cell.text = std::move(cStyle.text);
 	cell.x = x + leftIndent;
 	cell.y = yStart - y - h;
-	cell.w = cStyle.width;
+	cell.w = (cStyle.width == 0.0) ? xEnd - cell.x : cStyle.width;
+
 	if (cell.x + cell.w > xEnd)
 	{
+		double delta = xEnd - cell.x - cell.w;
 		cell.w = xEnd - cell.x;
-		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Ячейка была обрезана по правому краю до правого отступа");
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Ячейка была обрезана по правому отступу на %.1f мм", delta);
+		cStyle.fillColor = Color(NDTColor::Red);
 	}
 	cell.h = h;
+
 	painter.Save();
+
 	painter.GraphicsState.SetNonStrokingColor(PoDoFo::PdfColor(cStyle.fillColor));	// предустановка цвета заливки
 	painter.GraphicsState.SetStrokingColor(PoDoFo::PdfColor(cStyle.strokingColor)); // цвет рамки таблицы
 	painter.TextState.SetFont(*fonts.at(static_cast<uint8_t>(cStyle.fontStyle)), cStyle.fontSize);
 
 	if (cStyle.isRectVisible)
-	{
 		painter.DrawRectangle(MmToPt(cell.x, cell.y, cell.w, cell.h), PoDoFo::PdfPathDrawMode::StrokeFill);
-	}
 
 	painter.GraphicsState.SetNonStrokingColor(PoDoFo::PdfColor(cStyle.textColor)); // вернуть цвет текста перед рисованием текста(он же цвет заливки)
 	painter.DrawTextMultiLine(cell.text, MmToPt(cell.x + textRectIndent, cell.y, cell.w - textRectIndent * 2.0, cell.h),
 							  {.HorizontalAlignment = cStyle.hAlign, .VerticalAlignment = cStyle.vAlign});
 
 	painter.Restore();
+
 	return cell;
-}
-
-Cell PdfManager::CreateCell(double x, double y, double w, double h, std::string text)
-{
-
-	return Cell();
 }
 
 void PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells)
 {
 	double cursorX = 0.0;
-	for (const auto &cell : cells)
+	for (auto cell : cells)
 	{
 		if (cursorX >= dX)
 		{
-			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Невозможно создать все ячейки. Превышение ширины страницы. Уменьшите ширину ячеек");
+			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Невозможно создать все ячейки. Превышение границы отступа. Уменьшите ширину ячеек");
 			cursorRowY += height;
 			return;
 		}

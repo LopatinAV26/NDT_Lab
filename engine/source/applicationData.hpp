@@ -23,9 +23,9 @@ public:
 	ApplicationData();
 	~ApplicationData();
 
-	SDL_Window *window = {nullptr};
-	SDL_Renderer *renderer = {nullptr};
-	SDL_WindowFlags windowFlags{SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY};
+	SDL_Window *window = nullptr;
+	SDL_Renderer *renderer = nullptr;
+	SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	std::filesystem::path pathToDevices = "resources/xray_devices.toml";
 	std::filesystem::path pdfFontRegular = "resources/fonts/NotoSans-Regular.ttf";
 	std::filesystem::path pdfFontBold = "resources/fonts/NotoSans-Bold.ttf";
@@ -36,15 +36,17 @@ public:
 	GuiStyle style = GuiStyle::Classic;
 	Vsync mode = Vsync::enabled;
 	std::string vsyncModeName;
-	float mainScale = {1.0f};
-	float windowRounding = {0.0f};
-	float frameRounding = {0.0f};
-	float grabRounding = {0.0f};
-	float fontSize = {10.0f};
-	int windowWidth = {1920};
-	int windowHeight = {1080};
-	bool isWindowFocused = {true};
-	bool isWindowMinimized = {false};
+	float mainScale = 1.0f;
+	float windowRounding = 0.0f;
+	float frameRounding = 0.0f;
+	float grabRounding = 0.0f;
+	float fontSize = 10.0f;
+	const float fontSizeMax = 24.0f; // размер, на котором печётся атлас шрифта; fontSize только уменьшает через FontGlobalScale
+	int windowWidth = 1920;
+	int windowHeight = 1080;
+	float windowScreenPercent = 0.8f; // доля от usable-области экрана
+	bool isWindowFocused = true;
+	bool isWindowMinimized = false;
 
 private:
 	void LoadSettings(const std::filesystem::path &path = "resources/settings.toml");

@@ -24,8 +24,9 @@ void Gui::InitImGui()
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 	io.IniFilename = nullptr;
 
-	if (ImFont *font = LoadEmbeddedShareTechMono(io, (appData.fontSize * appData.mainScale)))
+	if (ImFont *font = LoadEmbeddedShareTechMono(io, (appData.fontSizeMax * appData.mainScale)))
 		io.FontDefault = font;
+	io.FontGlobalScale = appData.fontSize / appData.fontSizeMax;
 
 	switch (appData.style)
 	{

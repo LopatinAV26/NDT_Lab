@@ -8,13 +8,20 @@ SDL_AppResult Core::Init()
 		return SDL_APP_FAILURE;
 	}
 
+	SDL_Rect usableBounds{};
+	if (SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usableBounds))
+	{
+		appData.windowWidth = static_cast<int>(usableBounds.w * appData.windowScreenPercent);
+		appData.windowHeight = static_cast<int>(usableBounds.h * appData.windowScreenPercent);
+	}
+
 	appData.window = SDL_CreateWindow("NDT Lab",
 									  appData.windowWidth,
 									  appData.windowHeight,
 									  appData.windowFlags);
 
 	appData.mainScale = SDL_GetWindowDisplayScale(appData.window);
-	//if (appData.mainScale <= 0.0f)
+	// if (appData.mainScale <= 0.0f)
 	//	appData.mainScale = 1.0f;
 
 	if (!appData.window)
