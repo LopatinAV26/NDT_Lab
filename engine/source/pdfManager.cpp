@@ -66,8 +66,9 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 	return cell;
 }
 
-void PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells)
+std::vector<Cell> PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells)
 {
+	std::vector<Cell> cellsVector;
 	double cursorX = 0.0;
 	for (auto cell : cells)
 	{
@@ -75,13 +76,16 @@ void PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Невозможно создать все ячейки. Превышение границы отступа. Уменьшите ширину ячеек");
 			cursorRowY += height;
-			return;
+			return cellsVector;
 		}
 
 		Cell drawn = CreateCell(cursorX, cursorRowY, height, cell);
 		cursorX += drawn.w;
+		cellsVector.push_back(drawn);
 	}
 	cursorRowY += height;
+
+	return cellsVector;
 }
 
 PoDoFo::PdfColor PdfManager::Color(NDTColor c) const

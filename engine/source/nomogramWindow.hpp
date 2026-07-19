@@ -40,7 +40,7 @@ private:
         }
     }
 
-    enum class Measure
+    enum class Measure : uint8_t
     {
         mAxmin,
         min,

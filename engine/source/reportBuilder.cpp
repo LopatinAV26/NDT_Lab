@@ -15,17 +15,17 @@ void ReportBuilder::CreateReportRGC()
 
 	double sumY = 0.0;
 	double sumX = 0.0;
-	Cell c10 = pdfManager.CreateCell(0, sumY, 5, {80, data.nameLabTitle});
+	Cell c10 = pdfManager.CreateCell(0, sumY, 5, {80, data.nameLabTitle, 8, PoDoFo::PdfHorizontalAlignment::Center});
 	sumY += c10.h;
-	Cell c20 = pdfManager.CreateCell(0, sumY, 10, {80, data.nameLab});
+	Cell c20 = pdfManager.CreateCell(0, sumY, 15, {80, data.nameLab});
 	sumY += c20.h;
-	Cell c30 = pdfManager.CreateCell(0, sumY, 5, {80, data.numberAttestationTitle});
+	Cell c30 = pdfManager.CreateCell(0, sumY, 5, {80, data.numberAttestationTitle, 8, PoDoFo::PdfHorizontalAlignment::Center});
 	sumY += c30.h;
-	Cell c40 = pdfManager.CreateCell(0, sumY, 10, {80, data.numberAttestation});
+	Cell c40 = pdfManager.CreateCell(0, sumY, 5, {80, data.numberAttestation});
 	sumY += c40.h;
 
 	sumX = c10.w;
-	Cell c12 = pdfManager.CreateCell(sumX, 0, sumY, {80, data.protocolNumberTitle + data.protocolNumber + "\n" + "От " + data.protocolDate});
+	Cell c12 = pdfManager.CreateCell(sumX, 0, sumY, {80, data.protocolNumberTitle + data.protocolNumber + "\n" + "От " + data.protocolDate, 8, PoDoFo::PdfHorizontalAlignment::Center});
 
 	sumX += c12.w;
 	sumY = 0.0;
@@ -33,9 +33,9 @@ void ReportBuilder::CreateReportRGC()
 	sumY += c13.h;
 	Cell c23 = pdfManager.CreateCell(sumX, sumY, 5, {40, data.pipeCategoryTitle});
 	sumY += c23.h;
-	Cell c33 = pdfManager.CreateCell(sumX, sumY, 10, {40, data.contractorOrganizationTitle});
+	Cell c33 = pdfManager.CreateCell(sumX, sumY, 7.5, {40, data.contractorOrganizationTitle});
 	sumY += c33.h;
-	Cell c43 = pdfManager.CreateCell(sumX, sumY, 5, {40, data.customerOrganizationTitle});
+	Cell c43 = pdfManager.CreateCell(sumX, sumY, 7.5, {40, data.customerOrganizationTitle});
 
 	sumX += c43.w;
 	sumY = 0.0;
@@ -49,22 +49,23 @@ void ReportBuilder::CreateReportRGC()
 	sumY += c44.h;
 
 	pdfManager.cursorRowY = sumY;
-	pdfManager.CreateRow(5, {{0, data.methodTitle}});
+	pdfManager.CreateRow(5, {{0, data.methodTitle, 8, PoDoFo::PdfHorizontalAlignment::Center}});
 	pdfManager.CreateRow(5, {{0, data.technologicalControlMapTitle + " " + data.technologicalControlMap.at(data.technologicalControlMapIndex)}});
 	pdfManager.CreateRow(5, {{0, data.normativeDocsTitle + " " + data.normativeDocs}});
 	pdfManager.CreateRow(15, {{0, data.equipmentTitle + ": " + data.equipment}});
 
 	pdfManager.CreateRow(5, {{.width = 0, .isRectVisible = false}});
-	pdfManager.CreateRow(50, {{18, data.weldNumberTitle, 6.0},
-							  {18, "hjdfjv"}});
-
-	/* pdfManager.CreateRow(10, {
-								 {100, data.masterNameTitle},
-								 {40, data.masterNameList.at(data.masterNameIndex)},
-								 {80, data.masterOrganization + ", " + data.masterCertNumber},
-								 {20},
-								 {45, data.protocolDate},
-							 }); */
+	std::vector<Cell> rowCells = pdfManager.CreateRow(50, {
+															  {18, data.weldNumberTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
+															  {18, data.weldTypeTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
+															  {18, data.diameterTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
+															  {18, data.weldersMarkTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
+															  {20, data.sectionTypeTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
+															  {20, data.filmNumberTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
+																{15, data.sensitivityTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
+																{25, data.opticalDensityTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
+																{}
+														  });
 
 	pdfManager.SaveDocument();
 }

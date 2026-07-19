@@ -2,6 +2,7 @@
 
 #include <string>
 #include <array>
+#include <vector>
 #include "podofo/podofo.h"
 
 class ApplicationData;
@@ -28,9 +29,9 @@ struct CellStyle
 	double width = 5.0;															  ///< ширина ячейки, мм
 	std::string text{};															  ///< текст в ячейке
 	double fontSize = 8.0;														  ///< размер шрифта, pt
-	FontStyle fontStyle = FontStyle::Regular;									  ///< начертание шрифта
 	PoDoFo::PdfHorizontalAlignment hAlign = PoDoFo::PdfHorizontalAlignment::Left; ///< горизонтальное выравнивание
 	PoDoFo::PdfVerticalAlignment vAlign = PoDoFo::PdfVerticalAlignment::Center;	  ///< вертикальное выравнивание
+	FontStyle fontStyle = FontStyle::Regular;									  ///< начертание шрифта
 	bool isRectVisible = true;
 	PoDoFo::PdfColor fillColor = PoDoFo::PdfColor(1.0);		///< цвет заливки ячейки, по умолчанию белый
 	PoDoFo::PdfColor textColor = PoDoFo::PdfColor(0.0);		///< цвет текста ячейки, по умолчанию черный
@@ -57,7 +58,7 @@ public:
 	void NewPage();
 	void SaveDocument();
 	Cell CreateCell(double x, double y, double h, CellStyle cStyle);
-	void CreateRow(double height, std::initializer_list<CellStyle> cells);
+	std::vector<Cell> CreateRow(double height, std::initializer_list<CellStyle> cells);
 	PoDoFo::PdfColor Color(NDTColor c) const;
 
 	double cursorRowY = 0.0; // начало рисования следующей строки таблицы по Y, увеличивается на высоту строки поле каждого вызова CreateRow

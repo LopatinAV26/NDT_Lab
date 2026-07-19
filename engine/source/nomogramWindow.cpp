@@ -5,40 +5,53 @@
 #include "applicationData.hpp"
 #include "resourceManager.hpp"
 
-NomogramWindow::NomogramWindow(ApplicationData& coreAppData, ResourceManager& resManager)
-	: appData{ coreAppData },
-	resMgr{ resManager }
+NomogramWindow::NomogramWindow(ApplicationData &coreAppData, ResourceManager &resManager)
+	: appData{coreAppData},
+	  resMgr{resManager}
 {
 	devices = resMgr.LoadDevices(appData.pathToDevices);
 	calculatedDevices = devices;
 }
 
-void NomogramWindow::Show(bool& isOpen)
+void NomogramWindow::Show(bool &isOpen)
 {
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
 	ImGui::SetNextWindowSize(viewport->Size);
 
 	ImGuiWindowFlags window_flags =
-		//ImGuiWindowFlags_NoDecoration |
-		 ImGuiWindowFlags_NoTitleBar |
+		// ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_NoTitleBar |
 		// ImGuiWindowFlags_NoMove |
-		 ImGuiWindowFlags_NoResize |
-		 ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoSavedSettings;
 
 	if (ImGui::Begin("Диаграмма экспозиции", &isOpen, window_flags))
 	{
-		/* ImGui::BeginChild("Header", ImVec2(0, 30));
+		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+			ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+			ImGui::OpenPopup("Закрыть окно?");
 
-		ImGui::Text("Диаграмма экспозиции");
+		if (ImGui::BeginPopupModal("Закрыть окно?", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::Text("Закрыть диаграмму экспозиции?");
+			ImGui::Separator();
 
-		ImGui::SameLine(ImGui::GetWindowWidth() - 60);
+			if (ImGui::Button("Да", ImVec2(120, 0)))
+			{
+				isOpen = false;
+				ImGui::CloseCurrentPopup();
+			}
 
-		if (ImGui::Button("Выход"))
-			isOpen = false;
+			ImGui::SameLine();
+			if (ImGui::Button("Нет", ImVec2(120, 0)))
+				ImGui::CloseCurrentPopup();
 
-		ImGui::EndChild(); */
+			ImGui::SetItemDefaultFocus();
+
+			ImGui::EndPopup();
+		}
 
 		if (devices.empty() || calculatedDevices.empty())
 		{
@@ -80,19 +93,19 @@ void NomogramWindow::Show(bool& isOpen)
 			steelThickness = steelThicknessMin;
 
 		ImGui::DragFloat("##Толщина стали#",
-			&steelThickness,
-			0.1f,
-			steelThicknessMin,
-			steelThicknessMax,
-			"Толщина стали: %.1f мм");
+						 &steelThickness,
+						 0.1f,
+						 steelThicknessMin,
+						 steelThicknessMax,
+						 "Толщина стали: %.1f мм");
 
 		ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment ||
-			measureIndex == Measure::mAxmin);
+							 measureIndex == Measure::mAxmin);
 		ImGui::SliderFloat("##Сила тока#",
-			&deviceCurrent,
-			calculatedDevices[deviceIndex].currentMinimum,
-			calculatedDevices[deviceIndex].currentMaximum,
-			"Сила тока: %.1f мА");
+						   &deviceCurrent,
+						   calculatedDevices[deviceIndex].currentMinimum,
+						   calculatedDevices[deviceIndex].currentMaximum,
+						   "Сила тока: %.1f мА");
 		ImGui::EndDisabled();
 
 		if (!calculatedDevices[deviceIndex].currentAdjustment && measureIndex == Measure::mAxmin)
@@ -122,12 +135,12 @@ void NomogramWindow::Show(bool& isOpen)
 		}
 
 		if (ImPlot::BeginPlot(calculatedDevices[deviceIndex].name.c_str(),
-			ImVec2(-1, ImGui::GetContentRegionAvail().y),
-			ImPlotFlags_NoLegend))
+							  ImVec2(-1, ImGui::GetContentRegionAvail().y),
+							  ImPlotFlags_NoLegend))
 		{
 			ImPlot::SetupAxes("Толщина стали, мм", nameAxisY.c_str(),
-				ImPlotAxisFlags_AutoFit,
-				ImPlotAxisFlags_AutoFit);
+							  ImPlotAxisFlags_AutoFit,
+							  ImPlotAxisFlags_AutoFit);
 
 			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
 
@@ -136,17 +149,17 @@ void NomogramWindow::Show(bool& isOpen)
 			std::vector<CurvesRef> visibleLines; // массив структур массивов
 			visibleLines.reserve(calculatedDevices[deviceIndex].curveVector.size());
 
-			for (const auto& curve : calculatedDevices[deviceIndex].curveVector)
+			for (const auto &curve : calculatedDevices[deviceIndex].curveVector)
 			{
 				if (calculatedDevices[deviceIndex].electricPower >= curve.voltage * deviceCurrent)
 				{
 					ImPlot::PlotLine(curve.label.c_str(),
-						curve.xData.data(),
-						curve.yData.data(),
-						static_cast<int>(curve.xData.size()));
+									 curve.xData.data(),
+									 curve.yData.data(),
+									 static_cast<int>(curve.xData.size()));
 
-					visibleLines.push_back({ curve.xData, curve.yData,
-											ImPlot::GetLastItemColor(), curve.label });
+					visibleLines.push_back({curve.xData, curve.yData,
+											ImPlot::GetLastItemColor(), curve.label});
 				}
 			}
 			if (!visibleLines.empty())
@@ -162,11 +175,11 @@ void NomogramWindow::Show(bool& isOpen)
 	ImGui::End();
 }
 
-std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<XrayDevice>& deviceVector,
-	float distance, float current) const
+std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<XrayDevice> &deviceVector,
+															  float distance, float current) const
 {
 	auto result = deviceVector;
-	auto& device = result[deviceIndex];
+	auto &device = result[deviceIndex];
 
 	float factor = std::pow((distance / deviceVector[deviceIndex].focusDistanceDefault), 2);
 
@@ -185,9 +198,9 @@ std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<
 		break;
 	}
 
-	for (auto& curve : device.curveVector)
+	for (auto &curve : device.curveVector)
 	{
-		for (auto& y : curve.yData)
+		for (auto &y : curve.yData)
 		{ // cppcheck-suppress useStlAlgorithm
 			y *= factor;
 		}
@@ -197,7 +210,7 @@ std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<
 }
 
 // AI generated
-void NomogramWindow::DrawMarkers(const std::vector<CurvesRef>& curves, float thickness) const
+void NomogramWindow::DrawMarkers(const std::vector<CurvesRef> &curves, float thickness) const
 {
 	if (curves.empty())
 		return;
@@ -209,13 +222,13 @@ void NomogramWindow::DrawMarkers(const std::vector<CurvesRef>& curves, float thi
 
 	ImPlot::PlotInfLines("##thickness-line", &thickness, 1, lineSpec);
 
-	for (const auto& line : curves)
+	for (const auto &line : curves)
 	{
 		if (line.x.empty() || line.y.empty())
 			continue;
 
-		const auto& xs = line.x;
-		const auto& ys = line.y;
+		const auto &xs = line.x;
+		const auto &ys = line.y;
 
 		if (xs.size() < 2 || xs.size() != ys.size())
 			continue;
@@ -236,7 +249,7 @@ void NomogramWindow::DrawMarkers(const std::vector<CurvesRef>& curves, float thi
 
 			const float t = std::clamp((thickness - x0) / delta, 0.0f, 1.0f);
 
-			double px = { thickness };
+			double px = {thickness};
 
 			const float y0 = ys.at(i);
 			const float y1 = ys.at(i + 1);
@@ -244,7 +257,7 @@ void NomogramWindow::DrawMarkers(const std::vector<CurvesRef>& curves, float thi
 			double py = std::pow(10.0, std::log10(y0) + t * (std::log10(y1) - std::log10(y0)));
 
 			const ImVec4 fillColor = line.color;
-			const ImVec4 outlineColor{ 0.05f, 0.05f, 0.05f, 1.0f };
+			const ImVec4 outlineColor{0.05f, 0.05f, 0.05f, 1.0f};
 
 			std::string markerLabel = "##thickness-marker-" + line.label + "-" + std::to_string(i);
 
@@ -260,19 +273,19 @@ void NomogramWindow::DrawMarkers(const std::vector<CurvesRef>& curves, float thi
 			{
 			case Measure::mAxmin:
 				ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true,
-					"%s S=%.1f  T=%.1f %s", line.label.c_str(), px, py, "мА х мин");
+								   "%s S=%.1f  T=%.1f %s", line.label.c_str(), px, py, "мА х мин");
 				break;
 			case Measure::min:
 				ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true,
-					"%s S=%.1f  T=%.1f %s", line.label.c_str(), px, py, "мин");
+								   "%s S=%.1f  T=%.1f %s", line.label.c_str(), px, py, "мин");
 				break;
 			case Measure::sec:
 				ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true,
-					"%s S=%.1f  T=%.0f %s", line.label.c_str(), px, py, "с");
+								   "%s S=%.1f  T=%.0f %s", line.label.c_str(), px, py, "с");
 				break;
 			default:
 				ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true,
-					"%s S=%.1f  T=%.1f", line.label.c_str(), px, py);
+								   "%s S=%.1f  T=%.1f", line.label.c_str(), px, py);
 				break;
 			}
 			break;

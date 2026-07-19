@@ -21,8 +21,6 @@ SDL_AppResult Core::Init()
 									  appData.windowFlags);
 
 	appData.mainScale = SDL_GetWindowDisplayScale(appData.window);
-	// if (appData.mainScale <= 0.0f)
-	//	appData.mainScale = 1.0f;
 
 	if (!appData.window)
 	{
