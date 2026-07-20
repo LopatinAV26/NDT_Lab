@@ -9,58 +9,69 @@
 class ProtocolData
 {
 public:
-	uint GetPerimeter(uint diam);
-	float GetMetalDensity(uint negBright);
+	ProtocolData();
+
+	float GetPerimeter(int diam);
+
+	/// @brief Максимально допустимая плотность снимка, в зависимости от яркости негатоскопа
+	/// @param negBright паспортная яркость негатоскопа
+	/// @return Плотность снимка в е.о.п.
+	float GetMetalDensity(int negBright);
+
+	/// @brief Вычисление количества участков по 300 мм
+	/// @param diam диаметр свариваемых труб
+	/// @return Количество участков
+	int CalculateString(int diam);
 
 	std::string nameLabTitle{"Наименование ЛНК"};
-	std::string nameLab{"Лаборатория неразрушающего контроля БПО Белогорск"};
+	std::string nameLab{"Лаборатория неразрушающего контроля ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" База производственного обеспечения \"Белогорск\""};
 	std::string numberAttestationTitle{"Номер свидетельства об аттестации"};
 	std::string numberAttestation{"XXXXXXXXXX"};
 
 	std::string protocolNumberTitle{"ЗАКЛЮЧЕНИЕ №"};
 	std::string protocolNumber{"XXXX-XXXX"};
 	std::string controlDate{"15.07.2026"};
-	std::string protocolDate{"15.07.2026"};
+	std::string protocolDate{"16.07.2026"};
 
 	std::string objectNameTitle{"Наименование объекта"};
 	std::string objectName{};
 
 	std::string pipeCategoryTitle = {"Категория трубопровода"};
-	uint pipeCategoryIndex = {0};
+	int pipeCategoryIndex = 0;
 	std::array<std::string, 6> pipeCategory = {"В", "I", "II", "III", "IV", "-"};
 
 	std::string contractorOrganizationTitle{"Подрядная организация"};
-	uint contractorOrganizationIndex = 0;
-	std::vector<std::string> contractorOrganizationList{""};
+	int contractorOrganizationIndex = 0;
+	std::vector<std::string> contractorOrganizationList{"ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" БПО \"Белогорск\" ЛНК"};
 
 	std::string customerOrganizationTitle{"Организация заказчика"};
-	uint customerOrganizationIndex = 0;
-	std::vector<std::string> customerOrganizationList{""};
+	int customerOrganizationIndex = 0;
+	std::vector<std::string> customerOrganizationList{"ООО \"Транснефть - Дальний Восток\""};
 
 	std::string methodTitle{"ПО КОНТРОЛЮ СВАРНЫХ СОЕДИНЕНИЙ РАДИОГРАФИЧЕСКИМ МЕТОДОМ"};
 
 	std::string technologicalControlMapTitle{"Контроль выполнен в соответствии с операционной технологической картой"};
-	uint technologicalControlMapIndex{0};
+	int technologicalControlMapIndex = 0;
 	std::vector<std::string> technologicalControlMap = {"ТК-ТНДВ-ВИК", "ТК-ТНДВ-ПВК", "ТК-ТНДВ-УК"};
 
 	std::string normativeDocsTitle{"Оценка качества по"};
 	std::string normativeDocs{"РД-25.160.10-КТН-0016-23 с Изм.1"};
 
 	std::string equipmentTitle{"Оборудование и материалы в соответствии с операционной технологической картой"};
-	std::string equipment{""};
+	std::string equipment{};
 
 	std::string weldNumberTitle{"Номер сварного соединения по журналу сварки"};
 	std::string weldNumber{};
 
 	std::array<std::string, 8> methodList = {"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
-	uint methodIndex{0};
+	int methodIndex{0};
 
 	std::string weldTypeTitle{"Тип сварного соединения, способ сварки"};
 	std::vector<std::string> weldType{"Стыковое", "Стыковое кольцевое", "Угловое"};
 	std::vector<std::string> weldingMethod{"ручная дуговая"};
 
 	std::string diameterTitle{"Диаметр, толщина стенки свариваемых элементов, мм"};
-	uint diameter = 0;
+	int diameter = 1220;
 	float thicknes1 = 0.f;
 	float thicknes2 = 0.f;
 
@@ -77,30 +88,41 @@ public:
 	float sensitivity = 0.0f;
 
 	float weldOptDenMin = 1.5f;
-	uint negatoscopeBrightness = 100000;
-	float metalOptDenMax = std::log10(negatoscopeBrightness) - 2.0f;
-	std::string opticalDensityTitle{std::format(
-		"Оптическая плотность самого светлого участка сварного шва, не менее {:.1f} е.о.п./ наибольшая оптическая плотность основного металла в зоне контроля, {:.1f} е.о.п/фактическая яркость негатоскопа {:d} кд/м2",
-		weldOptDenMin, metalOptDenMax, negatoscopeBrightness)};
+	int negatoscopeBrightness = 100000;
+	float metalOptDenMax;
+	std::string opticalDensityTitle{};
+
+	std::string opticalDeltaTitle{"Разница оптических плотностей между эталоном чувствительности и основным металлом, е.о.п."};
+	float opticalDelta = 0.0f;
+
+	std::string defectsTitle{"Описание выявленных дефектов"};
+
+	std::string acceptableTitle{"ЗАКЛЮЧЕНИЕ о допустимости выявленных дефектов (допустим/не допустим)"};
+	int acceptableIndex = 0;
+	std::vector<std::string> acceptable{"допустим", "не допустим", "-"};
+
+	std::string notesTitle{"Примечания"};
+
+	std::string extentOfUnacceptableDefectsTitle{"Суммарная протяжённость недопустимых дефектов, подлежащих устранению с применением сварки, по всей длине/периметру сварного шва, мм"};
+	float extentOfUnacceptableDefects = 0.f;
+
+	std::string controlResultTitle{"Заключение о годности сварного соединения: («годен», «ремонт», «вырезать», «повторный контроль»)"};
+	int controlResultIndex = 0;
+	std::array<std::string, 4> controlResult{"годен", "ремонт", "вырезать", "повторный контроль"};
 
 	std::string sectionNumber1;
 	std::string sectionNumber2;
-	uint coordSec1Weld1{0};
-	uint coordSec1Weld2{0};
-	uint coordSec2Weld1{0};
-	uint coordSec2Weld2{0};
+	int coordSec1Weld1{0};
+	int coordSec1Weld2{0};
+	int coordSec2Weld1{0};
+	int coordSec2Weld2{0};
 
-	uint brightness{0};
+	int brightness{0};
 	int temperature{0};
 
 	std::array<std::string, 4> roughness{"Rz20", "Rz40", "Rz60", "Rz80"};
-	uint roughnessIndex{0};
+	int roughnessIndex{0};
 
-	// std::string stringOfDefects{""};
-	std::vector<std::string> acceptable{"допустим", "не допустим", "-"};
-	uint acceptableIndex{0};
-
-	float extentOfUnacceptableDefects{0.f}; // Суммарная протяжённость недопуст. дефектов
 	float maxHeightOfWeld{0.f};
 	float minHeightOfWeld{0.f};
 	float maxWidthOfWeld{0.f};
@@ -108,28 +130,26 @@ public:
 	float edgeDisplacement{0.f};
 
 	std::string controllerNameTitle{"Контроль произвёл"};
-	uint controllerNameIndex{0};
+	int controllerNameIndex{0};
 	std::vector<std::string> controllerNameList{"Лопатин А.В.", "Кухаренко И.А.", "Крылов А.Н.", "Федоренко А.Н."};
-	std::string controllerOrganization = {};
-	std::string controllerCertNumber = {};
+	std::string controllerOrganization = {"ООО Транснефть - Дальний Восток"};
+	std::string controllerCertNumber = {"РСКТН-09050-2021"};
 
 	std::string protocolCreateNameTitle{"Заключение выдал"};
-	uint protocolCreateNameIndex{0};
+	int protocolCreateNameIndex = 0;
 	std::vector<std::string> protocolCreateNameList{"Лопатин А.В.", "Кухаренко И.А.", "Крылов А.Н.", "Федоренко А.Н."};
-	std::string protocolCreateOrganizationName = {};
-	std::string protocolCreatoeCertNumber = {};
+	std::string protocolCreateOrganization = {"ООО Транснефть - Дальний Восток"};
+	std::string protocolCreateCertNumber = {"РСКТН-09050-2021"};
 
 	std::string inspectorNameTitle{"Подтвердил полноту проведенного контроля и соответствие оценки качества проконтролированных соединений требованиям НД"};
-	uint inspectorNameIndex{0};
+	int inspectorNameIndex = 0;
 	std::vector<std::string> inspectorNameList{"Караблин Ю.Н."};
-	std::string inspectorOrganization = {};
-	std::string inspectorCertNumber = {};
+	std::string inspectorOrganization = {"ООО Транснефть Надзор"};
+	std::string inspectorCertNumber = {"РСКТН-ХХХХХ-ХХХХ"};
 
 	std::string masterNameTitle{"Производитель сварочно-монтажных работ с результатами контроля ознакомлен и заключение получил"};
-	uint masterNameIndex{0};
+	int masterNameIndex = 0;
 	std::vector<std::string> masterNameList{"Протасевич А.А."};
-	std::string masterOrganization = {};
-	std::string masterCertNumber = {};
-
-	std::array<std::string, 4> controlResult{"годен", "ремонт", "вырезать", "повторный контроль"};
+	std::string masterOrganization = {"ООО Транснефть - Дальний Восток"};
+	std::string masterCertNumber = {"ТОР-9АЦ-II-ХХХХ"};
 };

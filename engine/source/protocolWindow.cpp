@@ -4,7 +4,7 @@
 
 ProtocolWindow::ProtocolWindow(ApplicationData &coreAppData)
 	: appData{coreAppData},
-	  builder{appData, data}
+	  builder{data}
 {
 }
 
@@ -26,7 +26,7 @@ void ProtocolWindow::Show(bool &isOpen)
 	{
 		if (ImGui::Button("Создать PDF"))
 		{
-			builder.CreateReportRGC();
+			builder.CreateReportRGC(appData);
 		}
 		ImGui::TextLinkOpenURL("Открыть протокол", "test.pdf");
 	}

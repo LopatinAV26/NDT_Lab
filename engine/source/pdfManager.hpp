@@ -61,6 +61,11 @@ public:
 	std::vector<Cell> CreateRow(double height, std::initializer_list<CellStyle> cells);
 	PoDoFo::PdfColor Color(NDTColor c) const;
 
+	const double topIndent = 20.0;	   // верхний отступ от края страницы, мм
+	const double bottomIndent = 10.0;  // нижний отступ, мм
+	const double leftIndent = 5.0;	   // левый отступ, мм
+	const double rightIndent = 5.0;	   // правый отступ, мм
+	double yEnd;
 	double cursorRowY = 0.0; // начало рисования следующей строки таблицы по Y, увеличивается на высоту строки поле каждого вызова CreateRow
 
 private:
@@ -74,10 +79,6 @@ private:
 	PoDoFo::PdfPainter painter;
 
 	double lineWidth = 0.1;			   // толщина рисуемых линий, единицы PDF
-	const double topIndent = 20.0;	   // верхний отступ от края страницы, мм
-	const double bottomIndent = 10.0;  // нижний отступ, мм
-	const double leftIndent = 5.0;	   // левый отступ, мм
-	const double rightIndent = 5.0;	   // правый отступ, мм
 	const double textRectIndent = 1.0; // отступ текста от внутренних границ ячейки, мм
 	double xEnd;					   // правая граница рисования, мм
 	double yStart;

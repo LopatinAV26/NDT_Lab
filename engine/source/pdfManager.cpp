@@ -1,18 +1,28 @@
 #include "pdfManager.hpp"
 #include <SDL3/SDL.h>
 #include "applicationData.hpp"
+// #include "embeddedFonts.hpp"
+#include "NotoSansRegular.cpp"
+#include "NotoSansBold.cpp"
+#include "NotoSansItalic.cpp"
+#include "NotoSansBoldItalic.cpp"
 
 PdfManager::PdfManager(ApplicationData &coreAppData)
 	: appData{coreAppData}
 {
 	pageRect = PoDoFo::PdfPage::CreateStandardPageSize(PoDoFo::PdfPageSize::A4, isLandscape);
-	fonts.at(static_cast<uint8_t>(FontStyle::Regular)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontRegular.string());
-	fonts.at(static_cast<uint8_t>(FontStyle::Bold)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontBold.string());
-	fonts.at(static_cast<uint8_t>(FontStyle::Italic)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontItalic.string());
-	fonts.at(static_cast<uint8_t>(FontStyle::BoldItalic)) = &doc.GetFonts().GetOrCreateFont(appData.pdfFontBoldItalic.string());
+	fonts.at(static_cast<uint8_t>(FontStyle::Regular)) = &doc.GetFonts().GetOrCreateFontFromBuffer(
+		PoDoFo::bufferview(reinterpret_cast<const char *>(NotoSansRegular_data), NotoSansRegular_data_len));
+	fonts.at(static_cast<uint8_t>(FontStyle::Bold)) = &doc.GetFonts().GetOrCreateFontFromBuffer(
+		PoDoFo::bufferview(reinterpret_cast<const char *>(NotoSansBold_data), NotoSansBold_data_len));
+	fonts.at(static_cast<uint8_t>(FontStyle::Italic)) = &doc.GetFonts().GetOrCreateFontFromBuffer(
+		PoDoFo::bufferview(reinterpret_cast<const char *>(NotoSansItalic_data), NotoSansItalic_data_len));
+	fonts.at(static_cast<uint8_t>(FontStyle::BoldItalic)) = &doc.GetFonts().GetOrCreateFontFromBuffer(
+		PoDoFo::bufferview(reinterpret_cast<const char *>(NotoSansBoldItalic_data), NotoSansBoldItalic_data_len));
 
 	mmToPt = 72.0 / 25.4;
 	xEnd = pageRect.Width / mmToPt - rightIndent;
+	yEnd = pageRect.Height / mmToPt - bottomIndent - topIndent;
 	yStart = pageRect.Height / mmToPt - topIndent;
 	dX = xEnd - 2.0;
 }
@@ -35,18 +45,20 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 {
 	Cell cell;
 	cell.text = std::move(cStyle.text);
-	cell.x = x + leftIndent;
-	cell.y = yStart - y - h;
-	cell.w = (cStyle.width == 0.0) ? xEnd - cell.x : cStyle.width;
+	cell.x = x;
+	double newX = x + leftIndent;
+	cell.y = y;
+	double newY = yStart - y - h;
+	cell.w = (cStyle.width == 0.0) ? xEnd - newX : cStyle.width;
+	cell.h = h;
 
-	if (cell.x + cell.w > xEnd)
+	if (newX + cell.w > xEnd)
 	{
-		double delta = xEnd - cell.x - cell.w;
-		cell.w = xEnd - cell.x;
+		double delta = xEnd - newX - cell.w;
+		cell.w = xEnd - newX;
 		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Ячейка была обрезана по правому отступу на %.1f мм", delta);
 		cStyle.fillColor = Color(NDTColor::Red);
 	}
-	cell.h = h;
 
 	painter.Save();
 
@@ -55,10 +67,10 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 	painter.TextState.SetFont(*fonts.at(static_cast<uint8_t>(cStyle.fontStyle)), cStyle.fontSize);
 
 	if (cStyle.isRectVisible)
-		painter.DrawRectangle(MmToPt(cell.x, cell.y, cell.w, cell.h), PoDoFo::PdfPathDrawMode::StrokeFill);
+		painter.DrawRectangle(MmToPt(newX, newY, cell.w, cell.h), PoDoFo::PdfPathDrawMode::StrokeFill);
 
 	painter.GraphicsState.SetNonStrokingColor(PoDoFo::PdfColor(cStyle.textColor)); // вернуть цвет текста перед рисованием текста(он же цвет заливки)
-	painter.DrawTextMultiLine(cell.text, MmToPt(cell.x + textRectIndent, cell.y, cell.w - textRectIndent * 2.0, cell.h),
+	painter.DrawTextMultiLine(cell.text, MmToPt(newX + textRectIndent, newY, cell.w - textRectIndent * 2.0, cell.h),
 							  {.HorizontalAlignment = cStyle.hAlign, .VerticalAlignment = cStyle.vAlign});
 
 	painter.Restore();
@@ -69,8 +81,9 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 std::vector<Cell> PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells)
 {
 	std::vector<Cell> cellsVector;
+	cellsVector.reserve(cells.size());
 	double cursorX = 0.0;
-	for (auto cell : cells)
+	for (const auto &cell : cells)
 	{
 		if (cursorX >= dX)
 		{

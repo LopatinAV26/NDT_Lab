@@ -1,5 +1,9 @@
 #include "embeddedFonts.hpp"
 #include "ShareTechMonoRegular.cpp"
+/* #include "NotoSansRegular.cpp"
+#include "NotoSansBold.cpp"
+#include "NotoSansItalic.cpp"
+#include "NotoSansBoldItalic.cpp" */
 
 ImFont *LoadEmbeddedShareTechMono(ImGuiIO &io, float sizePx)
 {

@@ -6,11 +6,10 @@ class ProtocolData;
 class ReportBuilder
 {
 public:
-    explicit ReportBuilder(ApplicationData &coreAppData, ProtocolData &protocolData);
+    explicit ReportBuilder(ProtocolData &protocolData);
 
-    void CreateReportRGC();
+    void CreateReportRGC(ApplicationData &coreAppData);
 
 private:
-    ApplicationData &appData;
     ProtocolData &data;
 };

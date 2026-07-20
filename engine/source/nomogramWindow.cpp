@@ -181,7 +181,7 @@ std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<
 	auto result = deviceVector;
 	auto &device = result[deviceIndex];
 
-	float factor = std::pow((distance / deviceVector[deviceIndex].focusDistanceDefault), 2);
+	float factor = static_cast<float>(std::pow((distance / deviceVector[deviceIndex].focusDistanceDefault), 2));
 
 	if (!result[deviceIndex].currentAdjustment)
 		current = 1.f;
