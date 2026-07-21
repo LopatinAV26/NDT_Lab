@@ -1,6 +1,7 @@
 #include "nomogramWindow.hpp"
 #include <cmath>
 #include <algorithm>
+#include "imgui_stdlib.h"
 #include "implot.h"
 #include "applicationData.hpp"
 #include "resourceManager.hpp"

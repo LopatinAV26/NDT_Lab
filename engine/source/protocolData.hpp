@@ -6,22 +6,58 @@
 #include <cmath>
 #include <format>
 
+struct Defect
+{
+	float width;
+	float height;
+	int coord;
+	float length;
+	std::string record;
+};
+
+struct DefInputRGC
+{
+	int nameIndex = 0;
+	static inline const std::array<std::string, 18> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2"};
+	int spacerIndex1 = 0;
+	int spacerIndex2 = 0;
+	static inline const std::array<std::string, 2> spacer{"×", "-"};
+	int endIndex = 0;
+	static inline const std::array<std::string, 2> end{"≤", ">"};
+	float width;
+	float height;
+	int coord;
+	float length;
+};
+
 class ProtocolData
 {
 public:
 	ProtocolData();
 
-	float GetPerimeter(int diam);
+	float GetPerimeter(int diam) const;
 
 	/// @brief Максимально допустимая плотность снимка, в зависимости от яркости негатоскопа
 	/// @param negBright паспортная яркость негатоскопа
 	/// @return Плотность снимка в е.о.п.
 	float GetMetalDensity(int negBright);
 
-	/// @brief Вычисление количества участков по 300 мм
+	/* /// @brief Вычисление количества участков по 300 мм
 	/// @param diam диаметр свариваемых труб
 	/// @return Количество участков
-	int CalculateString(int diam);
+	int CalculateString(int diam); */
+	int CalculateNumString(int numDefects);
+
+	Defect CreateDefectRGC(DefInputRGC input);
+
+	std::vector<DefInputRGC> defectInputRGCVector;
+
+	int defNameAmplitudeUCIndex = 0;
+	static inline const std::array<std::string, 2> defNameAmplitudeUC{"Ад", "Ан"};
+	int defNameUCIndex = 0;
+	static inline const std::array<std::string, 5> defNameUC{"SH", "LS", "LB", "TD", "CC"};
+
+	std::vector<Defect> defectList;
 
 	std::string nameLabTitle{"Наименование ЛНК"};
 	std::string nameLab{"Лаборатория неразрушающего контроля ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" База производственного обеспечения \"Белогорск\""};

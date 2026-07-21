@@ -45,12 +45,12 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 {
 	Cell cell;
 	cell.text = std::move(cStyle.text);
-	cell.x = x;
-	double newX = x + leftIndent;
-	cell.y = y;
-	double newY = yStart - y - h;
-	cell.w = (cStyle.width == 0.0) ? xEnd - newX : cStyle.width;
-	cell.h = h;
+	cell.x = {x};
+	double newX = {x + leftIndent};
+	cell.y = {y};
+	double newY = {yStart - y - h};
+	cell.w = {(cStyle.width == 0.0) ? xEnd - newX : cStyle.width};
+	cell.h = {h};
 
 	if (newX + cell.w > xEnd)
 	{

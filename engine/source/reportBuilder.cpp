@@ -85,7 +85,7 @@ void ReportBuilder::CreateReportRGC(ApplicationData &coreAppData)
 	pdfManager.CreateRow(0.4, {{0}}); /// двойная граница
 
 	/// Каркас для получения двумерного массива ячеек, для получения координат каждой
-	std::vector<std::vector<Cell>> rowCol;
+	/* std::vector<std::vector<Cell>> rowCol;
 	int num = data.CalculateString(data.diameter); /// количество строк в таблице, зависит от диаметра свариваемых труб
 	rowCol.reserve(num);
 	for (int i = 0; i < num; ++i)
@@ -102,7 +102,7 @@ void ReportBuilder::CreateReportRGC(ApplicationData &coreAppData)
 												  {rowCells.at(9).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
 												  {rowCells.at(10).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
 												  {rowCells.at(11).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center}}));
-	}
+	} */
 	///////////////////////////////////////
 	// нарисовать таблицу переменной структуры
 	/////////////////////////////////////
