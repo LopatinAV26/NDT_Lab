@@ -1,14 +1,12 @@
 #include "pdfManager.hpp"
 #include <SDL3/SDL.h>
-#include "applicationData.hpp"
 // #include "embeddedFonts.hpp"
 #include "NotoSansRegular.cpp"
 #include "NotoSansBold.cpp"
 #include "NotoSansItalic.cpp"
 #include "NotoSansBoldItalic.cpp"
 
-PdfManager::PdfManager(ApplicationData &coreAppData)
-	: appData{coreAppData}
+PdfManager::PdfManager()
 {
 	pageRect = PoDoFo::PdfPage::CreateStandardPageSize(PoDoFo::PdfPageSize::A4, isLandscape);
 	fonts.at(static_cast<uint8_t>(FontStyle::Regular)) = &doc.GetFonts().GetOrCreateFontFromBuffer(

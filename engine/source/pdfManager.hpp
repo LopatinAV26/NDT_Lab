@@ -5,8 +5,6 @@
 #include <vector>
 #include "podofo/podofo.h"
 
-class ApplicationData;
-
 enum class FontStyle : uint8_t
 {
 	Regular,
@@ -50,7 +48,7 @@ struct Cell
 class PdfManager
 {
 public:
-	explicit PdfManager(ApplicationData &coreAppData);
+	explicit PdfManager();
 
 	/**
 	 * @brief Создаёт новую страницу, вызов в начале рисования на новой странице обязателен
@@ -71,7 +69,6 @@ public:
 private:
 	PoDoFo::Rect MmToPt(double x_mm, double y_mm, double w_mm, double h_mm);
 
-	ApplicationData &appData;
 	std::array<PoDoFo::PdfFont *, 4> fonts;
 
 	PoDoFo::PdfMemDocument doc;

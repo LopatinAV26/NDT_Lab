@@ -1,15 +1,14 @@
 #pragma once
 
-class ApplicationData;
-class ProtocolData;
+class Protocol;
 
 class ReportBuilder
 {
 public:
-    explicit ReportBuilder(ProtocolData &protocolData);
+    explicit ReportBuilder(Protocol &protocolData);
 
-    void CreateReportRGC(ApplicationData &coreAppData);
+    void BuildReportRGC();
 
 private:
-    ProtocolData &data;
+    Protocol &protocol;
 };
