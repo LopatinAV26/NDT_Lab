@@ -25,124 +25,108 @@ void ProtocolWindow::Show(bool &isOpen)
 
 	if (ImGui::Begin("Протокол контроля", &isOpen, window_flags))
 	{
-		// if (ImGui::BeginTable("", 6, ImGuiTableFlags_Borders))
-		//{
-		// ImGui::TableSetupColumn("small");
-		// ImGui::TableSetupColumn("half");
-		// ImGui::TableSetupColumn("right-align");
-		// ImGui::TableHeadersRow();
-
-		static int rows = 0;
-		data.defectList.clear();
-		for (int row = 0; row < rows; ++row)
+		if (ImGui::BeginTable("Defect creator", 8, ImGuiTableFlags_Borders))
 		{
-			DefInputRGC &defInput = data.defectInputRGCVector[row];
-			Defect defect;
-			// ImGui::TableNextRow();
-			ImGui::PushID(row);
+			ImGui::TableSetupColumn("Координата");
+			ImGui::TableSetupColumn("Обозначение");
+			ImGui::TableSetupColumn("Протяжённость,\nдля Ac и Ab");
+			ImGui::TableSetupColumn("Длина");
+			ImGui::TableSetupColumn("Ширина");
+			ImGui::TableSetupColumn("Превышение плотности");
+			ImGui::TableSetupColumn("Запись дефекта");
+			ImGui::TableHeadersRow();
 
-			// ImGui::TableSetColumnIndex(0);
-			ImGui::PushItemWidth(150);
-			if (ImGui::BeginCombo("##Обозначение#", defInput.name[defInput.nameIndex].c_str()))
+			static int rows = 0;
+			data.defectList.clear();
+			for (int row = 0; row < rows; ++row)
 			{
-				for (int i = 0; i < std::ssize(defInput.name); ++i)
-				{
-					const bool isSelected = (defInput.nameIndex == i);
-					if (ImGui::Selectable(defInput.name[i].c_str(), isSelected))
-						defInput.nameIndex = i;
+				DefRGCData &defInput = data.defectInputRGCVector[row];
+				// Defect defect;
+				ImGui::TableNextRow();
+				ImGui::PushID(row);
 
-					if (isSelected)
-						ImGui::SetItemDefaultFocus();
+				ImGui::TableSetColumnIndex(0); /////////////////////////////////////////////////////////////////
+
+				ImGui::InputInt("##Координата#", &defInput.coord, 1, 100);
+				if (defInput.coord < 0)
+					defInput.coord = 0;
+
+				ImGui::TableSetColumnIndex(1); //////////////////////////////////////////////////////////////////////
+				if (ImGui::BeginCombo("##Обозначение#", defInput.name[defInput.nameIndex].c_str()))
+				{
+					for (int i = 0; i < std::ssize(defInput.name); ++i)
+					{
+						const bool isSelected = (defInput.nameIndex == i);
+						if (ImGui::Selectable(defInput.name[i].c_str(), isSelected))
+							defInput.nameIndex = i;
+
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
 				}
-				ImGui::EndCombo();
+
+				// bool length = false;
+				bool length = (defInput.name[defInput.nameIndex] == "Ac" || defInput.name[defInput.nameIndex] == "Ab") ? false : true;
+				ImGui::BeginDisabled(length);
+				ImGui::TableSetColumnIndex(2); /////////////////////////////////////////////////////////////////
+				ImGui::InputFloat("##Протяжённость#", &defInput.length, 0.1f, 1.0f, "%.1f");
+				if (defInput.length < 0.0f)
+					defInput.length = 0.0f;
+				ImGui::EndDisabled();
+
+				ImGui::TableSetColumnIndex(3); //////////////////////////////////////////////////////////
+				ImGui::InputFloat("##Длина#", &defInput.width, 0.1f, 1.0f, "%.1f");
+				if (defInput.width < 0.0f)
+					defInput.width = 0.0f;
+
+				ImGui::TableSetColumnIndex(4); //////////////////////////////////////////////////////
+				ImGui::InputFloat("##Ширина#", &defInput.height, 0.1f, 1.0f, "%.1f");
+				if (defInput.height < 0.0f)
+					defInput.height = 0.0f;
+
+				ImGui::TableSetColumnIndex(5); //////////////////////////////////////////////////////
+				if (ImGui::BeginCombo("##Окончание#", defInput.end[defInput.endIndex].c_str()))
+				{
+					for (int i = 0; i < std::ssize(defInput.end); ++i)
+					{
+						const bool isSelected = (defInput.endIndex == i);
+						if (ImGui::Selectable(defInput.end[i].c_str(), isSelected))
+							defInput.endIndex = i;
+
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+
+				ImGui::PopID();
+
+				data.defectList.push_back(data.CreateDefectRGC(defInput));
+
+				ImGui::TableSetColumnIndex(6); //////////////////////////////
+				if (rows > 0)
+				{
+					// ImGui::Text("(%d) %s", data.defectList[row].coord, data.defectList[row].record.c_str());
+					ImGui::TextUnformatted(std::format("({:d}) {}", data.defectList[row].coord, data.defectList[row].record).c_str());
+				}
 			}
 
-			ImGui::SameLine();
-			ImGui::InputFloat("##Протяжённость#", &defInput.length, 0.1f, 1.0f, "%.1f");
-			if (defInput.length < 0.0f)
-				defInput.length = 0.0f;
-
-			ImGui::SameLine();
-			if (ImGui::BeginCombo("##Разделитель1#", defInput.spacer[defInput.spacerIndex1].c_str()))
-			{
-				for (int i = 0; i < std::ssize(defInput.spacer); ++i)
-				{
-					const bool isSelected = (defInput.spacerIndex1 == i);
-					if (ImGui::Selectable(defInput.spacer[i].c_str(), isSelected))
-						defInput.spacerIndex1 = i;
-
-					if (isSelected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-
-			ImGui::SameLine();
-			ImGui::InputFloat("##Длина#", &defInput.width, 0.1f, 1.0f, "%.1f");
-			if (defInput.width < 0.0f)
-				defInput.width = 0.0f;
-
-			ImGui::SameLine();
-			if (ImGui::BeginCombo("##Разделитель2#", defInput.spacer[defInput.spacerIndex2].c_str()))
-			{
-				for (int i = 0; i < std::ssize(defInput.spacer); ++i)
-				{
-					const bool isSelected = (defInput.spacerIndex2 == i);
-					if (ImGui::Selectable(defInput.spacer[i].c_str(), isSelected))
-						defInput.spacerIndex2 = i;
-
-					if (isSelected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-
-			ImGui::SameLine();
-			ImGui::InputFloat("##Ширина#", &defInput.height, 0.1f, 1.0f, "%.1f");
-			if (defInput.height < 0.0f)
-				defInput.height = 0.0f;
-
-			ImGui::SameLine();
-			if (ImGui::BeginCombo("##Окончание#", defInput.end[defInput.endIndex].c_str()))
-			{
-				for (int i = 0; i < std::ssize(defInput.end); ++i)
-				{
-					const bool isSelected = (defInput.endIndex == i);
-					if (ImGui::Selectable(defInput.end[i].c_str(), isSelected))
-						defInput.endIndex = i;
-
-					if (isSelected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-
-			ImGui::PopID();
-
-			defect = data.CreateDefectRGC(defInput);
-			data.defectList.push_back(defect);
-
-			ImGui::SameLine();
+			ImGui::TableSetColumnIndex(7); //////////////////////////////
 			if (rows > 0)
-				ImGui::Text(data.defectList[row].record.c_str());
-		}
+				if (ImGui::Button("Удалить дефект"))
+				{
+					rows--;
+					data.defectInputRGCVector.resize(rows);
+				}
+			ImGui::EndTable();
 
-		// ImGui::EndTable();
-
-		ImGui::SameLine();
-		if (rows > 0)
-			if (ImGui::Button("-"))
+			if (ImGui::Button("Добавить дефект"))
 			{
-				rows--;
+				rows++;
 				data.defectInputRGCVector.resize(rows);
 			}
-
-		if (ImGui::Button("+"))
-		{
-			rows++;
-			data.defectInputRGCVector.resize(rows);
 		}
-		//}
 
 		if (ImGui::Button("Создать PDF"))
 		{

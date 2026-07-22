@@ -8,14 +8,15 @@
 
 struct Defect
 {
-	float width;
-	float height;
-	int coord;
-	float length;
+	float width = 0.f;
+	float height=0.f;
+	int coord=0;
+	float length=0.f;
 	std::string record;
+	std::string coordStr;
 };
 
-struct DefInputRGC
+struct DefRGCData
 {
 	int nameIndex = 0;
 	static inline const std::array<std::string, 18> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2"};
@@ -24,10 +25,10 @@ struct DefInputRGC
 	static inline const std::array<std::string, 2> spacer{"×", "-"};
 	int endIndex = 0;
 	static inline const std::array<std::string, 2> end{"≤", ">"};
-	float width;
-	float height;
-	int coord;
-	float length;
+	float width = 0.f;
+	float height = 0.f;
+	int coord = 0;
+	float length = 0.f;
 };
 
 class ProtocolData
@@ -48,16 +49,17 @@ public:
 	int CalculateString(int diam); */
 	int CalculateNumString(int numDefects);
 
-	Defect CreateDefectRGC(DefInputRGC input);
+	Defect CreateDefectRGC(DefRGCData input);
 
-	std::vector<DefInputRGC> defectInputRGCVector;
+	std::vector<DefRGCData> defectInputRGCVector;
+	std::vector<Defect> defectList;
 
 	int defNameAmplitudeUCIndex = 0;
 	static inline const std::array<std::string, 2> defNameAmplitudeUC{"Ад", "Ан"};
 	int defNameUCIndex = 0;
 	static inline const std::array<std::string, 5> defNameUC{"SH", "LS", "LB", "TD", "CC"};
 
-	std::vector<Defect> defectList;
+	
 
 	std::string nameLabTitle{"Наименование ЛНК"};
 	std::string nameLab{"Лаборатория неразрушающего контроля ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" База производственного обеспечения \"Белогорск\""};

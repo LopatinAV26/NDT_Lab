@@ -9,8 +9,8 @@ SettingsWindow::SettingsWindow(ApplicationData& coreAppData)
 
 void SettingsWindow::Show(bool& isOpen)
 {
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
+	//ImGuiViewport* viewport = ImGui::GetMainViewport();
+	//ImGui::SetNextWindowPos(viewport->Pos);
 
 	ImGuiWindowFlags window_flags =
 		ImGuiWindowFlags_AlwaysAutoResize |
