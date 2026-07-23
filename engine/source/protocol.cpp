@@ -2,9 +2,9 @@
 
 Protocol::Protocol()
 {
-	metalOptDenMax = static_cast<float>(std::log10(negatoscopeBrightness) - 2.0f);
-	opticalDensityTitle = std::format("Оптическая плотность самого светлого участка сварного шва, не менее {:.1f} е.о.п./наибольшая оптическая плотность основного металла в зоне контроля, {:.1f} е.о.п/фактическая яркость негатоскопа {:d} кд/м2",
-									  weldOptDenMin, metalOptDenMax, negatoscopeBrightness);
+	//metalOptDenMax = static_cast<float>(std::log10(negatoscopeBrightness) - 2.0f);
+	//opticalDensityTitle = std::format("Оптическая плотность самого светлого участка сварного шва, не менее {:.1f} е.о.п./наибольшая оптическая плотность основного металла в зоне контроля, {:.1f} е.о.п/фактическая яркость негатоскопа {:d} кд/м2",
+									  //weldOptDenMin, metalOptDenMax, negatoscopeBrightness);
 }
 
 float Protocol::GetPerimeter(int diam) const
@@ -14,7 +14,7 @@ float Protocol::GetPerimeter(int diam) const
 
 float Protocol::GetMetalDensity(int negBright)
 {
-	opticalDensityTitle = "";
+	//opticalDensityTitle = "";
 	return static_cast<float>(std::log10(negBright) - 2.0f);
 }
 
@@ -32,13 +32,13 @@ int Protocol::CalculateNumString(int numDefects)
 	////дополнить логикой объединения однотипных дефектов
 }
 
-Defect Protocol::CreateDefectRGC(DefRGCData input)
+Defect Protocol::ConstructDefectRGC(DefRGCData input)
 {
-	Defect defect{
-		.width = {input.width},
-		.height = {input.height},
-		.coord = {input.coord},
-		.length = {input.length}};
+	Defect defect;
+	defect.length = {input.length};
+	defect.width = {input.width};
+	defect.height = {input.height};
+	defect.coord = {input.coord};
 
 	// Ас 25.0 – 2.0 × 1.0 ≤	пример записи дефекта
 	// A   B   C  D  E  F  G

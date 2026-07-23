@@ -1,12 +1,13 @@
 #include "protocolWindow.hpp"
 #include <cfloat>
+#include <chrono>
+#include <algorithm>
 #include "applicationData.hpp"
 #include "imgui.h"
 #include "imgui_stdlib.h"
 
 ProtocolWindow::ProtocolWindow(ApplicationData &coreAppData)
-	: appData{coreAppData},
-	  builder{protocol}
+	: appData{coreAppData}
 {
 }
 
@@ -24,17 +25,44 @@ void ProtocolWindow::Show(bool &isOpen)
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoSavedSettings;
 
-	if (ImGui::Begin("Протокол контроля", &isOpen, window_flags))
+	if (ImGui::Begin("Отчёты НК", &isOpen, window_flags))
 	{
-		DefectTable();
+		ReportTable();
 
-		if (ImGui::Button("Создать PDF"))
+		if (ImGui::Button("Добавить отчёт"))
 		{
-			builder.BuildReportRGC();
+			protocolTableRows++;
+			protocol.reportList.resize(protocolTableRows);
+			protocol.reportList.back().protocolDate = GetCurrentDateString();
+			reportWindowIsOpen = true;
+			editingReportIndex = protocolRow;
 		}
-		ImGui::TextLinkOpenURL("Открыть протокол", "test.pdf");
+
+		ImGui::SameLine();
+		ImGui::BeginDisabled(reportIndexesList.empty());
+		if (ImGui::Button("Удалить выбранные"))
+		{
+			std::sort(reportIndexesList.rbegin(), reportIndexesList.rend()); // по убыванию, чтобы стирать с конца
+			for (int idx : reportIndexesList)
+				protocol.reportList.erase(protocol.reportList.begin() + idx);
+			reportIndexesList.clear();
+		}
+		ImGui::EndDisabled();
+
+		ImGui::SameLine();
+		ImGui::BeginDisabled(reportIndexesList.empty());
+		if (ImGui::Button("Сохранить выбранные в PDF"))
+		{
+			builder.BuildReportRGC(protocol.reportList, reportIndexesList);
+		}
+		ImGui::EndDisabled();
+
+		DefectTable();
 	}
 	ImGui::End();
+
+	if (reportWindowIsOpen && editingReportIndex >= 0)
+		ReportCreateWindow(protocol.reportList.at(editingReportIndex), reportWindowIsOpen);
 }
 
 void ProtocolWindow::DefectTable()
@@ -80,7 +108,6 @@ void ProtocolWindow::DefectTable()
 				ImGui::EndCombo();
 			}
 
-			// bool length = false;
 			bool length = (defInput.name[defInput.nameIndex] == "Ac" || defInput.name[defInput.nameIndex] == "Ab") ? false : true;
 			ImGui::BeginDisabled(length);
 			ImGui::TableSetColumnIndex(2); /////////////////////////////////////////////////////////////////
@@ -120,13 +147,13 @@ void ProtocolWindow::DefectTable()
 
 			ImGui::PopID();
 
-			protocol.defectList.push_back(protocol.CreateDefectRGC(defInput));
+			protocol.defectList.push_back(protocol.ConstructDefectRGC(defInput));
 
 			ImGui::TableSetColumnIndex(6); //////////////////////////////
 			if (rows > 0)
 			{
 				// ImGui::Text("(%d) %s", data.defectList[row].coord, data.defectList[row].record.c_str());
-				ImGui::TextUnformatted(std::format("({:d}) {}", protocol.defectList[row].coord, protocol.defectList[row].record).c_str());
+				ImGui::TextUnformatted(std::format("({:d}) {}", protocol.defectList[row].coord, protocol.defectList[row].record).c_str()); // безопаснее
 			}
 		}
 
@@ -145,4 +172,73 @@ void ProtocolWindow::DefectTable()
 			protocol.defectDataList.resize(rows);
 		}
 	}
+}
+
+void ProtocolWindow::ReportTable()
+{
+	if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 4, ImGuiTableFlags_Borders))
+	{
+		ImGui::TableSetupColumn("Номер заключения");
+		ImGui::TableSetupColumn("Дата заключения");
+		ImGui::TableHeadersRow();
+
+		protocolTableRows = static_cast<int>(protocol.reportList.size());
+		protocolRow = 0;
+		for (protocolRow; protocolRow < protocolTableRows; ++protocolRow)
+		{
+			ReportData &repData = protocol.reportList[protocolRow];
+			ImGui::TableNextRow();
+			ImGui::PushID(protocolRow);
+
+			ImGui::TableSetColumnIndex(0); /////////////////////////////////////////////////////////////////
+			ImGui::SetNextItemWidth(-FLT_MIN);
+			ImGui::TextUnformatted(std::format("{:s}", repData.protocolNumber).c_str());
+
+			ImGui::TableSetColumnIndex(1); //////////////////////////////
+			ImGui::TextUnformatted(std::format("{:s}", repData.protocolDate).c_str());
+
+			ImGui::TableSetColumnIndex(2); //////////////////////////////
+			bool isSelected = std::find(reportIndexesList.begin(), reportIndexesList.end(), protocolRow) != reportIndexesList.end();
+			if (protocolTableRows > 0)
+				if (ImGui::Checkbox("##select", &isSelected))
+				{
+					if (isSelected)
+						reportIndexesList.push_back(protocolRow);
+					else
+						std::erase(reportIndexesList, protocolRow);
+				}
+
+			ImGui::PopID();
+		}
+
+		ImGui::EndTable();
+	}
+}
+
+void ProtocolWindow::ReportCreateWindow(ReportData &report, bool &isOpen)
+{
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+
+	ImGuiWindowFlags window_flags =
+		//  ImGuiWindowFlags_NoDecoration |
+		//  ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoSavedSettings;
+
+	if (ImGui::Begin("Новое заключение", &isOpen, window_flags))
+	{
+		ImGui::InputText("Дата выдачи заключения", &report.protocolDate);
+		ImGui::InputText("Номер заключения", &report.protocolNumber);
+	}
+	ImGui::End();
+}
+
+std::string ProtocolWindow::GetCurrentDateString()
+{
+	auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
+	return std::format("{:%d.%m.%Y}", today);
 }

@@ -54,7 +54,7 @@ public:
 	 * @brief Создаёт новую страницу, вызов в начале рисования на новой странице обязателен
 	 * */
 	void NewPage();
-	void SaveDocument();
+	void SaveDocument(std::string_view docName);
 	Cell CreateCell(double x, double y, double h, CellStyle cStyle);
 	std::vector<Cell> CreateRow(double height, std::initializer_list<CellStyle> cells);
 	PoDoFo::PdfColor Color(NDTColor c) const;

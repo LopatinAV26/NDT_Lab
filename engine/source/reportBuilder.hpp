@@ -1,14 +1,14 @@
 #pragma once
 
-class Protocol;
+#include "protocol.hpp"
 
 class ReportBuilder
 {
 public:
-    explicit ReportBuilder(Protocol &protocolData);
+    explicit ReportBuilder();
 
-    void BuildReportRGC();
+    void BuildReportRGC(const std::vector<ReportData> &reportList, const std::vector<int> reportIndexes);
 
 private:
-    Protocol &protocol;
+    std::string GetCurrentDateString();
 };

@@ -33,10 +33,10 @@ void PdfManager::NewPage()
 	cursorRowY = 0.0;
 }
 
-void PdfManager::SaveDocument()
+void PdfManager::SaveDocument(std::string_view docName)
 {
 	painter.FinishDrawing();
-	doc.Save("test.pdf");
+	doc.Save(docName);
 }
 
 Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
