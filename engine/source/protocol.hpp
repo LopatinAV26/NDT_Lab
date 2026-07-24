@@ -6,35 +6,25 @@
 #include <cmath>
 #include <format>
 
-struct Defect
+struct DefRGC
 {
-	float length = 0.f;
+	int nameIndex = 0;
+	int endIndex = 0;
+	float length = 0.f; ///< протяжённость, для скоплений и цепочек
 	float width = 0.f;
 	float height = 0.f;
 	int coord = 0;
 	std::string record;
 	std::string coordStr;
+	static inline const std::array<std::string, 18> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2"};
+	static inline const std::array<std::string, 2> end{"≤", ">"};
 };
 
-struct DefRGCData
+struct DefUC
 {
-	// RGC
-	int nameIndex = 0;
-	static inline const std::array<std::string, 18> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2"};
-	static inline const std::array<std::string, 2> spacer{"×", "-"};
-	static inline const std::array<std::string, 2> end{"≤", ">"};
-	int spacerIndex1 = 0;
-	int spacerIndex2 = 0;
-	int endIndex = 0;
-	float length = 0.f;
-	float width = 0.f;
-	float height = 0.f;
-	int coord = 0;
-
-	// UC
 	int defNameAmplitudeUCIndex = 0;
-	static inline const std::array<std::string, 2> defNameAmplitudeUC{"Ад", "Ан"};
 	int defNameUCIndex = 0;
+	static inline const std::array<std::string, 2> defNameAmplitudeUC{"Ад", "Ан"};
 	static inline const std::array<std::string, 5> defNameUC{"SH", "LS", "LB", "TD", "CC"};
 };
 
@@ -169,6 +159,8 @@ struct ReportData
 	static inline std::vector<std::string> masterNameList{"Протасевич А.А."};
 	std::string masterOrganization = {"ООО Транснефть - Дальний Восток"};
 	std::string masterCertNumber = {"ТОР-9АЦ-II-ХХХХ"};
+
+	std::vector<DefRGC> defRGCList; ///< Список дефектов
 };
 
 class Protocol
@@ -189,12 +181,11 @@ public:
 	int CalculateString(int diam); */
 	int CalculateNumString(int numDefects);
 
-	Defect ConstructDefectRGC(DefRGCData input);
+	/// @brief Формирует строку-запись дефекта
+	/// @param input
+	void ConstructDefectRGCString(DefRGC &input);
 
-	std::vector<ReportData> reportList;
-
-	std::vector<DefRGCData> defectDataList;
-	std::vector<Defect> defectList;
+	std::vector<ReportData> reportList; /// Список отчётов
 };
 
 namespace NDT

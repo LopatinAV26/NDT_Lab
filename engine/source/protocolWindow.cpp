@@ -55,13 +55,16 @@ void ProtocolWindow::Show(bool &isOpen)
 			builder.BuildReportRGC(protocol.reportList, reportIndexesList);
 		}
 		ImGui::EndDisabled();
-
-		DefectTable();
 	}
 	ImGui::End();
 
-	if (reportWindowIsOpen && editingReportIndex >= 0)
+	if (reportWindowIsOpen && editingReportIndex >= 0 &&
+		editingReportIndex < static_cast<int>(protocol.reportList.size()))
 		ReportCreateWindow(protocol.reportList.at(editingReportIndex), reportWindowIsOpen);
+
+	if (defectWindowIsOpen && editingReportIndex >= 0 &&
+		editingReportIndex < static_cast<int>(protocol.reportList.size()))
+		DefectCreateWindow(protocol.reportList.at(editingReportIndex), defectWindowIsOpen);
 }
 
 void ProtocolWindow::DefectTable()
@@ -77,29 +80,28 @@ void ProtocolWindow::DefectTable()
 		ImGui::TableSetupColumn("Запись дефекта");
 		ImGui::TableHeadersRow();
 
-		static int rows = 0;
-		protocol.defectList.clear();
-		for (int row = 0; row < rows; ++row)
+		defectTableRows = static_cast<int>(protocol.reportList.at(editingReportIndex).defRGCList.size());
+		for (int row = 0; row < defectTableRows; ++row)
 		{
-			DefRGCData &defInput = protocol.defectDataList[row];
+			DefRGC &def = protocol.reportList.at(editingReportIndex).defRGCList.at(row);
 			ImGui::TableNextRow();
 			ImGui::PushID(row);
 
 			ImGui::TableSetColumnIndex(0); /////////////////////////////////////////////////////////////////
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::InputInt("##Координата#", &defInput.coord, 1, 100);
-			if (defInput.coord < 0)
-				defInput.coord = 0;
+			ImGui::InputInt("##Координата#", &def.coord, 1, 100);
+			if (def.coord < 0)
+				def.coord = 0;
 
 			ImGui::TableSetColumnIndex(1); //////////////////////////////////////////////////////////////////////
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			if (ImGui::BeginCombo("##Обозначение#", defInput.name[defInput.nameIndex].c_str()))
+			if (ImGui::BeginCombo("##Обозначение#", def.name[def.nameIndex].c_str()))
 			{
-				for (int i = 0; i < std::ssize(defInput.name); ++i)
+				for (int i = 0; i < std::ssize(def.name); ++i)
 				{
-					const bool isSelected = (defInput.nameIndex == i);
-					if (ImGui::Selectable(defInput.name[i].c_str(), isSelected))
-						defInput.nameIndex = i;
+					const bool isSelected = (def.nameIndex == i);
+					if (ImGui::Selectable(def.name[i].c_str(), isSelected))
+						def.nameIndex = i;
 
 					if (isSelected)
 						ImGui::SetItemDefaultFocus();
@@ -107,36 +109,36 @@ void ProtocolWindow::DefectTable()
 				ImGui::EndCombo();
 			}
 
-			bool length = (defInput.name[defInput.nameIndex] == "Ac" || defInput.name[defInput.nameIndex] == "Ab") ? false : true;
+			bool length = (def.name[def.nameIndex] == "Ac" || def.name[def.nameIndex] == "Ab") ? false : true;
 			ImGui::BeginDisabled(length);
 			ImGui::TableSetColumnIndex(2); /////////////////////////////////////////////////////////////////
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::InputFloat("##Протяжённость#", &defInput.length, 0.1f, 1.0f, "%.1f");
-			if (defInput.length < 0.0f)
-				defInput.length = 0.0f;
+			ImGui::InputFloat("##Протяжённость#", &def.length, 0.1f, 1.0f, "%.1f");
+			if (def.length < 0.0f)
+				def.length = 0.0f;
 			ImGui::EndDisabled();
 
 			ImGui::TableSetColumnIndex(3); //////////////////////////////////////////////////////////
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::InputFloat("##Длина#", &defInput.width, 0.1f, 1.0f, "%.1f");
-			if (defInput.width < 0.0f)
-				defInput.width = 0.0f;
+			ImGui::InputFloat("##Длина#", &def.width, 0.1f, 1.0f, "%.1f");
+			if (def.width < 0.0f)
+				def.width = 0.0f;
 
 			ImGui::TableSetColumnIndex(4); //////////////////////////////////////////////////////
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::InputFloat("##Ширина#", &defInput.height, 0.1f, 1.0f, "%.1f");
-			if (defInput.height < 0.0f)
-				defInput.height = 0.0f;
+			ImGui::InputFloat("##Ширина#", &def.height, 0.1f, 1.0f, "%.1f");
+			if (def.height < 0.0f)
+				def.height = 0.0f;
 
 			ImGui::TableSetColumnIndex(5); //////////////////////////////////////////////////////
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			if (ImGui::BeginCombo("##Окончание#", defInput.end[defInput.endIndex].c_str()))
+			if (ImGui::BeginCombo("##Окончание#", def.end[def.endIndex].c_str()))
 			{
-				for (int i = 0; i < std::ssize(defInput.end); ++i)
+				for (int i = 0; i < std::ssize(def.end); ++i)
 				{
-					const bool isSelected = (defInput.endIndex == i);
-					if (ImGui::Selectable(defInput.end[i].c_str(), isSelected))
-						defInput.endIndex = i;
+					const bool isSelected = (def.endIndex == i);
+					if (ImGui::Selectable(def.end[i].c_str(), isSelected))
+						def.endIndex = i;
 
 					if (isSelected)
 						ImGui::SetItemDefaultFocus();
@@ -146,29 +148,29 @@ void ProtocolWindow::DefectTable()
 
 			ImGui::PopID();
 
-			protocol.defectList.push_back(protocol.ConstructDefectRGC(defInput));
+			protocol.ConstructDefectRGCString(def);
 
 			ImGui::TableSetColumnIndex(6); //////////////////////////////
-			if (rows > 0)
+			if (defectTableRows > 0)
 			{
 				// ImGui::Text("(%d) %s", data.defectList[row].coord, data.defectList[row].record.c_str());
-				ImGui::TextUnformatted(std::format("({:d}) {}", protocol.defectList[row].coord, protocol.defectList[row].record).c_str()); // безопаснее
+				ImGui::TextUnformatted(std::format("({:d}) {}", def.coord, def.record).c_str()); // безопаснее
 			}
 		}
 
 		ImGui::TableSetColumnIndex(7); //////////////////////////////
-		if (rows > 0)
+		if (defectTableRows > 0)
 			if (ImGui::Button("Удалить дефект"))
 			{
-				rows--;
-				protocol.defectDataList.resize(rows);
+				defectTableRows--;
+				protocol.reportList.at(editingReportIndex).defRGCList.resize(defectTableRows);
 			}
 		ImGui::EndTable();
 
 		if (ImGui::Button("Добавить дефект"))
 		{
-			rows++;
-			protocol.defectDataList.resize(rows);
+			defectTableRows++;
+			protocol.reportList.at(editingReportIndex).defRGCList.resize(defectTableRows);
 		}
 	}
 }
@@ -180,7 +182,6 @@ void ProtocolWindow::ReportTable()
 	{
 		ImGui::TableSetupColumn("Номер заключения");
 		ImGui::TableSetupColumn("Дата заключения");
-		// ImGui::TableSetupColumn("Редактировать");
 		ImGui::TableHeadersRow();
 
 		protocolTableRows = static_cast<int>(protocol.reportList.size());
@@ -203,10 +204,9 @@ void ProtocolWindow::ReportTable()
 			ImGui::SameLine();
 			ImGui::TextUnformatted(std::format("{:s}", repData.protocolNumber).c_str());
 
-			ImGui::TableSetColumnIndex(1); //////////////////////////////
+			ImGui::TableSetColumnIndex(1); /////////////////////////////////////////////////////////////////
 			ImGui::TextUnformatted(std::format("{:s}", repData.protocolDate).c_str());
 
-			// ImGui::TableSetColumnIndex(2); //////////////////////////////
 			ImGui::SameLine();
 			if (ImGui::Button("Редактировать"))
 			{
@@ -240,6 +240,32 @@ void ProtocolWindow::ReportCreateWindow(ReportData &report, bool &isOpen)
 	{
 		ImGui::InputText("Дата выдачи заключения", &report.protocolDate);
 		ImGui::InputText("Номер заключения", &report.protocolNumber);
+
+		if (ImGui::Button("Дефекты"))
+		{
+			defectWindowIsOpen = true;
+		}
+	}
+	ImGui::End();
+}
+
+void ProtocolWindow::DefectCreateWindow(ReportData &report, bool &isOpen)
+{
+	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+
+	ImGuiWindowFlags window_flags =
+		//  ImGuiWindowFlags_NoDecoration |
+		//  ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoSavedSettings;
+
+	if (ImGui::Begin("Конструктор дефектов", &isOpen, window_flags))
+	{
+		DefectTable();
 	}
 	ImGui::End();
 }

@@ -34,47 +34,28 @@ int Protocol::CalculateNumString(int numDefects)
 	////дополнить логикой объединения однотипных дефектов
 }
 
-Defect Protocol::ConstructDefectRGC(DefRGCData input)
+void Protocol::ConstructDefectRGCString(DefRGC &input)
 {
-	Defect defect;
-	defect.length = {input.length};
-	defect.width = {input.width};
-	defect.height = {input.height};
-	defect.coord = {input.coord};
-
 	// Ас 25.0 – 2.0 × 1.0 ≤	пример записи дефекта
 	// A   B   C  D  E  F  G
 	std::string A = input.name.at(input.nameIndex);
 	std::string B;
-	// std::string C = input.spacer.at(input.spacerIndex1);
 	std::string C = "-";
-	std::string D = std::format("{:.1f}", defect.width);
-	// std::string E = input.spacer.at(input.spacerIndex2);
+	std::string D = std::format("{:.1f}", input.width);
 	std::string E = "×";
-	std::string F = std::format("{:.1f}", defect.height);
+	std::string F = std::format("{:.1f}", input.height);
 	std::string G = input.end.at(input.endIndex);
-	// std::string coord = std::format("{:d}", input.coord);
 
 	if (A == "Ac" || A == "Ab")
-		B = std::format("{:.1f}", defect.length);
+		B = std::format("{:.1f}", input.length);
 	else
 	{
 		B = "";
 		C = "";
 	}
 
-	defect.coordStr = std::format("({:d}) ", defect.coord);
-	defect.record = A + " " + B + C + D + E + F + G;
-
-	// Аа3,0≤
-
-	// Ас25–2×1,0≤
-
-	// E100
-
-	// Fe>
-
-	return defect;
+	input.coordStr = std::format("({:d}) ", input.coord);
+	input.record = A + " " + B + C + D + E + F + G;
 }
 
 namespace NDT
