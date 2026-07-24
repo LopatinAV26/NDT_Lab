@@ -26,6 +26,6 @@ private:
 	bool reportWindowIsOpen = false;
 	int editingReportIndex = -1; ///< текущий индекс отчёта, который создаётся/редактируется
 
-	int protocolTableRows = 0; 
+	int protocolTableRows = 0; ///< количество строк в таблице отчётов
 	int protocolRow = 0; ///< текущий индекс отчёта в таблице отчётов
 };

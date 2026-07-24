@@ -176,39 +176,47 @@ void ProtocolWindow::DefectTable()
 
 void ProtocolWindow::ReportTable()
 {
-	if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 4, ImGuiTableFlags_Borders))
+	if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 3,
+						  /*ImGuiTableFlags_Borders |*/ ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX))
 	{
 		ImGui::TableSetupColumn("Номер заключения");
 		ImGui::TableSetupColumn("Дата заключения");
+		// ImGui::TableSetupColumn("Редактировать");
 		ImGui::TableHeadersRow();
 
 		protocolTableRows = static_cast<int>(protocol.reportList.size());
-		protocolRow = 0;
-		for (protocolRow; protocolRow < protocolTableRows; ++protocolRow)
+		for (int row = 0; row < protocolTableRows; ++row)
 		{
-			ReportData &repData = protocol.reportList[protocolRow];
+			ReportData &repData = protocol.reportList[row];
 			ImGui::TableNextRow();
-			ImGui::PushID(protocolRow);
+			ImGui::PushID(row);
 
 			ImGui::TableSetColumnIndex(0); /////////////////////////////////////////////////////////////////
-			ImGui::SetNextItemWidth(-FLT_MIN);
+			bool isSelected = std::find(reportIndexesList.begin(), reportIndexesList.end(), row) != reportIndexesList.end();
+			if (ImGui::Checkbox("##select", &isSelected))
+			{
+				if (isSelected)
+					reportIndexesList.push_back(row);
+				else
+					std::erase(reportIndexesList, row);
+			}
+
+			ImGui::SameLine();
 			ImGui::TextUnformatted(std::format("{:s}", repData.protocolNumber).c_str());
 
 			ImGui::TableSetColumnIndex(1); //////////////////////////////
 			ImGui::TextUnformatted(std::format("{:s}", repData.protocolDate).c_str());
 
-			ImGui::TableSetColumnIndex(2); //////////////////////////////
-			bool isSelected = std::find(reportIndexesList.begin(), reportIndexesList.end(), protocolRow) != reportIndexesList.end();
-			if (protocolTableRows > 0)
-				if (ImGui::Checkbox("##select", &isSelected))
-				{
-					if (isSelected)
-						reportIndexesList.push_back(protocolRow);
-					else
-						std::erase(reportIndexesList, protocolRow);
-				}
+			// ImGui::TableSetColumnIndex(2); //////////////////////////////
+			ImGui::SameLine();
+			if (ImGui::Button("Редактировать"))
+			{
+				reportWindowIsOpen = true;
+				editingReportIndex = row;
+			}
 
 			ImGui::PopID();
+			protocolRow = row;
 		}
 
 		ImGui::EndTable();
