@@ -10,5 +10,4 @@ public:
     void BuildReportRGC(const std::vector<ReportData> &reportList, const std::vector<int> &reportIndexes);
 
 private:
-    std::string GetCurrentDateString();
 };

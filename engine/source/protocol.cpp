@@ -1,10 +1,12 @@
 #include "protocol.hpp"
 
+#include <chrono>
+
 Protocol::Protocol()
 {
-	//metalOptDenMax = static_cast<float>(std::log10(negatoscopeBrightness) - 2.0f);
-	//opticalDensityTitle = std::format("Оптическая плотность самого светлого участка сварного шва, не менее {:.1f} е.о.п./наибольшая оптическая плотность основного металла в зоне контроля, {:.1f} е.о.п/фактическая яркость негатоскопа {:d} кд/м2",
-									  //weldOptDenMin, metalOptDenMax, negatoscopeBrightness);
+	// metalOptDenMax = static_cast<float>(std::log10(negatoscopeBrightness) - 2.0f);
+	// opticalDensityTitle = std::format("Оптическая плотность самого светлого участка сварного шва, не менее {:.1f} е.о.п./наибольшая оптическая плотность основного металла в зоне контроля, {:.1f} е.о.п/фактическая яркость негатоскопа {:d} кд/м2",
+	// weldOptDenMin, metalOptDenMax, negatoscopeBrightness);
 }
 
 float Protocol::GetPerimeter(int diam) const
@@ -14,7 +16,7 @@ float Protocol::GetPerimeter(int diam) const
 
 float Protocol::GetMetalDensity(int negBright)
 {
-	//opticalDensityTitle = "";
+	// opticalDensityTitle = "";
 	return static_cast<float>(std::log10(negBright) - 2.0f);
 }
 
@@ -73,4 +75,13 @@ Defect Protocol::ConstructDefectRGC(DefRGCData input)
 	// Fe>
 
 	return defect;
+}
+
+namespace NDT
+{
+	std::string NDT::GetCurrentDateString()
+	{
+		auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
+		return std::format("{:%d.%m.%Y}", today);
+	}
 }

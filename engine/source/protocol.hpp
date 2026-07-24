@@ -196,3 +196,9 @@ public:
 	std::vector<DefRGCData> defectDataList;
 	std::vector<Defect> defectList;
 };
+
+namespace NDT
+{
+	/// @brief Получить текущую локальную дату
+	std::string GetCurrentDateString();
+}

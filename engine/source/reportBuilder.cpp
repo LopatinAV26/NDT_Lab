@@ -1,7 +1,6 @@
 #include "reportBuilder.hpp"
 
 #include <format>
-#include <chrono>
 #include "pdfManager.hpp"
 
 ReportBuilder::ReportBuilder()
@@ -118,12 +117,6 @@ void ReportBuilder::BuildReportRGC(const std::vector<ReportData> &reportList, co
 
 		pdfManager.NewPage();
 
-		pdfManager.SaveDocument(std::format("{:s} {:s} от {:s}.pdf", GetCurrentDateString(), reportData.protocolNumber, reportData.protocolDate));
+		pdfManager.SaveDocument(std::format("{:s} {:s} от {:s}.pdf", NDT::GetCurrentDateString(), reportData.protocolNumber, reportData.protocolDate));
 	}
-}
-
-std::string ReportBuilder::GetCurrentDateString()
-{
-	auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
-	return std::format("{:%d.%m.%Y}", today);
 }

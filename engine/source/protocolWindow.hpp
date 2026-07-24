@@ -15,7 +15,6 @@ private:
 	void DefectTable();
 	void ReportTable();
 	void ReportCreateWindow(ReportData &report, bool &isOpen);
-	std::string GetCurrentDateString();
 
 	std::vector<int> reportIndexesList; ///< Список индексов для печати в pdf
 

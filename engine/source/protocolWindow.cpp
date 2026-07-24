@@ -1,6 +1,5 @@
 #include "protocolWindow.hpp"
 #include <cfloat>
-#include <chrono>
 #include <algorithm>
 #include "applicationData.hpp"
 #include "imgui.h"
@@ -33,7 +32,7 @@ void ProtocolWindow::Show(bool &isOpen)
 		{
 			protocolTableRows++;
 			protocol.reportList.resize(protocolTableRows);
-			protocol.reportList.back().protocolDate = GetCurrentDateString();
+			protocol.reportList.back().protocolDate = NDT::GetCurrentDateString();
 			reportWindowIsOpen = true;
 			editingReportIndex = protocolTableRows - 1;
 		}
@@ -243,10 +242,4 @@ void ProtocolWindow::ReportCreateWindow(ReportData &report, bool &isOpen)
 		ImGui::InputText("Номер заключения", &report.protocolNumber);
 	}
 	ImGui::End();
-}
-
-std::string ProtocolWindow::GetCurrentDateString()
-{
-	auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
-	return std::format("{:%d.%m.%Y}", today);
 }
