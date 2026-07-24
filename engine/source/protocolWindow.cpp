@@ -35,7 +35,7 @@ void ProtocolWindow::Show(bool &isOpen)
 			protocol.reportList.resize(protocolTableRows);
 			protocol.reportList.back().protocolDate = GetCurrentDateString();
 			reportWindowIsOpen = true;
-			editingReportIndex = protocolRow;
+			editingReportIndex = protocolTableRows - 1;
 		}
 
 		ImGui::SameLine();
