@@ -34,30 +34,6 @@ int Protocol::CalculateNumString(int numDefects)
 	////дополнить логикой объединения однотипных дефектов
 }
 
-void Protocol::ConstructDefectRGCString(DefRGC &input)
-{
-	// Ас 25.0 – 2.0 × 1.0 ≤	пример записи дефекта
-	// A   B   C  D  E  F  G
-	std::string A = input.name.at(input.nameIndex);
-	std::string B;
-	std::string C = "-";
-	std::string D = std::format("{:.1f}", input.width);
-	std::string E = "×";
-	std::string F = std::format("{:.1f}", input.height);
-	std::string G = input.end.at(input.endIndex);
-
-	if (A == "Ac" || A == "Ab")
-		B = std::format("{:.1f}", input.length);
-	else
-	{
-		B = "";
-		C = "";
-	}
-
-	input.coordStr = std::format("({:d}) ", input.coord);
-	input.record = A + " " + B + C + D + E + F + G;
-}
-
 namespace NDT
 {
 	std::string NDT::GetCurrentDateString()

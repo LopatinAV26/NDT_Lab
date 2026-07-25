@@ -181,10 +181,6 @@ public:
 	int CalculateString(int diam); */
 	int CalculateNumString(int numDefects);
 
-	/// @brief Формирует строку-запись дефекта
-	/// @param input
-	void ConstructDefectRGCString(DefRGC &input);
-
 	std::vector<ReportData> reportList; /// Список отчётов
 };
 
