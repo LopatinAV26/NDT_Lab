@@ -74,17 +74,19 @@ struct ReportData
 	int methodIndex{0};
 
 	static inline const std::string weldTypeTitle{"Тип сварного соединения, способ сварки"};
+	int weldTypeIndex = 0;
 	static inline const std::vector<std::string> weldType{"Стыковое", "Стыковое кольцевое", "Угловое"};
-	std::vector<std::string> weldingMethod{"ручная дуговая"};
+	int weldingMethodIndex = 0;
+	std::vector<std::string> weldingMethod{"ручная дуговая", "автоматическая"};
 
 	static inline const std::string diameterTitle{"Диаметр, толщина стенки свариваемых элементов, мм"};
 	int diameter = 1220;
-	float thicknes1 = 0.f;
-	float thicknes2 = 0.f;
+	float thicknes1 = 12.f;
+	float thicknes2 = 14.f;
 
 	static inline const std::string weldersMarkTitle{"Шифр клейма сварщика/бригады сварщиков"};
-	std::vector<std::string> weldersMark1{"Клеймо сварщика 1"};
-	std::vector<std::string> weldersMark2{"Клеймо сварщика 2"};
+	std::string weldersMark1{"0763"};
+	std::string weldersMark2{""};
 
 	static inline const std::string sectionTypeTitle{"Тип секций (одношовная или двухшовная). Координаты продольных швов, наименьшее расстояние между продольными швами, мм"};
 	static inline const std::array<std::string, 3> sectionType1{"Одношовная", "Двухшовная", "Бесшовная"};
@@ -168,24 +170,23 @@ class Protocol
 public:
 	explicit Protocol();
 
-	float GetPerimeter(int diam) const;
-
 	/// @brief Максимально допустимая плотность снимка, в зависимости от яркости негатоскопа
 	/// @param negBright паспортная яркость негатоскопа
 	/// @return Плотность снимка в е.о.п.
 	float GetMetalDensity(int negBright);
 
-	/* /// @brief Вычисление количества участков по 300 мм
-	/// @param diam диаметр свариваемых труб
-	/// @return Количество участков
-	int CalculateString(int diam); */
-	int CalculateNumString(int numDefects);
-
-	std::vector<ReportData> reportList; /// Список отчётов
+	static inline std::vector<ReportData> reportList; /// Список отчётов
 };
 
 namespace NDT
 {
 	/// @brief Получить текущую локальную дату
 	std::string GetCurrentDateString();
+
+	/// @brief Вычисление количества участков по 300 мм
+	/// @param diam диаметр свариваемых труб
+	/// @return Количество участков
+	std::vector<std::string> CalculateNumString(int diam, int range = 300);
+
+	float GetPerimeter(int diam);
 }

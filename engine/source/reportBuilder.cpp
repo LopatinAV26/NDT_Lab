@@ -85,9 +85,31 @@ void ReportBuilder::BuildReportRGC(const std::vector<ReportData> &reportList, co
 								 {rowCells.at(11).w, "12", 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.CreateRow(0.4, {{0}}); /// двойная граница
 
-		///////////////////////////////////////
-		// нарисовать таблицу переменной структуры
-		/////////////////////////////////////
+		/// Каркас для получения двумерного массива ячеек, для получения координат каждой
+		std::vector<std::vector<Cell>> rowCol;
+		int num = static_cast<int>(NDT::CalculateNumString(reportData.diameter).size()); /// количество строк в таблице, зависит от диаметра свариваемых труб
+		rowCol.reserve(num);
+		for (int i = 0; i < num; ++i)
+		{
+			rowCol.push_back(pdfManager.CreateRow(3, {{rowCells.at(0).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(1).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(2).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(3).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(4).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(5).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(6).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(7).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(8).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(9).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(10).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
+													  {rowCells.at(11).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center}}));
+		}
+
+		pdfManager.cursorRowY -= 3 * num;
+		pdfManager.CreateRow(3 * num, {{rowCells.at(0).w, reportData.protocolNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
+									   {rowCells.at(1).w, std::format("{:s}, {:s}", reportData.weldType.at(reportData.weldTypeIndex), reportData.weldingMethod.at(reportData.weldingMethodIndex)), 8, PoDoFo::PdfHorizontalAlignment::Center},
+									   {rowCells.at(2).w, std::format("{:d}×{:.1f}×{:.1f}", reportData.diameter, reportData.thicknes1, reportData.thicknes2), 8, PoDoFo::PdfHorizontalAlignment::Center},
+									   {rowCells.at(3).w, std::format("{:s}/{:s}", reportData.weldersMark1, reportData.weldersMark2), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 
 		pdfManager.CreateRow(4, {{.width = 0, .text = reportData.extentOfUnacceptableDefectsTitle + ": " + std::format("{:.1f}", reportData.extentOfUnacceptableDefects), .isRectVisible = false}});
 		pdfManager.CreateRow(4, {{.width = 0, .text = reportData.controlResultTitle + ": " + reportData.controlResult.at(reportData.controlResultIndex), .isRectVisible = false}});

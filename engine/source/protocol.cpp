@@ -9,29 +9,10 @@ Protocol::Protocol()
 	// weldOptDenMin, metalOptDenMax, negatoscopeBrightness);
 }
 
-float Protocol::GetPerimeter(int diam) const
-{
-	return diam * 3.14159f;
-}
-
 float Protocol::GetMetalDensity(int negBright)
 {
 	// opticalDensityTitle = "";
 	return static_cast<float>(std::log10(negBright) - 2.0f);
-}
-
-/* int ProtocolData::CalculateString(int diam)
-{
-	constexpr float range = 300.f;
-	float perimeter = GetPerimeter(diam);
-	constexpr float eps = 2.0f; ///< необходимо подобрать экспериментально чтобы не было лишнего или недостающего участка
-	return static_cast<int>(std::ceil((perimeter - eps) / range));
-} */
-
-int Protocol::CalculateNumString(int numDefects)
-{
-	return numDefects;
-	////дополнить логикой объединения однотипных дефектов
 }
 
 namespace NDT
@@ -40,5 +21,32 @@ namespace NDT
 	{
 		auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
 		return std::format("{:%d.%m.%Y}", today);
+	}
+
+	std::vector<std::string> CalculateNumString(int diam, int range)
+	{
+		float perimeter = GetPerimeter(diam);
+		constexpr float eps = 2.0f; ///< необходимо подобрать экспериментально чтобы не было лишнего или недостающего участка
+		int result = static_cast<int>(std::ceil((perimeter - eps) / range));
+		std::vector<std::string> rangesStringList;
+		rangesStringList.reserve(result);
+		int coord = 0;
+
+		for (int i = 0; i < result; ++i)
+		{
+			if (coord + range > perimeter - eps)
+				rangesStringList.push_back(std::format("{:d}-{:d}", coord, 0));
+			else
+				rangesStringList.push_back(std::format("{:d}-{:d}", coord, coord + range));
+
+			coord += range;
+		}
+
+		return rangesStringList;
+	}
+
+	float GetPerimeter(int diam)
+	{
+		return diam * 3.14159f;
 	}
 }

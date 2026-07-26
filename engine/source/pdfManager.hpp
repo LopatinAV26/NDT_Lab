@@ -64,6 +64,7 @@ public:
 	const double leftIndent = 5.0;	   // левый отступ, мм
 	const double rightIndent = 5.0;	   // правый отступ, мм
 	double yEnd;
+	double cursorX = 0.0;
 	double cursorRowY = 0.0; // начало рисования следующей строки таблицы по Y, увеличивается на высоту строки поле каждого вызова CreateRow
 
 private:

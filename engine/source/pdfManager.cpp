@@ -43,12 +43,12 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 {
 	Cell cell;
 	cell.text = std::move(cStyle.text);
-	cell.x = {x};
+	cell.x = x;
 	double newX = {x + leftIndent};
-	cell.y = {y};
+	cell.y = y;
 	double newY = {yStart - y - h};
 	cell.w = {(cStyle.width == 0.0) ? xEnd - newX : cStyle.width};
-	cell.h = {h};
+	cell.h = h;
 
 	if (newX + cell.w > xEnd)
 	{
@@ -80,7 +80,7 @@ std::vector<Cell> PdfManager::CreateRow(double height, std::initializer_list<Cel
 {
 	std::vector<Cell> cellsVector;
 	cellsVector.reserve(cells.size());
-	double cursorX = 0.0;
+	cursorX = 0.0;
 	for (const auto &cell : cells)
 	{
 		if (cursorX >= dX)

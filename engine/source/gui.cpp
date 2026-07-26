@@ -9,8 +9,7 @@ Gui::Gui(ApplicationData &coreAppData, ResourceManager &resourceManager)
 	: appData{coreAppData},
 	  resManager{resourceManager},
 	  settingsWindow{appData},
-	  nomogramWindow{appData, resManager},
-	  protocolWindow{appData}
+	  nomogramWindow{appData, resManager}
 {
 }
 

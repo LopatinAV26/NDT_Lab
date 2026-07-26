@@ -23,9 +23,7 @@ void ReportCreateWindow::Show(ReportData &report, bool &isOpen)
         ImGui::InputText("Номер заключения", &report.protocolNumber);
 
         if (ImGui::Button("Дефекты"))
-        {
             defectWindowIsOpen = true;
-        }
     }
     ImGui::End();
 
