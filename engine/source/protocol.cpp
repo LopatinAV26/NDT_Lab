@@ -17,7 +17,7 @@ float Protocol::GetMetalDensity(int negBright)
 
 namespace NDT
 {
-	std::string NDT::GetCurrentDateString()
+	std::string GetCurrentDateString()
 	{
 		auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
 		return std::format("{:%d.%m.%Y}", today);

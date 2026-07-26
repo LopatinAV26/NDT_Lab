@@ -11,8 +11,10 @@ SDL_AppResult Core::Init()
 	SDL_Rect usableBounds{};
 	if (SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usableBounds))
 	{
-		appData.windowWidth = static_cast<int>(usableBounds.w * appData.windowScreenPercent);
-		appData.windowHeight = static_cast<int>(usableBounds.h * appData.windowScreenPercent);
+		if (usableBounds.w < appData.windowWidth || usableBounds.h < appData.windowHeight) {
+			appData.windowWidth = static_cast<int>(usableBounds.w * appData.windowScreenPercent);
+			appData.windowHeight = static_cast<int>(usableBounds.h * appData.windowScreenPercent);
+		}
 	}
 
 	appData.window = SDL_CreateWindow("NDT Lab",
