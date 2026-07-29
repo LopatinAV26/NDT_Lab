@@ -55,16 +55,20 @@ public:
 	 * */
 	void NewPage();
 	void SaveDocument(std::string_view docName);
-	Cell CreateCell(double x, double y, double h, CellStyle cStyle);
-	std::vector<Cell> CreateRow(double height, std::initializer_list<CellStyle> cells);
+	Cell TableCreateCell(double x, double y, double h, CellStyle cStyle);
+	std::vector<Cell> TableCreateRow(double height, std::initializer_list<CellStyle> cells);
+
+	/// @brief Установка следующей строки с нулевой позиции
+	/// @param offset Смещение строки относительно нулевой позиции
+	void TableNewRow(double offset = 0.0);
+
 	PoDoFo::PdfColor Color(NDTColor c) const;
 
-	const double topIndent = 20.0;	   // верхний отступ от края страницы, мм
-	const double bottomIndent = 10.0;  // нижний отступ, мм
-	const double leftIndent = 5.0;	   // левый отступ, мм
-	const double rightIndent = 5.0;	   // правый отступ, мм
+	const double topIndent = 20.0;	  // верхний отступ от края страницы, мм
+	const double bottomIndent = 10.0; // нижний отступ, мм
+	const double leftIndent = 5.0;	  // левый отступ, мм
+	const double rightIndent = 5.0;	  // правый отступ, мм
 	double yEnd;
-	double cursorX = 0.0;
 	double cursorRowY = 0.0; // начало рисования следующей строки таблицы по Y, увеличивается на высоту строки поле каждого вызова CreateRow
 
 private:
@@ -80,6 +84,7 @@ private:
 	const double textRectIndent = 1.0; // отступ текста от внутренних границ ячейки, мм
 	double xEnd;					   // правая граница рисования, мм
 	double yStart;
+	double cursorX = 0.0;
 	double dX;				 // Граница, почти вплотную к правому полю, рисование после которой возвращает ошибку, мм
 	double mmToPt;			 // коэффициент для перевода из единиц PDF в миллиметры
 	bool isLandscape = true; // Флаг, указывающий на то, что страница в альбомной ориентации

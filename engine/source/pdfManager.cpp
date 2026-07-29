@@ -39,7 +39,7 @@ void PdfManager::SaveDocument(std::string_view docName)
 	doc.Save(docName);
 }
 
-Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
+Cell PdfManager::TableCreateCell(double x, double y, double h, CellStyle cStyle)
 {
 	Cell cell;
 	cell.text = std::move(cStyle.text);
@@ -76,11 +76,10 @@ Cell PdfManager::CreateCell(double x, double y, double h, CellStyle cStyle)
 	return cell;
 }
 
-std::vector<Cell> PdfManager::CreateRow(double height, std::initializer_list<CellStyle> cells)
+std::vector<Cell> PdfManager::TableCreateRow(double height, std::initializer_list<CellStyle> cells)
 {
 	std::vector<Cell> cellsVector;
 	cellsVector.reserve(cells.size());
-	cursorX = 0.0;
 	for (const auto &cell : cells)
 	{
 		if (cursorX >= dX)
@@ -90,13 +89,18 @@ std::vector<Cell> PdfManager::CreateRow(double height, std::initializer_list<Cel
 			return cellsVector;
 		}
 
-		Cell drawn = CreateCell(cursorX, cursorRowY, height, cell);
+		Cell drawn = TableCreateCell(cursorX, cursorRowY, height, cell);
 		cursorX += drawn.w;
 		cellsVector.push_back(drawn);
 	}
 	cursorRowY += height;
 
 	return cellsVector;
+}
+
+void PdfManager::TableNewRow(double offset)
+{
+	cursorX = 0.0 + offset;
 }
 
 PoDoFo::PdfColor PdfManager::Color(NDTColor c) const
