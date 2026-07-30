@@ -5,6 +5,15 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
 
+# SDL3's own check_symbol_exists(getresuid/getresgid "unistd.h" ...) тест компилируется
+# без _GNU_SOURCE и не находит эти функции в glibc (они спрятаны за __USE_GNU), поэтому
+# SDL_gtk.c определяет свои static inline фолбэки - но при реальной компиляции этого файла
+# _GNU_SOURCE всё-таки включается транзитивно (через GTK/glib-заголовки), и настоящие extern
+# из unistd.h конфликтуют со static-фолбэком SDL. Форсируем "найдено", чтобы SDL не подставляла
+# фолбэк - тогда останется только настоящая glibc-декларация.
+set(HAVE_GETRESUID 1 CACHE INTERNAL "" FORCE)
+set(HAVE_GETRESGID 1 CACHE INTERNAL "" FORCE)
+
 # SDL3 ---------------------------------------------------------------------------------------
 FetchContent_Declare(SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git

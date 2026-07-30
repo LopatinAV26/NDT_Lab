@@ -30,7 +30,7 @@ if(WIN32)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-project(ImGUI_NDT VERSION 0.1.0 LANGUAGES C CXX)
+project(NDTLab VERSION 0.1.0 LANGUAGES C CXX)
 
 # set the output directory for built objects.
 # This makes sure that the dynamic library goes into the build directory automatically
