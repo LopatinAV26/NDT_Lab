@@ -1,4 +1,5 @@
 #include "core.hpp"
+#include "appIcon.hpp"
 
 SDL_AppResult Core::Init()
 {
@@ -23,6 +24,12 @@ SDL_AppResult Core::Init()
 									  appData.windowFlags);
 
 	appData.mainScale = SDL_GetWindowDisplayScale(appData.window);
+
+	if (SDL_Surface *icon = CreateAppIconSurface())
+	{
+		SDL_SetWindowIcon(appData.window, icon);
+		SDL_DestroySurface(icon);
+	}
 
 	if (!appData.window)
 	{
