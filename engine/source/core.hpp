@@ -6,6 +6,7 @@
 #include "resourceManager.hpp"
 #include "applicationData.hpp"
 #include "gui.hpp"
+#include "databaseManager.hpp"
 
 class Core
 {
@@ -25,4 +26,5 @@ private:
 	ApplicationData appData;
 	std::unique_ptr<ResourceManager>resManager;
 	std::unique_ptr<Gui> imWindow;
+	std::unique_ptr<DatabaseManager> dbManager;
 };

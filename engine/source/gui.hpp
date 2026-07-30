@@ -4,9 +4,9 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 #include "imgui_stdlib.h"
-#include "settingsWindow.hpp"
-#include "nomogramWindow.hpp"
-#include "protocolWindow.hpp"
+#include "appWindows/settingsWindow.hpp"
+#include "appWindows/nomogramWindow.hpp"
+#include "appWindows/protocolWindow.hpp"
 
 class ApplicationData;
 class ResourceManager;

@@ -60,9 +60,10 @@ SDL_AppResult Core::Init()
 	}
 
 	resManager = std::make_unique<ResourceManager>(appData.renderer);
+	dbManager = std::make_unique<DatabaseManager>(appData.pathToDatabase);
 	imWindow = std::make_unique<Gui>(appData, *resManager);
 	imWindow->InitImGui();
-
+	
 	return SDL_APP_CONTINUE;
 }
 

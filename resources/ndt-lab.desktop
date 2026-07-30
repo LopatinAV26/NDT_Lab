@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=NDT Lab
+Comment=Приложение лаборатории неразрушающего контроля
+Exec=/home/av26/Dev/NDT_Lab/build/Debug/ImGUI_NDT
+Icon=/home/av26/Dev/NDT_Lab/resources/radiation_ndt_lab_worn.png
+Terminal=false
+Categories=Utility;Engineering;

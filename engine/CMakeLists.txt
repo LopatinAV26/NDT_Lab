@@ -4,6 +4,20 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 
 add_executable(${PROJECT_NAME} WIN32 ${SRC_FILES})
 
+# Иконка .exe в проводнике Windows. resources/app.rc ссылается на
+# resources/app.ico (нужно положить туда сам .ico - см. пояснение).
+# На других платформах .rc не используется, поэтому подключаем только под Windows.
+if(WIN32)
+    target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/resources/app.rc")
+endif()
+
+# Файлы в source/appWindows/ (settingsWindow, protocolWindow, nomogramWindow,
+# reportCreateWindow, defectCreateWindow) инклюдят соседние заголовки из
+# source/ (applicationData.hpp, resourceManager.hpp, laboratory.hpp,
+# reportBuilder.hpp) без префикса пути - добавляем source/ в include path,
+# чтобы такие "#include "applicationData.hpp"" резолвились и из подкаталога.
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/source")
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
     imgui
     implot

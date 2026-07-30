@@ -27,6 +27,7 @@ public:
 	SDL_Renderer *renderer = nullptr;
 	SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	std::filesystem::path pathToDevices = "resources/xray_devices.toml";
+	std::filesystem::path pathToDatabase = "resources/data.lnkdb";
 	std::string driverName;
 	std::string rendererName;
 	GuiStyle style = GuiStyle::Classic;
