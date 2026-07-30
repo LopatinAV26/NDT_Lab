@@ -1,6 +1,6 @@
 #pragma once
 
-#include "protocol.hpp"
+#include "laboratory.hpp"
 
 class ReportBuilder
 {

@@ -1,18 +1,10 @@
-#include "protocol.hpp"
-
-#include <chrono>
+#include "laboratory.hpp"
 
 Protocol::Protocol()
 {
 	// metalOptDenMax = static_cast<float>(std::log10(negatoscopeBrightness) - 2.0f);
 	// opticalDensityTitle = std::format("Оптическая плотность самого светлого участка сварного шва, не менее {:.1f} е.о.п./наибольшая оптическая плотность основного металла в зоне контроля, {:.1f} е.о.п/фактическая яркость негатоскопа {:d} кд/м2",
 	// weldOptDenMin, metalOptDenMax, negatoscopeBrightness);
-}
-
-float Protocol::GetMetalDensity(int negBright)
-{
-	// opticalDensityTitle = "";
-	return static_cast<float>(std::log10(negBright) - 2.0f);
 }
 
 namespace NDT
@@ -48,5 +40,34 @@ namespace NDT
 	float GetPerimeter(int diam)
 	{
 		return diam * 3.14159f;
+	}
+	std::chrono::year_month_day GetTerm(const std::chrono::year_month_day &date1, const std::chrono::year_month_day &date2)
+	{
+		using namespace std::chrono;
+
+		int y = static_cast<int>(date2.year()) - static_cast<int>(date1.year());
+		int m = static_cast<int>(static_cast<unsigned>(date2.month())) - static_cast<int>(static_cast<unsigned>(date1.month()));
+		int d = static_cast<int>(static_cast<unsigned>(date2.day())) - static_cast<int>(static_cast<unsigned>(date1.day()));
+
+		if (d < 0)
+		{
+			--m;
+			auto prevMonth = (date2.year() / date2.month()) - months{1};
+			d += static_cast<int>(static_cast<unsigned>((prevMonth.year() / prevMonth.month() / last).day()));
+		}
+
+		if (m < 0)
+		{
+			--y;
+			m += 12;
+		}
+
+		return year_month_day{year{y}, month{static_cast<unsigned>(m)}, day{static_cast<unsigned>(d)}};
+	}
+
+	float GetMetalDensity(int negBright)
+	{
+		// opticalDensityTitle = "";
+		return static_cast<float>(std::log10(negBright) - 2.0f);
 	}
 }

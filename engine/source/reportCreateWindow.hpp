@@ -1,6 +1,6 @@
 #pragma once
 
-#include "protocol.hpp"
+#include "laboratory.hpp"
 #include "defectCreateWindow.hpp"
 
 class ReportCreateWindow

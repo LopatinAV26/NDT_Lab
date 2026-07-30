@@ -5,6 +5,23 @@
 #include <vector>
 #include <cmath>
 #include <format>
+#include <chrono>
+
+struct LaboratoryNDT
+{
+	std::string name{"Лаборатория неразрушающего контроля ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" База производственного обеспечения \"Белогорск\""};
+};
+
+struct EmployeeNdt ///< Сотрудники лаборатории НК
+{
+	std::string name{"Лопатин Андрей Владимирович"};
+	std::string shortName{"Лопатин А.В."};
+	std::string organization{"ООО Транснефть - Дальний Восток БПО Белогорск"};
+	std::string department{"Лаборатория неразрушающего контроля"};
+	std::string position{"Дефектоскопист РГГ"};
+	std::chrono::year_month_day employeementDate{std::chrono::year{2016}, std::chrono::month{11}, std::chrono::day{14}};
+	std::string personalCode{"Б04"};
+};
 
 struct DefRGC
 {
@@ -121,25 +138,25 @@ struct ReportData
 
 	std::string sectionNumber1;
 	std::string sectionNumber2;
-	int coordSec1Weld1{0};
-	int coordSec1Weld2{0};
-	int coordSec2Weld1{0};
-	int coordSec2Weld2{0};
+	int coordSec1Weld1 = 0;
+	int coordSec1Weld2 = 0;
+	int coordSec2Weld1 = 0;
+	int coordSec2Weld2 = 0;
 
-	int brightness{0};
-	int temperature{0};
+	int brightness = 0;
+	int temperature = 0;
 
 	static inline const std::array<std::string, 4> roughness{"Rz20", "Rz40", "Rz60", "Rz80"};
-	int roughnessIndex{0};
+	int roughnessIndex = 0;
 
-	float maxHeightOfWeld{0.f};
-	float minHeightOfWeld{0.f};
-	float maxWidthOfWeld{0.f};
-	float minWidthOfWeld{0.f};
-	float edgeDisplacement{0.f};
+	float maxHeightOfWeld = 0.f;
+	float minHeightOfWeld = 0.f;
+	float maxWidthOfWeld = 0.f;
+	float minWidthOfWeld = 0.f;
+	float edgeDisplacement = 0.f;
 
 	static inline const std::string controllerNameTitle{"Контроль произвёл"};
-	int controllerNameIndex{0};
+	int controllerNameIndex = 0;
 	static inline std::vector<std::string> controllerNameList{"Лопатин А.В.", "Кухаренко И.А.", "Крылов А.Н.", "Федоренко А.Н."};
 	std::string controllerOrganization = {"ООО Транснефть - Дальний Восток"};
 	std::string controllerCertNumber = {"РСКТН-09050-2021"};
@@ -162,6 +179,7 @@ struct ReportData
 	std::string masterOrganization = {"ООО Транснефть - Дальний Восток"};
 	std::string masterCertNumber = {"ТОР-9АЦ-II-ХХХХ"};
 
+	static inline std::vector<EmployeeNdt> employeesNdtList;
 	std::vector<DefRGC> defRGCList; ///< Список дефектов
 };
 
@@ -169,11 +187,6 @@ class Protocol
 {
 public:
 	explicit Protocol();
-
-	/// @brief Максимально допустимая плотность снимка, в зависимости от яркости негатоскопа
-	/// @param negBright паспортная яркость негатоскопа
-	/// @return Плотность снимка в е.о.п.
-	float GetMetalDensity(int negBright);
 
 	static inline std::vector<ReportData> reportList; /// Список отчётов
 };
@@ -183,10 +196,18 @@ namespace NDT
 	/// @brief Получить текущую локальную дату
 	std::string GetCurrentDateString();
 
+	std::chrono::year_month_day GetTerm(const std::chrono::year_month_day &date1,
+										const std::chrono::year_month_day &date2 = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now()));
+
 	/// @brief Вычисление количества участков по 300 мм
 	/// @param diam диаметр свариваемых труб
 	/// @return Количество участков
 	std::vector<std::string> CalculateNumString(int diam, int range = 300);
 
 	float GetPerimeter(int diam);
+
+	/// @brief Максимально допустимая плотность снимка, в зависимости от яркости негатоскопа
+	/// @param negBright паспортная яркость негатоскопа
+	/// @return Плотность снимка в е.о.п.
+	float GetMetalDensity(int negBright);
 }

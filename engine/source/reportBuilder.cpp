@@ -114,20 +114,34 @@ void ReportBuilder::BuildReportRGC(const std::vector<ReportData> &reportList, co
 														   {rowCells.at(11).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center}}));
 		}
 
-		pdfManager.cursorRowY -= 3 * num;
+		pdfManager.cursorRowY -= 3.0 * num;
 		pdfManager.TableNewRow();
-		pdfManager.TableCreateRow(3 * num, {{rowCells.at(0).w, reportData.protocolNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
-											{rowCells.at(1).w, std::format("{:s}, {:s}", reportData.weldType.at(reportData.weldTypeIndex), reportData.weldingMethod.at(reportData.weldingMethodIndex)), 8, PoDoFo::PdfHorizontalAlignment::Center},
-											{rowCells.at(2).w, std::format("{:d}×{:.1f}×{:.1f}", reportData.diameter, reportData.thicknes1, reportData.thicknes2), 8, PoDoFo::PdfHorizontalAlignment::Center},
-											{rowCells.at(3).w, std::format("{:s}/{:s}", reportData.weldersMark1, reportData.weldersMark2), 8, PoDoFo::PdfHorizontalAlignment::Center}});
+		pdfManager.TableCreateRow(3.0 * num, {{rowCells.at(0).w, reportData.weldNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
+											  {rowCells.at(1).w, std::format("{:s}, {:s}", reportData.weldType.at(reportData.weldTypeIndex), reportData.weldingMethod.at(reportData.weldingMethodIndex)), 8, PoDoFo::PdfHorizontalAlignment::Center},
+											  {rowCells.at(2).w, std::format("{:d}×{:.1f}×{:.1f}", reportData.diameter, reportData.thicknes1, reportData.thicknes2), 8, PoDoFo::PdfHorizontalAlignment::Center},
+											  {rowCells.at(3).w, std::format("{:s}/{:s}", reportData.weldersMark1, reportData.weldersMark2), 8, PoDoFo::PdfHorizontalAlignment::Center}});
+
+		pdfManager.cursorRowY -= 3.0 * num;
+		double height = {(3.0 * num) / 4.0};
+		pdfManager.TableNewRow(rowCells.at(4).x);
+		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, "двухшовная", 6, PoDoFo::PdfHorizontalAlignment::Center},
+										   {rowCells.at(4).w / 2, "одношовная", 6, PoDoFo::PdfHorizontalAlignment::Center}});
+		pdfManager.TableNewRow(rowCells.at(4).x);
+		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, "коорд", 8, PoDoFo::PdfHorizontalAlignment::Center},
+										   {rowCells.at(4).w / 2, "коорд", 8, PoDoFo::PdfHorizontalAlignment::Center}});
+		pdfManager.TableNewRow(rowCells.at(4).x);
+		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, "коорд", 8, PoDoFo::PdfHorizontalAlignment::Center},
+										   {rowCells.at(4).w / 2, "коорд", 8, PoDoFo::PdfHorizontalAlignment::Center}});
+		pdfManager.TableNewRow(rowCells.at(4).x);
+		pdfManager.TableCreateRow(height, {{rowCells.at(4).w, "минимум", 8, PoDoFo::PdfHorizontalAlignment::Center}});
 
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(4, {{.width = 0, .text = reportData.extentOfUnacceptableDefectsTitle + ": " + std::format("{:.1f}", reportData.extentOfUnacceptableDefects), .isRectVisible = false}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(4, {{.width = 0, .text = reportData.controlResultTitle + ": " + reportData.controlResult.at(reportData.controlResultIndex), .isRectVisible = false}});
 
-		double signHeight = 8;
-		pdfManager.cursorRowY = pdfManager.yEnd - signHeight * 4.0;
+		double signHeight = 8.0;
+		pdfManager.cursorRowY = {pdfManager.yEnd - signHeight * 4.0};
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.controllerNameTitle, 8},
 											   {40, reportData.controllerNameList.at(reportData.controllerNameIndex), 8, PoDoFo::PdfHorizontalAlignment::Center},

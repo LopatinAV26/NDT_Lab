@@ -190,45 +190,101 @@ voltage = 200.0
 points = [[1.9, 0.7], [24.5, 20]]
 
 [[devices]]
-name = "РПД-200 С"
-information = "тип РА: постоянный\nнапряжение: 70-200 кВ\nдиаметр фокусного пятна: 2.0 x 3.0 мм"
-electricPower = 900
+name = "РПД-200 / РПД-200С"
+information = "тип РА: постоянный\nнапряжение: 70-200 кВ\nдиаметр фокусного пятна: 2.0 x 2.0 мм"
+electricPower = 1000
 currentAdjustment = true
 voltageMaximum = 200.0
 currentMinimum = 1.0
 currentMaximum = 5.0
 focusDistanceDefault = 700.0
-focalSpotSize = 3.0
+focalSpotSize = 2.0
 exposureMultiplier = 1.0
 #steelThicknessMax = 36.0
+
+[[devices.curves]]
+name = "80 кВ"
+voltage = 80.0
+points = [[1.25, 2], [6.25, 50]]
+
+[[devices.curves]]
+name = "100 кВ"
+voltage = 100.0
+points = [[2.5, 2], [10.8, 50]]
+
+[[devices.curves]]
+name = "120 кВ"
+voltage = 120.0
+points = [[4.6, 2], [16.2, 50]]
+
+[[devices.curves]]
+name = "140 кВ"
+voltage = 140.0
+points = [[7.0, 2], [23.0, 50]]
+
+[[devices.curves]]
+name = "160 кВ"
+voltage = 160.0
+points = [[11.0, 2], [27.8, 50]]
 
 [[devices.curves]]
 name = "180 кВ"
 voltage = 180.0
-points = [[11.0, 1], [32.0, 50]]
+points = [[12.5, 2], [36.8, 50]]
 
 [[devices.curves]]
 name = "200 кВ"
 voltage = 200.0
-points = [[12.0, 1], [41.0, 50]]
+points = [[16.25, 2], [42.0, 50]]
+
 
 [[devices]]
-name = "РПД-200 СП"
-information = "тип РА: постоянный\nнапряжение: 70-200 кВ\nдиаметр фокусного пятна: 5.5 мм"
-electricPower = 900
+name = "РПД-200П / РПД-200СП"
+information = "тип РА: постоянный\nнапряжение: 70-200 кВ\nдиаметр фокусного пятна: 3.5 x 1.5 мм"
+electricPower = 1000
 currentAdjustment = true
 voltageMaximum = 200.0
 currentMinimum = 1.0
 currentMaximum = 5.0
 focusDistanceDefault = 700.0
-focalSpotSize = 5.5
+focalSpotSize = 3.5
 exposureMultiplier = 1.0
 #steelThicknessMax = 36.0
 
 [[devices.curves]]
+name = "80 кВ"
+voltage = 80.0
+points = [[0.6, 2], [4.5, 50]]
+
+[[devices.curves]]
+name = "100 кВ"
+voltage = 100.0
+points = [[1.25, 2], [8.7, 50]]
+
+[[devices.curves]]
+name = "120 кВ"
+voltage = 120.0
+points = [[3.0, 2], [13.7, 50]]
+
+[[devices.curves]]
+name = "140 кВ"
+voltage = 140.0
+points = [[3.8, 2], [19.5, 50]]
+
+[[devices.curves]]
+name = "160 кВ"
+voltage = 160.0
+points = [[6.0, 2], [24.6, 50]]
+
+[[devices.curves]]
+name = "180 кВ"
+voltage = 180.0
+points = [[7.5, 2], [30.5, 50]]
+
+[[devices.curves]]
 name = "200 кВ"
 voltage = 200.0
-points = [[10.0, 1], [48.0, 50]]
+points = [[11.2, 2], [36.0, 50]]
 
 [[devices]]
 #id = "arina_9"
