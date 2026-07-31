@@ -1,6 +1,6 @@
 #include "laboratory.hpp"
 
-Protocol::Protocol()
+Laboratory::Laboratory()
 {
 	// metalOptDenMax = static_cast<float>(std::log10(negatoscopeBrightness) - 2.0f);
 	// opticalDensityTitle = std::format("Оптическая плотность самого светлого участка сварного шва, не менее {:.1f} е.о.п./наибольшая оптическая плотность основного металла в зоне контроля, {:.1f} е.о.п/фактическая яркость негатоскопа {:d} кд/м2",

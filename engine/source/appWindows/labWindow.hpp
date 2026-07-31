@@ -1,7 +1,8 @@
 #pragma once
 
+#include "laboratory.hpp"
 #include "appWindows/nomogramWindow.hpp"
-#include "appWindows/protocolWindow.hpp"
+#include "appWindows/reportWindow.hpp"
 
 class ApplicationData;
 class ResourceManager;
@@ -13,8 +14,9 @@ public:
     void Show(bool &isOpen);
 
 private:
+    Laboratory lab;
     NomogramWindow nomogramWindow;
-    ProtocolWindow reportWindow;
+    ReportWindow reportWindow;
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration;
 };

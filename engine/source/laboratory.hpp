@@ -7,11 +7,6 @@
 #include <format>
 #include <chrono>
 
-struct LaboratoryNDT
-{
-	std::string name{"Лаборатория неразрушающего контроля ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" База производственного обеспечения \"Белогорск\""};
-};
-
 struct EmployeeNdt ///< Сотрудники лаборатории НК
 {
 	std::string name{"Лопатин Андрей Владимирович"};
@@ -183,10 +178,10 @@ struct ReportData
 	std::vector<DefRGC> defRGCList; ///< Список дефектов
 };
 
-class Protocol
+class Laboratory
 {
 public:
-	explicit Protocol();
+	explicit Laboratory();
 
 	static inline std::vector<ReportData> reportList; /// Список отчётов
 };

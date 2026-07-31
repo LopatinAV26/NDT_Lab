@@ -20,6 +20,6 @@ private:
         // ImGuiWindowFlags_NoDecoration |
         // ImGuiWindowFlags_NoTitleBar |
         // ImGuiWindowFlags_NoMove |
-        // ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoCollapse;
 };

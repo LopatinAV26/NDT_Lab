@@ -1,6 +1,5 @@
 #include "settingsWindow.hpp"
 #include "imgui.h"
-//#include "imgui_stdlib.h"
 #include "applicationData.hpp"
 
 SettingsWindow::SettingsWindow(ApplicationData& coreAppData)

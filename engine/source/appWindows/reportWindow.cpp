@@ -1,21 +1,27 @@
-#include "protocolWindow.hpp"
+#include "reportWindow.hpp"
 
 #include <cfloat>
 #include <algorithm>
 #include "imgui.h"
 #include "imgui_stdlib.h"
+#include "laboratory.hpp"
 
-void ProtocolWindow::Show()
+ReportWindow::ReportWindow(Laboratory &laboratory)
+	: lnk{laboratory}
+{
+}
+
+void ReportWindow::Show()
 {
 	ReportTable();
 
 	if (ImGui::Button("Добавить отчёт"))
 	{
-		protocolTableRows++;
-		protocol.reportList.resize(protocolTableRows);
-		protocol.reportList.back().protocolDate = NDT::GetCurrentDateString();
+		reportTableRows++;
+		lnk.reportList.resize(reportTableRows);
+		lnk.reportList.back().protocolDate = NDT::GetCurrentDateString();
 		reportWindowIsOpen = true;
-		editingReportIndex = protocolTableRows - 1;
+		editingReportIndex = reportTableRows - 1;
 	}
 
 	ImGui::SameLine();
@@ -24,7 +30,7 @@ void ProtocolWindow::Show()
 	{
 		std::sort(reportIndexesList.rbegin(), reportIndexesList.rend()); // по убыванию, чтобы стирать с конца
 		for (int idx : reportIndexesList)
-			protocol.reportList.erase(protocol.reportList.begin() + idx);
+			lnk.reportList.erase(lnk.reportList.begin() + idx);
 		reportIndexesList.clear();
 	}
 	ImGui::EndDisabled();
@@ -33,16 +39,16 @@ void ProtocolWindow::Show()
 	ImGui::BeginDisabled(reportIndexesList.empty());
 	if (ImGui::Button("Сохранить выбранные в PDF"))
 	{
-		builder.BuildReportRGC(protocol.reportList, reportIndexesList);
+		builder.BuildReportRGC(lnk.reportList, reportIndexesList);
 	}
 	ImGui::EndDisabled();
 
 	if (reportWindowIsOpen && editingReportIndex >= 0 &&
-		editingReportIndex < static_cast<int>(protocol.reportList.size()))
-		reportCreateWindow.Show(protocol.reportList.at(editingReportIndex), reportWindowIsOpen);
+		editingReportIndex < static_cast<int>(lnk.reportList.size()))
+		reportCreateWindow.Show(lnk.reportList.at(editingReportIndex), reportWindowIsOpen);
 }
 
-void ProtocolWindow::ReportTable()
+void ReportWindow::ReportTable()
 {
 	if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 3
 						  // ImGuiTableFlags_Borders |
@@ -53,10 +59,10 @@ void ProtocolWindow::ReportTable()
 		ImGui::TableSetupColumn("Дата заключения");
 		ImGui::TableHeadersRow();
 
-		protocolTableRows = static_cast<int>(protocol.reportList.size());
-		for (int row = 0; row < protocolTableRows; ++row)
+		reportTableRows = static_cast<int>(lnk.reportList.size());
+		for (int row = 0; row < reportTableRows; ++row)
 		{
-			ReportData &repData = protocol.reportList[row];
+			ReportData &repData = lnk.reportList[row];
 			ImGui::TableNextRow();
 			ImGui::PushID(row);
 
@@ -84,7 +90,7 @@ void ProtocolWindow::ReportTable()
 			}
 
 			ImGui::PopID();
-			protocolRow = row;
+			reportRow = row;
 		}
 
 		ImGui::EndTable();

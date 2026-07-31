@@ -5,7 +5,8 @@
 #include "resourceManager.hpp"
 
 LabWindow::LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager)
-    : nomogramWindow{coreAppData, resourceManager}
+    : nomogramWindow{coreAppData, resourceManager},
+      reportWindow{lab}
 {
 }
 

@@ -54,6 +54,7 @@ void Gui::InitImGui()
 	style.WindowRounding = appData.windowRounding;
 	style.FrameRounding = appData.frameRounding;
 	style.GrabRounding = appData.grabRounding;
+	style.WindowBorderSize = 0.0f;
 
 	ImGui_ImplSDL3_InitForSDLRenderer(appData.window, appData.renderer);
 	ImGui_ImplSDLRenderer3_Init(appData.renderer);
