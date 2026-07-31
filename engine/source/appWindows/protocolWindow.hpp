@@ -7,7 +7,7 @@
 class ProtocolWindow
 {
 public:
-	void Show(bool &isOpen);
+	void Show();
 
 private:
 	void ReportTable();

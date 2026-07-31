@@ -4,176 +4,132 @@
 #include "imgui_stdlib.h"
 #include "implot.h"
 #include "applicationData.hpp"
-#include "resourceManager.hpp"
 
 NomogramWindow::NomogramWindow(ApplicationData &coreAppData, ResourceManager &resManager)
-	: appData{coreAppData},
-	  resMgr{resManager}
 {
-	devices = resMgr.LoadDevices(appData.pathToDevices);
+	devices = resManager.LoadDevices(coreAppData.pathToDevices);
 	calculatedDevices = devices;
 }
 
-void NomogramWindow::Show(bool &isOpen)
+void NomogramWindow::Show()
 {
-	ImGuiViewport *viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize(viewport->Size);
-
-	ImGuiWindowFlags window_flags =
-		// ImGuiWindowFlags_NoDecoration |
-		ImGuiWindowFlags_NoTitleBar |
-		// ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoSavedSettings;
-
-	if (ImGui::Begin("Диаграмма экспозиции", &isOpen, window_flags))
+	if (devices.empty() || calculatedDevices.empty())
 	{
-		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
-			ImGui::IsKeyPressed(ImGuiKey_Escape, false))
-			ImGui::OpenPopup("Закрыть окно?");
-
-		if (ImGui::BeginPopupModal("Закрыть окно?", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
-		{
-			ImGui::Text("Закрыть диаграмму экспозиции?");
-			ImGui::Separator();
-
-			if (ImGui::Button("Да", ImVec2(120, 0)))
-			{
-				isOpen = false;
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::SameLine();
-			if (ImGui::Button("Нет", ImVec2(120, 0)))
-				ImGui::CloseCurrentPopup();
-
-			ImGui::SetItemDefaultFocus();
-
-			ImGui::EndPopup();
-		}
-
-		if (devices.empty() || calculatedDevices.empty())
-		{
-			ImGui::Text("No devices loaded.");
-			ImGui::End();
-			return;
-		}
-
-		if (ImGui::BeginCombo("##Аппарат#", calculatedDevices[deviceIndex].name.c_str()))
-		{
-			for (int i = 0; i < std::ssize(calculatedDevices); ++i)
-			{
-				const bool isSelected = (deviceIndex == i);
-				if (ImGui::Selectable(calculatedDevices[i].name.c_str(), isSelected))
-					deviceIndex = i;
-
-				if (isSelected)
-					ImGui::SetItemDefaultFocus();
-			}
-
-			if (deviceCurrent < calculatedDevices[deviceIndex].currentMinimum ||
-				deviceCurrent > calculatedDevices[deviceIndex].currentMaximum)
-				deviceCurrent = calculatedDevices[deviceIndex].currentMinimum;
-
-			ImGui::EndCombo();
-		}
-		ImGui::SameLine();
-
-		HelpMarker(calculatedDevices[deviceIndex].information.c_str());
-		ImGui::SameLine();
-		ImGui::TextLinkOpenURL("Паспорт", "resources/devices_manual/Arina.pdf");
-
-		ImGui::DragFloat("##Фокусное расстояние#", &focusDistance, 1.f, 1.f, 2000.f, "Фокусное расстояние: %.0f мм");
-
-		if (steelThickness > steelThicknessMax)
-			steelThickness = steelThicknessMax;
-
-		if (steelThickness < steelThicknessMin)
-			steelThickness = steelThicknessMin;
-
-		ImGui::DragFloat("##Толщина стали#",
-						 &steelThickness,
-						 0.1f,
-						 steelThicknessMin,
-						 steelThicknessMax,
-						 "Толщина стали: %.1f мм");
-
-		ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment ||
-							 measureIndex == Measure::mAxmin);
-		ImGui::SliderFloat("##Сила тока#",
-						   &deviceCurrent,
-						   calculatedDevices[deviceIndex].currentMinimum,
-						   calculatedDevices[deviceIndex].currentMaximum,
-						   "Сила тока: %.1f мА");
-		ImGui::EndDisabled();
-
-		if (!calculatedDevices[deviceIndex].currentAdjustment && measureIndex == Measure::mAxmin)
-		{
-			measureIndex = Measure::min;
-			nameAxisY = "Время экспозиции, мин";
-		}
-
-		ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment);
-		if (ImGui::RadioButton("мА х мин", measureIndex == Measure::mAxmin))
-		{
-			measureIndex = Measure::mAxmin;
-			nameAxisY = "Экспозиция, мА х мин";
-		}
-		ImGui::EndDisabled();
-		ImGui::SameLine();
-		if (ImGui::RadioButton("минуты", measureIndex == Measure::min))
-		{
-			measureIndex = Measure::min;
-			nameAxisY = "Время экспозиции, мин";
-		}
-		ImGui::SameLine();
-		if (ImGui::RadioButton("секунды", measureIndex == Measure::sec))
-		{
-			measureIndex = Measure::sec;
-			nameAxisY = "Время экспозиции, с";
-		}
-
-		if (ImPlot::BeginPlot(calculatedDevices[deviceIndex].name.c_str(),
-							  ImVec2(-1, ImGui::GetContentRegionAvail().y),
-							  ImPlotFlags_NoLegend))
-		{
-			ImPlot::SetupAxes("Толщина стали, мм", nameAxisY.c_str(),
-							  ImPlotAxisFlags_AutoFit,
-							  ImPlotAxisFlags_AutoFit);
-
-			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-
-			calculatedDevices = ExposureRecalculation(devices, focusDistance, deviceCurrent);
-
-			std::vector<CurvesRef> visibleLines; // массив структур массивов
-			visibleLines.reserve(calculatedDevices[deviceIndex].curveVector.size());
-
-			for (const auto &curve : calculatedDevices[deviceIndex].curveVector)
-			{
-				if (calculatedDevices[deviceIndex].electricPower >= curve.voltage * deviceCurrent)
-				{
-					ImPlot::PlotLine(curve.label.c_str(),
-									 curve.xData.data(),
-									 curve.yData.data(),
-									 static_cast<int>(curve.xData.size()));
-
-					visibleLines.push_back({curve.xData, curve.yData,
-											ImPlot::GetLastItemColor(), curve.label});
-				}
-			}
-			if (!visibleLines.empty())
-			{
-				steelThicknessMin = visibleLines.front().x.front();
-				steelThicknessMax = visibleLines.back().x.back();
-			}
-			DrawMarkers(visibleLines, steelThickness);
-
-			ImPlot::EndPlot();
-		}
+		ImGui::Text("No devices loaded.");
+		return;
 	}
-	ImGui::End();
+
+	if (ImGui::BeginCombo("##Аппарат#", calculatedDevices[deviceIndex].name.c_str()))
+	{
+		for (int i = 0; i < std::ssize(calculatedDevices); ++i)
+		{
+			const bool isSelected = (deviceIndex == i);
+			if (ImGui::Selectable(calculatedDevices[i].name.c_str(), isSelected))
+				deviceIndex = i;
+
+			if (isSelected)
+				ImGui::SetItemDefaultFocus();
+		}
+
+		if (deviceCurrent < calculatedDevices[deviceIndex].currentMinimum ||
+			deviceCurrent > calculatedDevices[deviceIndex].currentMaximum)
+			deviceCurrent = calculatedDevices[deviceIndex].currentMinimum;
+
+		ImGui::EndCombo();
+	}
+	ImGui::SameLine();
+
+	HelpMarker(calculatedDevices[deviceIndex].information.c_str());
+	ImGui::SameLine();
+	ImGui::TextLinkOpenURL("Паспорт", "resources/devices_manual/Arina.pdf");
+
+	ImGui::DragFloat("##Фокусное расстояние#", &focusDistance, 1.f, 1.f, 2000.f, "Фокусное расстояние: %.0f мм");
+
+	if (steelThickness > steelThicknessMax)
+		steelThickness = steelThicknessMax;
+
+	if (steelThickness < steelThicknessMin)
+		steelThickness = steelThicknessMin;
+
+	ImGui::DragFloat("##Толщина стали#",
+					 &steelThickness,
+					 0.1f,
+					 steelThicknessMin,
+					 steelThicknessMax,
+					 "Толщина стали: %.1f мм");
+
+	ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment ||
+						 measureIndex == Measure::mAxmin);
+	ImGui::SliderFloat("##Сила тока#",
+					   &deviceCurrent,
+					   calculatedDevices[deviceIndex].currentMinimum,
+					   calculatedDevices[deviceIndex].currentMaximum,
+					   "Сила тока: %.1f мА");
+	ImGui::EndDisabled();
+
+	if (!calculatedDevices[deviceIndex].currentAdjustment && measureIndex == Measure::mAxmin)
+	{
+		measureIndex = Measure::min;
+		nameAxisY = "Время экспозиции, мин";
+	}
+
+	ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment);
+	if (ImGui::RadioButton("мА х мин", measureIndex == Measure::mAxmin))
+	{
+		measureIndex = Measure::mAxmin;
+		nameAxisY = "Экспозиция, мА х мин";
+	}
+	ImGui::EndDisabled();
+	ImGui::SameLine();
+	if (ImGui::RadioButton("минуты", measureIndex == Measure::min))
+	{
+		measureIndex = Measure::min;
+		nameAxisY = "Время экспозиции, мин";
+	}
+	ImGui::SameLine();
+	if (ImGui::RadioButton("секунды", measureIndex == Measure::sec))
+	{
+		measureIndex = Measure::sec;
+		nameAxisY = "Время экспозиции, с";
+	}
+
+	if (ImPlot::BeginPlot(calculatedDevices[deviceIndex].name.c_str(),
+						  ImVec2(-1, ImGui::GetContentRegionAvail().y),
+						  ImPlotFlags_NoLegend))
+	{
+		ImPlot::SetupAxes("Толщина стали, мм", nameAxisY.c_str(),
+						  ImPlotAxisFlags_AutoFit,
+						  ImPlotAxisFlags_AutoFit);
+
+		ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
+
+		calculatedDevices = ExposureRecalculation(devices, focusDistance, deviceCurrent);
+
+		std::vector<CurvesRef> visibleLines; // массив структур массивов
+		visibleLines.reserve(calculatedDevices[deviceIndex].curveVector.size());
+
+		for (const auto &curve : calculatedDevices[deviceIndex].curveVector)
+		{
+			if (calculatedDevices[deviceIndex].electricPower >= curve.voltage * deviceCurrent)
+			{
+				ImPlot::PlotLine(curve.label.c_str(),
+								 curve.xData.data(),
+								 curve.yData.data(),
+								 static_cast<int>(curve.xData.size()));
+
+				visibleLines.push_back({curve.xData, curve.yData,
+										ImPlot::GetLastItemColor(), curve.label});
+			}
+		}
+		if (!visibleLines.empty())
+		{
+			steelThicknessMin = visibleLines.front().x.front();
+			steelThicknessMax = visibleLines.back().x.back();
+		}
+		DrawMarkers(visibleLines, steelThickness);
+
+		ImPlot::EndPlot();
+	}
 }
 
 std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<XrayDevice> &deviceVector,

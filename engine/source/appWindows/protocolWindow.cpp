@@ -5,53 +5,37 @@
 #include "imgui.h"
 #include "imgui_stdlib.h"
 
-void ProtocolWindow::Show(bool &isOpen)
+void ProtocolWindow::Show()
 {
-	ImGuiViewport *viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize(viewport->Size);
+	ReportTable();
 
-	ImGuiWindowFlags window_flags =
-		//  ImGuiWindowFlags_NoDecoration |
-		//  ImGuiWindowFlags_NoTitleBar |
-		ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoSavedSettings;
-
-	if (ImGui::Begin("Отчёты НК", &isOpen, window_flags))
+	if (ImGui::Button("Добавить отчёт"))
 	{
-		ReportTable();
-
-		if (ImGui::Button("Добавить отчёт"))
-		{
-			protocolTableRows++;
-			protocol.reportList.resize(protocolTableRows);
-			protocol.reportList.back().protocolDate = NDT::GetCurrentDateString();
-			reportWindowIsOpen = true;
-			editingReportIndex = protocolTableRows - 1;
-		}
-
-		ImGui::SameLine();
-		ImGui::BeginDisabled(reportIndexesList.empty());
-		if (ImGui::Button("Удалить выбранные"))
-		{
-			std::sort(reportIndexesList.rbegin(), reportIndexesList.rend()); // по убыванию, чтобы стирать с конца
-			for (int idx : reportIndexesList)
-				protocol.reportList.erase(protocol.reportList.begin() + idx);
-			reportIndexesList.clear();
-		}
-		ImGui::EndDisabled();
-
-		ImGui::SameLine();
-		ImGui::BeginDisabled(reportIndexesList.empty());
-		if (ImGui::Button("Сохранить выбранные в PDF"))
-		{
-			builder.BuildReportRGC(protocol.reportList, reportIndexesList);
-		}
-		ImGui::EndDisabled();
+		protocolTableRows++;
+		protocol.reportList.resize(protocolTableRows);
+		protocol.reportList.back().protocolDate = NDT::GetCurrentDateString();
+		reportWindowIsOpen = true;
+		editingReportIndex = protocolTableRows - 1;
 	}
-	ImGui::End();
+
+	ImGui::SameLine();
+	ImGui::BeginDisabled(reportIndexesList.empty());
+	if (ImGui::Button("Удалить выбранные"))
+	{
+		std::sort(reportIndexesList.rbegin(), reportIndexesList.rend()); // по убыванию, чтобы стирать с конца
+		for (int idx : reportIndexesList)
+			protocol.reportList.erase(protocol.reportList.begin() + idx);
+		reportIndexesList.clear();
+	}
+	ImGui::EndDisabled();
+
+	ImGui::SameLine();
+	ImGui::BeginDisabled(reportIndexesList.empty());
+	if (ImGui::Button("Сохранить выбранные в PDF"))
+	{
+		builder.BuildReportRGC(protocol.reportList, reportIndexesList);
+	}
+	ImGui::EndDisabled();
 
 	if (reportWindowIsOpen && editingReportIndex >= 0 &&
 		editingReportIndex < static_cast<int>(protocol.reportList.size()))
@@ -60,8 +44,10 @@ void ProtocolWindow::Show(bool &isOpen)
 
 void ProtocolWindow::ReportTable()
 {
-	if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 3,
-						  /*ImGuiTableFlags_Borders |*/ ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX))
+	if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 3
+						  // ImGuiTableFlags_Borders |
+						  // ImGuiTableFlags_NoHostExtendX
+						  ))
 	{
 		ImGui::TableSetupColumn("Номер заключения");
 		ImGui::TableSetupColumn("Дата заключения");

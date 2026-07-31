@@ -5,8 +5,7 @@
 #include "imgui_impl_sdlrenderer3.h"
 #include "imgui_stdlib.h"
 #include "appWindows/settingsWindow.hpp"
-#include "appWindows/nomogramWindow.hpp"
-#include "appWindows/protocolWindow.hpp"
+#include "appWindows/labWindow.hpp"
 
 class ApplicationData;
 class ResourceManager;
@@ -22,6 +21,8 @@ public:
 	void IterateImGui();
 	void RenderImGui();
 
+	void SetRadiationTheme();
+
 private:
 	void ButtonsWindow();
 
@@ -29,11 +30,9 @@ private:
 	ResourceManager &resManager;
 
 	SettingsWindow settingsWindow;
-	NomogramWindow nomogramWindow;
-	ProtocolWindow protocolWindow;
+	LabWindow labWindow;
 
-	bool buttonsWindowOpen = {true};
-	bool settingsWindowOpen = {false};
-	bool nomogramWindowOpen = {false};
-	bool protocolWindowOpen = {false};
+	bool buttonsWindowOpen = true;
+	bool settingsWindowOpen = false;
+	bool labWindowIsOpen = false;
 };

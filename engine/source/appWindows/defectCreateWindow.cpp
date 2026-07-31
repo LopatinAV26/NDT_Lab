@@ -1,23 +1,12 @@
 #include "defectCreateWindow.hpp"
 
-#include "imgui.h"
+#include "laboratory.hpp"
 
 void DefectCreateWindow::Show(ReportData &report, bool &isOpen)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
-    ImVec2 size(viewport->Size.x * 0.8f, viewport->Size.y * 0.8f);
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x + (viewport->Size.x - size.x) * 0.5f,
-                                   viewport->Pos.y + (viewport->Size.y - size.y) * 0.5f),
-                            ImGuiCond_Appearing);
-    ImGui::SetNextWindowSize(size, ImGuiCond_Appearing);
-
-    ImGuiWindowFlags window_flags =
-        //  ImGuiWindowFlags_NoDecoration |
-        //  ImGuiWindowFlags_NoTitleBar |
-        // ImGuiWindowFlags_NoMove |
-        // ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoSavedSettings;
+    ImGui::SetNextWindowPos(viewport->Pos);
+    ImGui::SetNextWindowSize(viewport->Size);
 
     if (ImGui::Begin("Конструктор дефектов", &isOpen, window_flags))
     {

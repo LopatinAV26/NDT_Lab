@@ -6,13 +6,12 @@
 #include "resourceManager.hpp"
 
 class ApplicationData;
-// class ResourceManager;
 
 class NomogramWindow
 {
 public:
     explicit NomogramWindow(ApplicationData &coreAppData, ResourceManager &resManager);
-    void Show(bool &isOpen);
+    void Show();
 
 private:
     struct CurvesRef
@@ -57,6 +56,4 @@ private:
     float steelThicknessMax = {10.f};
     std::vector<XrayDevice> devices;
     std::vector<XrayDevice> calculatedDevices;
-    ApplicationData &appData;
-    ResourceManager &resMgr;
 };
