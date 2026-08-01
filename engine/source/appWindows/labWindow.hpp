@@ -13,6 +13,8 @@ public:
     LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager);
     void Show(bool &isOpen);
 
+    void Employees(std::vector<Employee> &empl);
+
 private:
     Laboratory lab;
     NomogramWindow nomogramWindow;

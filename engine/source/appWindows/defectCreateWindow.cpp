@@ -1,5 +1,6 @@
 #include "defectCreateWindow.hpp"
 
+#include <cfloat>
 #include "laboratory.hpp"
 
 void DefectCreateWindow::Show(ReportData &report, bool &isOpen)
@@ -15,7 +16,7 @@ void DefectCreateWindow::Show(ReportData &report, bool &isOpen)
     ImGui::End();
 }
 
-void DefectCreateWindow::ConstructDefectRGCString(DefRGC &input)
+void DefectCreateWindow::ConstructDefectRGCString(DefRT &input)
 {
     // Ас 25.0 – 2.0 × 1.0 ≤	пример записи дефекта
     // A   B   C  D  E  F  G
@@ -41,7 +42,7 @@ void DefectCreateWindow::ConstructDefectRGCString(DefRGC &input)
 
 void DefectCreateWindow::DefectTable(ReportData &report)
 {
-    if (ImGui::BeginTable("Defect creator", 8, ImGuiTableFlags_Borders))
+    if (ImGui::BeginTable("Defect creator", 7, ImGuiTableFlags_Borders))
     {
         ImGui::TableSetupColumn("Координата");
         ImGui::TableSetupColumn("Обозначение");
@@ -56,7 +57,7 @@ void DefectCreateWindow::DefectTable(ReportData &report)
 
         for (int row = 0; row < defectTableRows; ++row)
         {
-            DefRGC &def = report.defRGCList.at(row);
+            DefRT &def = report.defRGCList.at(row);
             ImGui::TableNextRow();
             ImGui::PushID(row);
 
@@ -119,30 +120,29 @@ void DefectCreateWindow::DefectTable(ReportData &report)
                 ImGui::EndCombo();
             }
 
-            ImGui::PopID();
-
             ConstructDefectRGCString(def);
 
             ImGui::TableSetColumnIndex(6); //////////////////////////////
             if (defectTableRows > 0)
             {
                 // ImGui::Text("(%d) %s", data.defectList[row].coord, data.defectList[row].record.c_str());
+                ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
                 ImGui::TextUnformatted(std::format("({:d}) {}", def.coord, def.record).c_str()); // безопаснее
-            }
-        }
+                ImGui::PopTextWrapPos();
 
-        ImGui::TableSetColumnIndex(7); //////////////////////////////
-        if (defectTableRows > 0)
-            if (ImGui::Button("Удалить дефект"))
-            {
-                defectTableRows--;
-                report.defRGCList.resize(defectTableRows);
+                if (ImGui::Button("-"))
+                {
+                    defectTableRows--;
+                    report.defRGCList.resize(defectTableRows);
+                }
             }
+            ImGui::PopID();
+        }
 
         ImGui::EndTable();
     }
 
-    if (ImGui::Button("Добавить дефект"))
+    if (ImGui::Button("+"))
     {
         defectTableRows++;
         report.defRGCList.resize(defectTableRows);

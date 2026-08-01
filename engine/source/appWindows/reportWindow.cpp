@@ -6,93 +6,87 @@
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
 
-ReportWindow::ReportWindow(Laboratory &laboratory)
-	: lnk{laboratory}
+void ReportWindow::Show(std::vector<ReportData> &repList)
 {
-}
+	static int tableRows = 0;			   ///< количество строк в таблице отчётов
+	static int editingIndex = -1;		   ///< текущий индекс отчёта, который создаётся/редактируется
+	static std::vector<int> indexesList; ///< Список индексов для печати в pdf
+	static std::vector<bool> selected;
 
-void ReportWindow::Show()
-{
-	ReportTable();
-
-	if (ImGui::Button("Добавить отчёт"))
+	if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 2))
 	{
-		reportTableRows++;
-		lnk.reportList.resize(reportTableRows);
-		lnk.reportList.back().protocolDate = NDT::GetCurrentDateString();
-		reportWindowIsOpen = true;
-		editingReportIndex = reportTableRows - 1;
-	}
+		//ImGui::TableSetupColumn("Номер заключения");
+		//ImGui::TableSetupColumn("Дата заключения");
+		//ImGui::TableHeadersRow();
 
-	ImGui::SameLine();
-	ImGui::BeginDisabled(reportIndexesList.empty());
-	if (ImGui::Button("Удалить выбранные"))
-	{
-		std::sort(reportIndexesList.rbegin(), reportIndexesList.rend()); // по убыванию, чтобы стирать с конца
-		for (int idx : reportIndexesList)
-			lnk.reportList.erase(lnk.reportList.begin() + idx);
-		reportIndexesList.clear();
-	}
-	ImGui::EndDisabled();
-
-	ImGui::SameLine();
-	ImGui::BeginDisabled(reportIndexesList.empty());
-	if (ImGui::Button("Сохранить выбранные в PDF"))
-	{
-		builder.BuildReportRGC(lnk.reportList, reportIndexesList);
-	}
-	ImGui::EndDisabled();
-
-	if (reportWindowIsOpen && editingReportIndex >= 0 &&
-		editingReportIndex < static_cast<int>(lnk.reportList.size()))
-		reportCreateWindow.Show(lnk.reportList.at(editingReportIndex), reportWindowIsOpen);
-}
-
-void ReportWindow::ReportTable()
-{
-	if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 3
-						  // ImGuiTableFlags_Borders |
-						  // ImGuiTableFlags_NoHostExtendX
-						  ))
-	{
-		ImGui::TableSetupColumn("Номер заключения");
-		ImGui::TableSetupColumn("Дата заключения");
-		ImGui::TableHeadersRow();
-
-		reportTableRows = static_cast<int>(lnk.reportList.size());
-		for (int row = 0; row < reportTableRows; ++row)
+		tableRows = static_cast<int>(repList.size());
+		selected.resize(tableRows);
+		for (int row = 0; row < tableRows; ++row)
 		{
-			ReportData &repData = lnk.reportList[row];
 			ImGui::TableNextRow();
 			ImGui::PushID(row);
 
-			ImGui::TableSetColumnIndex(0); /////////////////////////////////////////////////////////////////
-			bool isSelected = std::find(reportIndexesList.begin(), reportIndexesList.end(), row) != reportIndexesList.end();
-			if (ImGui::Checkbox("##select", &isSelected))
+			ImGui::TableNextColumn(); //-------------------------------------------------------
+			if (ImGui::Selectable("###", selected.at(row), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
 			{
-				if (isSelected)
-					reportIndexesList.push_back(row);
+				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+				{
+					reportCreateWindowIsOpen = true;
+					editingIndex = row;
+				}
 				else
-					std::erase(reportIndexesList, row);
+				{
+					selected.at(row) = !selected.at(row);
+					if (selected.at(row))
+						indexesList.push_back(row);
+					else
+						std::erase(indexesList, row);
+				}
 			}
 
 			ImGui::SameLine();
-			ImGui::TextUnformatted(std::format("{:s}", repData.protocolNumber).c_str());
+			ImGui::TextUnformatted(std::format("{:s}", repList.at(row).protocolNumber).c_str());
 
-			ImGui::TableSetColumnIndex(1); /////////////////////////////////////////////////////////////////
-			ImGui::TextUnformatted(std::format("{:s}", repData.protocolDate).c_str());
+			ImGui::TableNextColumn(); //-----------------------------------------------------
 
-			ImGui::SameLine();
-			if (ImGui::Button("Редактировать"))
-			{
-				reportWindowIsOpen = true;
-				editingReportIndex = row;
-			}
+			ImGui::TextUnformatted(std::format("{:s}", repList.at(row).protocolDate).c_str());
 
 			ImGui::PopID();
-			reportRow = row;
 		}
 
 		ImGui::EndTable();
 	}
+
+	if (ImGui::Button("Добавить отчёт")) //////////////////////////////////////////
+	{
+		tableRows++;
+		repList.resize(tableRows);
+		repList.back().protocolDate = NDT::GetCurrentDateString();
+		reportCreateWindowIsOpen = true;
+		editingIndex = tableRows - 1;
+	}
+
+	ImGui::SameLine();
+	ImGui::BeginDisabled(indexesList.empty());
+	if (ImGui::Button("Удалить выбранные")) ////////////////////////////////////////
+	{
+		std::sort(indexesList.rbegin(), indexesList.rend()); // по убыванию, чтобы стирать с конца
+		for (int idx : indexesList)
+			repList.erase(repList.begin() + idx);
+		indexesList.clear();
+		std::ranges::fill(selected, false); // индексы после удаления сдвинулись, старые флаги уже не соответствуют строкам
+	}
+	ImGui::EndDisabled();
+
+	ImGui::SameLine();
+	ImGui::BeginDisabled(indexesList.empty());
+	if (ImGui::Button("Сохранить выбранные в PDF")) //////////////////////////////////////
+	{
+		builder.BuildReportRGC(repList, indexesList);
+	}
+	ImGui::EndDisabled();
+
+	if (reportCreateWindowIsOpen && editingIndex >= 0 &&
+		editingIndex < static_cast<int>(repList.size()))
+		reportCreateWindow.Show(repList.at(editingIndex), reportCreateWindowIsOpen);
 }

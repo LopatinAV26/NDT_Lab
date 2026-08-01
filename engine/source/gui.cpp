@@ -1,4 +1,5 @@
 #include "gui.hpp"
+#include <format>
 #include <SDL3/SDL.h>
 #include "implot.h"
 #include "embeddedFonts.hpp"
@@ -90,6 +91,14 @@ void Gui::IterateImGui()
 	SDL_SetRenderScale(appData.renderer,
 					   io.DisplayFramebufferScale.x,
 					   io.DisplayFramebufferScale.y);
+
+	static float fpsUpdateTimer = 0.0f;
+	fpsUpdateTimer += io.DeltaTime;
+	if (fpsUpdateTimer >= 0.5f)
+	{
+		SDL_SetWindowTitle(appData.window, std::format("NDT Lab - {:.0f} FPS", io.Framerate).c_str());
+		fpsUpdateTimer = 0.0f;
+	}
 }
 
 // Добавить перед SDL_RenderPresent

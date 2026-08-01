@@ -1,12 +1,14 @@
 #include "labWindow.hpp"
 
+#include <cfloat>
 #include "imgui.h"
+#include "imgui_stdlib.h"
 #include "applicationData.hpp"
 #include "resourceManager.hpp"
 
 LabWindow::LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager)
-    : nomogramWindow{coreAppData, resourceManager},
-      reportWindow{lab}
+    : lab{coreAppData},
+      nomogramWindow{coreAppData, resourceManager}
 {
 }
 
@@ -53,18 +55,74 @@ void LabWindow::Show(bool &isOpen)
 
             if (ImGui::BeginTabItem("Отчёты контроля"))
             {
-                reportWindow.Show();
+                reportWindow.Show(lab.reportList);
                 ImGui::EndTabItem();
             }
 
             if (ImGui::BeginTabItem("Сотрудники"))
             {
-
+                Employees(lab.employeesList);
                 ImGui::EndTabItem();
             }
 
             ImGui::EndTabBar();
         }
         ImGui::End();
+    }
+}
+
+void LabWindow::Employees(std::vector<Employee> &empl)
+{
+    static int tableRows = 0;
+    if (ImGui::BeginTable("Сотрудники", 6, ImGuiTableFlags_Borders))
+    {
+        tableRows = empl.size();
+        for (int row = 0; row < tableRows; ++row)
+        {
+            ImGui::TableNextRow();
+            ImGui::PushID(row);
+
+            bool changed = false;
+
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##name#", &empl.at(row).name);
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##organization#", &empl.at(row).organization);
+            ImGui::SetItemTooltip("%s", empl.at(row).organization.c_str());
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##department#", &empl.at(row).department);
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##position#", &empl.at(row).position);
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##employeementDate#", &empl.at(row).employeementDate);
+
+            ImGui::PopStyleVar();
+            ImGui::PopStyleColor();
+
+            if (changed)
+            {
+                empl.at(row).updatedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+            }
+
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+    if (ImGui::Button("+")) //////////////////////////////////////////
+    {
+        tableRows++;
+        empl.resize(tableRows);
     }
 }

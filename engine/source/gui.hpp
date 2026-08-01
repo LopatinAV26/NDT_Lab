@@ -21,10 +21,9 @@ public:
 	void IterateImGui();
 	void RenderImGui();
 
-	void SetRadiationTheme();
-
 private:
 	void ButtonsWindow();
+	void SetRadiationTheme();
 
 	ApplicationData &appData;
 	ResourceManager &resManager;

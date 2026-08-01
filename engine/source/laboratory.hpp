@@ -1,24 +1,41 @@
 #pragma once
 
+#include <memory>
 #include <string>
+#include <format>
 #include <array>
 #include <vector>
-#include <cmath>
-#include <format>
 #include <chrono>
 
-struct EmployeeNdt ///< Сотрудники лаборатории НК
+#include "utilities.hpp"
+#include "databaseManager.hpp"
+
+class ApplicationData;
+
+struct Employee ///< Сотрудники (ЛНК и надзор)
 {
-	std::string name{"Лопатин Андрей Владимирович"};
-	std::string shortName{"Лопатин А.В."};
+	std::string id = NDT::GenerateUuidV4(); // UUID v4, генерируется на клиенте при создании записи
+	std::chrono::sys_seconds updatedAt =
+		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
+	std::optional<std::chrono::sys_seconds> deletedAt;								// nullopt = не удалена; иначе - момент "мягкого" удаления
+	std::string name{};
 	std::string organization{"ООО Транснефть - Дальний Восток БПО Белогорск"};
 	std::string department{"Лаборатория неразрушающего контроля"};
 	std::string position{"Дефектоскопист РГГ"};
-	std::chrono::year_month_day employeementDate{std::chrono::year{2016}, std::chrono::month{11}, std::chrono::day{14}};
+	std::string employeementDate{"2016-11-14"};
 	std::string personalCode{"Б04"};
+	u_int8_t level = 0;
+	std::string experience;
+	std::string certificateNumber = {"РСКТН-09050-2024"};
+	std::string certificateEndDateVT;
+	std::string certificateEndDateUT;
+	std::string certificateEndRT;
+	std::string certificateEndPT;
+	std::string certificateEndMT;
+	std::string certificateEndLT;
 };
 
-struct DefRGC
+struct DefRT
 {
 	int nameIndex = 0;
 	int endIndex = 0;
@@ -174,35 +191,18 @@ struct ReportData
 	std::string masterOrganization = {"ООО Транснефть - Дальний Восток"};
 	std::string masterCertNumber = {"ТОР-9АЦ-II-ХХХХ"};
 
-	static inline std::vector<EmployeeNdt> employeesNdtList;
-	std::vector<DefRGC> defRGCList; ///< Список дефектов
+	static inline std::vector<Employee> employeesNdtList;
+	std::vector<DefRT> defRGCList; ///< Список дефектов
 };
 
 class Laboratory
 {
 public:
-	explicit Laboratory();
+	explicit Laboratory(ApplicationData &appData);
 
+	std::vector<Employee> employeesList;			  /// список сотрудников
 	static inline std::vector<ReportData> reportList; /// Список отчётов
+
+private:
+	std::unique_ptr<DatabaseManager> dbManager;
 };
-
-namespace NDT
-{
-	/// @brief Получить текущую локальную дату
-	std::string GetCurrentDateString();
-
-	std::chrono::year_month_day GetTerm(const std::chrono::year_month_day &date1,
-										const std::chrono::year_month_day &date2 = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now()));
-
-	/// @brief Вычисление количества участков по 300 мм
-	/// @param diam диаметр свариваемых труб
-	/// @return Количество участков
-	std::vector<std::string> CalculateNumString(int diam, int range = 300);
-
-	float GetPerimeter(int diam);
-
-	/// @brief Максимально допустимая плотность снимка, в зависимости от яркости негатоскопа
-	/// @param negBright паспортная яркость негатоскопа
-	/// @return Плотность снимка в е.о.п.
-	float GetMetalDensity(int negBright);
-}

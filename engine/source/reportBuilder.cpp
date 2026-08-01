@@ -2,6 +2,7 @@
 
 #include <format>
 #include "pdfManager.hpp"
+#include "utilities.hpp"
 
 ReportBuilder::ReportBuilder()
 {
