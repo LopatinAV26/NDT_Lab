@@ -18,15 +18,15 @@ struct Employee ///< Сотрудники (ЛНК и надзор)
 	std::chrono::sys_seconds updatedAt =
 		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
 	std::optional<std::chrono::sys_seconds> deletedAt;								// nullopt = не удалена; иначе - момент "мягкого" удаления
-	std::string name{};
-	std::string organization{"ООО Транснефть - Дальний Восток БПО Белогорск"};
-	std::string department{"Лаборатория неразрушающего контроля"};
-	std::string position{"Дефектоскопист РГГ"};
-	std::string employeementDate{"2016-11-14"};
-	std::string personalCode{"Б04"};
-	u_int8_t level = 0;
+	std::string name;
+	std::string organization;
+	std::string department;
+	std::string position;
+	std::string employeementDate;
+	std::string personalCode;
+	std::string level;
 	std::string experience;
-	std::string certificateNumber = {"РСКТН-09050-2024"};
+	std::string certificateNumber;
 	std::string certificateEndDateVT;
 	std::string certificateEndDateUT;
 	std::string certificateEndRT;
@@ -199,6 +199,8 @@ class Laboratory
 {
 public:
 	explicit Laboratory(ApplicationData &appData);
+
+	void SaveDB();
 
 	std::vector<Employee> employeesList;			  /// список сотрудников
 	static inline std::vector<ReportData> reportList; /// Список отчётов

@@ -22,7 +22,7 @@ void Gui::InitImGui()
 	[[maybe_unused]] ImGuiIO &io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-	io.IniFilename = nullptr;
+	//io.IniFilename = nullptr;
 
 	if (ImFont *font = LoadEmbeddedShareTechMono(io, (appData.fontSizeMax * appData.mainScale)))
 		io.FontDefault = font;

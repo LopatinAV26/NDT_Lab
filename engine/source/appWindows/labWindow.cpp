@@ -31,6 +31,7 @@ void LabWindow::Show(bool &isOpen)
 
             if (ImGui::Button("Да", ImVec2(120, 0)))
             {
+                lab.SaveDB();
                 isOpen = false;
                 ImGui::CloseCurrentPopup();
             }
@@ -74,8 +75,22 @@ void LabWindow::Show(bool &isOpen)
 void LabWindow::Employees(std::vector<Employee> &empl)
 {
     static int tableRows = 0;
-    if (ImGui::BeginTable("Сотрудники", 6, ImGuiTableFlags_Borders))
+    if (ImGui::BeginTable("Сотрудники", 15,
+                          ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY))
     {
+        ImGui::TableSetupColumn("Имя");
+        ImGui::TableSetupColumn("Организация");
+        ImGui::TableSetupColumn("Подразделение");
+        ImGui::TableSetupColumn("Должность");
+        ImGui::TableSetupColumn("Дата\nтрудоустройства");
+        ImGui::TableSetupColumn("Опыт работы");
+        ImGui::TableSetupColumn("Личный код");
+        ImGui::TableSetupColumn("Разряд");
+        ImGui::TableSetupColumn("Номер\nудостоверения");
+        ImGui::TableSetupColumn("");
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableHeadersRow();
+
         tableRows = empl.size();
         for (int row = 0; row < tableRows; ++row)
         {
@@ -93,7 +108,7 @@ void LabWindow::Employees(std::vector<Employee> &empl)
 
             ImGui::TableNextColumn();
             ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##organization#", &empl.at(row).organization);
+            changed |= ImGui::InputTextMultiline("##organization#", &empl.at(row).organization);
             ImGui::SetItemTooltip("%s", empl.at(row).organization.c_str());
 
             ImGui::TableNextColumn();
@@ -107,6 +122,22 @@ void LabWindow::Employees(std::vector<Employee> &empl)
             ImGui::TableNextColumn();
             ImGui::SetNextItemWidth(-FLT_MIN);
             changed |= ImGui::InputText("##employeementDate#", &empl.at(row).employeementDate);
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##experience#", &empl.at(row).experience);
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##personalCode#", &empl.at(row).personalCode);
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##level#", &empl.at(row).level);
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            changed |= ImGui::InputText("##certificateNumber#", &empl.at(row).certificateNumber);
 
             ImGui::PopStyleVar();
             ImGui::PopStyleColor();
