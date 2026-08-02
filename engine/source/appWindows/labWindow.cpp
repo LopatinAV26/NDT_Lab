@@ -56,104 +56,18 @@ void LabWindow::Show(bool &isOpen)
 
             if (ImGui::BeginTabItem("Отчёты контроля"))
             {
-                reportWindow.Show(lab.reportList);
+                reportWindow.ShowReportsWindow(lab.reportList);
                 ImGui::EndTabItem();
             }
 
             if (ImGui::BeginTabItem("Сотрудники"))
             {
-                Employees(lab.employeesList);
+                emplWindow.ShowEmployeesWindow(lab.employeesList);
                 ImGui::EndTabItem();
             }
 
             ImGui::EndTabBar();
         }
         ImGui::End();
-    }
-}
-
-void LabWindow::Employees(std::vector<Employee> &empl)
-{
-    static int tableRows = 0;
-    if (ImGui::BeginTable("Сотрудники", 15,
-                          ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY))
-    {
-        ImGui::TableSetupColumn("Имя");
-        ImGui::TableSetupColumn("Организация");
-        ImGui::TableSetupColumn("Подразделение");
-        ImGui::TableSetupColumn("Должность");
-        ImGui::TableSetupColumn("Дата\nтрудоустройства");
-        ImGui::TableSetupColumn("Опыт работы");
-        ImGui::TableSetupColumn("Личный код");
-        ImGui::TableSetupColumn("Разряд");
-        ImGui::TableSetupColumn("Номер\nудостоверения");
-        ImGui::TableSetupColumn("");
-        ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableHeadersRow();
-
-        tableRows = empl.size();
-        for (int row = 0; row < tableRows; ++row)
-        {
-            ImGui::TableNextRow();
-            ImGui::PushID(row);
-
-            bool changed = false;
-
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##name#", &empl.at(row).name);
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputTextMultiline("##organization#", &empl.at(row).organization);
-            ImGui::SetItemTooltip("%s", empl.at(row).organization.c_str());
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##department#", &empl.at(row).department);
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##position#", &empl.at(row).position);
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##employeementDate#", &empl.at(row).employeementDate);
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##experience#", &empl.at(row).experience);
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##personalCode#", &empl.at(row).personalCode);
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##level#", &empl.at(row).level);
-
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            changed |= ImGui::InputText("##certificateNumber#", &empl.at(row).certificateNumber);
-
-            ImGui::PopStyleVar();
-            ImGui::PopStyleColor();
-
-            if (changed)
-            {
-                empl.at(row).updatedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-            }
-
-            ImGui::PopID();
-        }
-        ImGui::EndTable();
-    }
-    if (ImGui::Button("+")) //////////////////////////////////////////
-    {
-        tableRows++;
-        empl.resize(tableRows);
     }
 }

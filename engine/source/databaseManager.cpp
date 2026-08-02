@@ -36,7 +36,6 @@ namespace
         {"employeement_date", "TEXT"},
         {"personal_code", "TEXT"},
         {"level", "TEXT"},
-        {"experience", "TEXT"},
         {"certificate_number", "TEXT"},
         {"certificate_end_vt", "TEXT"},
         {"certificate_end_ut", "TEXT"},
@@ -123,14 +122,13 @@ void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
         sqlite3_bind_text(stmt, 8, e.employeementDate.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 9, e.personalCode.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 10, e.level.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 11, e.experience.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 12, e.certificateNumber.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 13, e.certificateEndDateVT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 14, e.certificateEndDateUT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 15, e.certificateEndRT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 16, e.certificateEndPT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 17, e.certificateEndMT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 18, e.certificateEndLT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 11, e.certificateNumber.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 12, e.certificateEndDateVT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 13, e.certificateEndDateUT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 14, e.certificateEndDateRT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 15, e.certificateEndDatePT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 16, e.certificateEndDateMT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 17, e.certificateEndDateLT.c_str(), -1, SQLITE_TRANSIENT);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveEmployees: вставка/обновление не удались: %s", sqlite3_errmsg(db));
@@ -185,14 +183,13 @@ std::vector<Employee> DatabaseManager::LoadEmployees()
         e.employeementDate = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 7));
         e.personalCode = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 8));
         e.level = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 9));
-        e.experience = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 10));
-        e.certificateNumber = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 11));
-        e.certificateEndDateVT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 12));
-        e.certificateEndDateUT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 13));
-        e.certificateEndRT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 14));
-        e.certificateEndPT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 15));
-        e.certificateEndMT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 16));
-        e.certificateEndLT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 17));
+        e.certificateNumber = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 10));
+        e.certificateEndDateVT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 11));
+        e.certificateEndDateUT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 12));
+        e.certificateEndDateRT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 13));
+        e.certificateEndDatePT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 14));
+        e.certificateEndDateMT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 15));
+        e.certificateEndDateLT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 16));
 
         employees.push_back(std::move(e));
     }

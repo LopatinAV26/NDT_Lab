@@ -1,14 +1,15 @@
 #pragma once
 
+#include <vector>
 #include "reportBuilder.hpp"
 #include "reportCreateWindow.hpp"
 
-class Laboratory;
+class ReportData;
 
 class ReportWindow
 {
 public:
-	void Show(std::vector<ReportData> &repList);
+	void ShowReportsWindow(std::vector<ReportData> &repList);
 
 private:
 	ReportBuilder builder;

@@ -3,6 +3,7 @@
 #include "laboratory.hpp"
 #include "appWindows/nomogramWindow.hpp"
 #include "appWindows/reportWindow.hpp"
+#include "appWindows/employeesWindow.hpp"
 
 class ApplicationData;
 class ResourceManager;
@@ -13,12 +14,11 @@ public:
     LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager);
     void Show(bool &isOpen);
 
-    void Employees(std::vector<Employee> &empl);
-
 private:
     Laboratory lab;
     NomogramWindow nomogramWindow;
     ReportWindow reportWindow;
+    EmployeesWindow emplWindow;
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration;
 };

@@ -6,7 +6,7 @@
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
 
-void ReportWindow::Show(std::vector<ReportData> &repList)
+void ReportWindow::ShowReportsWindow(std::vector<ReportData> &repList)
 {
 	static int tableRows = 0;			   ///< количество строк в таблице отчётов
 	static int editingIndex = -1;		   ///< текущий индекс отчёта, который создаётся/редактируется
@@ -57,7 +57,7 @@ void ReportWindow::Show(std::vector<ReportData> &repList)
 		ImGui::EndTable();
 	}
 
-	if (ImGui::Button("Добавить отчёт")) //////////////////////////////////////////
+	if (ImGui::Button("+")) //////////////////////////////////////////
 	{
 		tableRows++;
 		repList.resize(tableRows);

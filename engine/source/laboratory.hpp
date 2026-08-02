@@ -25,14 +25,13 @@ struct Employee ///< Сотрудники (ЛНК и надзор)
 	std::string employeementDate;
 	std::string personalCode;
 	std::string level;
-	std::string experience;
 	std::string certificateNumber;
 	std::string certificateEndDateVT;
 	std::string certificateEndDateUT;
-	std::string certificateEndRT;
-	std::string certificateEndPT;
-	std::string certificateEndMT;
-	std::string certificateEndLT;
+	std::string certificateEndDateRT;
+	std::string certificateEndDatePT;
+	std::string certificateEndDateMT;
+	std::string certificateEndDateLT;
 };
 
 struct DefRT

@@ -8,3 +8,4 @@ out/
 .claude
 normative/
 devices_manual/
+resources/imgui.ini

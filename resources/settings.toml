@@ -1,7 +1,7 @@
-fontSize = 8.0
-frameRounding = 0.0
-grabRounding = 0.0
-guiStyle = 2
+fontSize = 9.0
+frameRounding = 3.0
+grabRounding = 3.0
+guiStyle = 0
 mainScale = 2.0
 vsyncMode = 1
 windowRounding = 3.0

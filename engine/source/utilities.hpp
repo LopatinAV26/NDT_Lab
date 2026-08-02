@@ -7,14 +7,36 @@
 #include <optional>
 #include <random>
 #include <cstdint>
+#include <ctime>
 
 namespace NDT
 {
 	/// @brief Получить текущую локальную дату
 	std::string GetCurrentDateString();
 
+	/// @brief Разобрать дату в формате ISO 8601 (YYYY-MM-DD);
+	/// @brief при ошибке разбора возвращает 1900-01-01
+	tm ParseDateString(const std::string &date);
+
+	/// @brief Отформатировать дату в формате ISO 8601 (YYYY-MM-DD) - для хранения в БД
+	/// @return std::string в формате ISO 8601 (YYYY-MM-DD)
+	std::string FormatDateString(const tm &date);
+
+	/// @brief Преобразовать ISO-дату в формат ДД.ММ.ГГГГ - для отображения в UI
+	/// @return std::string в формате ДД.ММ.ГГГГ
+	std::string FormatDateForDisplay(const std::string &isoDate);
+
 	std::chrono::year_month_day GetTerm(const std::chrono::year_month_day &date1,
 										const std::chrono::year_month_day &date2 = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now()));
+
+	/// @brief Разобрать дату в формате ISO 8601 (YYYY-MM-DD) в std::chrono::year_month_day
+	std::chrono::year_month_day ParseIsoDate(const std::string &isoDate);
+
+	/// @brief Отформатировать разницу дат (результат GetTerm) в строку вида "5 лет 3 месяца 12 дней"
+	std::string FormatTerm(const std::chrono::year_month_day &term);
+
+	/// @brief Стаж сотрудника на сегодняшний день, вычисляется от даты трудоустройства (ISO 8601) - не хранится в БД
+	std::string GetEmployeeExperience(const std::string &employeementDateIso);
 
 	/// @brief Вычисление количества участков по 300 мм
 	/// @param diam диаметр свариваемых труб

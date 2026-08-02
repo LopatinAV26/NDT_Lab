@@ -21,5 +21,5 @@ void ReportCreateWindow::Show(ReportData &report, bool &isOpen)
     ImGui::End();
 
     if (defectWindowIsOpen)
-        defectCreateWindow.Show(report, defectWindowIsOpen);
+        defectCreateWindow.ShowDefectCreateWindow(report, defectWindowIsOpen);
 }
