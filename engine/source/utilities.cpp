@@ -24,6 +24,18 @@ namespace
 
 namespace NDT
 {
+	void HelpMarker(const char *desc)
+	{
+		ImGui::TextDisabled("(?)");
+		if (ImGui::BeginItemTooltip())
+		{
+			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+			ImGui::TextUnformatted(desc);
+			ImGui::PopTextWrapPos();
+			ImGui::EndTooltip();
+		}
+	}
+
 	std::string GetCurrentDateString()
 	{
 		auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());

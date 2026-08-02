@@ -24,9 +24,11 @@ void Gui::InitImGui()
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 	io.IniFilename = appData.pathToImGuiIniFile;
 
-	if (ImFont *font = LoadEmbeddedShareTechMono(io, (appData.fontSizeMax * appData.mainScale)))
+	// Шрифт грузится один раз под fontSizeMax - атлас в этой версии ImGui рендерит глифы под
+	// итоговый масштабированный размер на лету (style.FontScaleMain/FontScaleDpi), пересборка
+	// атласа при смене масштаба не нужна.
+	if (ImFont *font = LoadEmbeddedShareTechMono(io, appData.fontSizeMax))
 		io.FontDefault = font;
-	io.FontGlobalScale = appData.fontSize / appData.fontSizeMax;
 
 	switch (appData.style)
 	{
@@ -46,21 +48,34 @@ void Gui::InitImGui()
 		break;
 	}
 
-	// SetRadiationTheme();
-
 	ImGuiStyle &style = ImGui::GetStyle();
-#ifdef WIN32
-	style.ScaleAllSizes(appData.mainScale);
-#endif
 	style.WindowRounding = appData.windowRounding;
 	style.FrameRounding = appData.frameRounding;
 	style.GrabRounding = appData.grabRounding;
 	style.WindowBorderSize = 0.0f;
 
+	referenceStyle = style; // немасштабированный эталон - снят до применения масштаба
+
+	ApplyScale();
+
 	ImGui_ImplSDL3_InitForSDLRenderer(appData.window, appData.renderer);
 	ImGui_ImplSDLRenderer3_Init(appData.renderer);
 
 	SDL_Log("ImGui initialized successfully.");
+}
+
+void Gui::ApplyScale()
+{
+	ImGuiStyle &style = ImGui::GetStyle();
+	style = referenceStyle; // сбрасываем отступы/rounding к эталону - ScaleAllSizes не идемпотентна
+#ifdef WIN32
+	// На Linux SDL_GetWindowDisplayScale даёт слишком крупные виджеты при ScaleAllSizes,
+	// в отличие от Windows - поэтому отступы/rounding масштабируем только на Windows.
+	style.ScaleAllSizes(appData.mainScale);
+#endif
+
+	style.FontScaleDpi = appData.mainScale;						// масштаб от DPI монитора
+	style.FontScaleMain = appData.fontSize / appData.fontSizeMax; // ручная настройка размера шрифта
 }
 
 void Gui::ProcessEventImGui(const SDL_Event *event)

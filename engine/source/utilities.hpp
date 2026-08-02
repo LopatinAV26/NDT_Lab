@@ -8,9 +8,14 @@
 #include <random>
 #include <cstdint>
 #include <ctime>
+#include "imgui.h"
 
 namespace NDT
 {
+	/// @brief Знак "(?)" с всплывающей подсказкой при наведении
+	/// @param desc Текст подсказки
+	void HelpMarker(const char *desc);
+
 	/// @brief Получить текущую локальную дату
 	std::string GetCurrentDateString();
 

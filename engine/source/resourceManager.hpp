@@ -4,8 +4,6 @@
 #include <filesystem>
 #include <string>
 
-struct SDL_Renderer;
-
 struct Curve
 {
 	std::string label;
@@ -32,11 +30,5 @@ struct XrayDevice
 class ResourceManager
 {
 public:
-	explicit ResourceManager(SDL_Renderer *ren);
-	~ResourceManager();
-
 	std::vector<XrayDevice> LoadDevices(const std::filesystem::path &pathToDevices);
-
-private:
-	SDL_Renderer *renderer = nullptr;
 };

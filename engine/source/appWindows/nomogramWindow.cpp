@@ -4,6 +4,7 @@
 #include "imgui_stdlib.h"
 #include "implot.h"
 #include "applicationData.hpp"
+#include "utilities.hpp"
 
 NomogramWindow::NomogramWindow(ApplicationData &coreAppData, ResourceManager &resManager)
 {
@@ -39,7 +40,7 @@ void NomogramWindow::Show()
 	}
 	ImGui::SameLine();
 
-	HelpMarker(calculatedDevices[deviceIndex].information.c_str());
+	NDT::HelpMarker(calculatedDevices[deviceIndex].information.c_str());
 	ImGui::SameLine();
 	ImGui::TextLinkOpenURL("Паспорт", "resources/devices_manual/Arina.pdf");
 

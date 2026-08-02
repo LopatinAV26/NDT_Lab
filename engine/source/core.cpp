@@ -66,7 +66,7 @@ SDL_AppResult Core::Init()
 		break;
 	}
 
-	resManager = std::make_unique<ResourceManager>(appData.renderer);
+	resManager = std::make_unique<ResourceManager>();
 	imWindow = std::make_unique<Gui>(appData, *resManager);
 	imWindow->InitImGui();
 	
@@ -128,6 +128,7 @@ SDL_AppResult Core::ProcessEvent(const SDL_Event *event)
 		appData.mainScale = SDL_GetWindowDisplayScale(appData.window);
 		if (appData.mainScale <= 0.0f)
 			appData.mainScale = 1.0f;
+		imWindow->ApplyScale();
 		break;
 	}
 

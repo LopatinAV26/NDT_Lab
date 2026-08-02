@@ -1,15 +1,6 @@
 #include "resourceManager.hpp"
-#include <SDL3/SDL.h>
+#include <SDL3/SDL_log.h>
 #include <toml++/toml.hpp>
-
-ResourceManager::ResourceManager(SDL_Renderer *ren)
-    : renderer{ren}
-{
-}
-
-ResourceManager::~ResourceManager()
-{
-}
 
 std::vector<XrayDevice> ResourceManager::LoadDevices(const std::filesystem::path &pathToDevices)
 {

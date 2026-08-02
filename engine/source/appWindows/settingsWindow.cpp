@@ -29,7 +29,7 @@ void SettingsWindow::Show(bool& isOpen)
 
 		ImGui::SeparatorText("Font");
 		if (ImGui::SliderFloat("##FontSize#", &appData.fontSize, 6.0f, appData.fontSizeMax, "Font size: %.0f"))
-			ImGui::GetIO().FontGlobalScale = appData.fontSize / appData.fontSizeMax;
+			ImGui::GetStyle().FontScaleMain = appData.fontSize / appData.fontSizeMax;
 
 		ImGui::Spacing();
 

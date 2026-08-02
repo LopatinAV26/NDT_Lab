@@ -6,13 +6,43 @@ ApplicationData::ApplicationData()
     LoadSettings();
 }
 
-ApplicationData::~ApplicationData()
+namespace
 {
-    SaveSettings();
+    /// @brief Синхронизировать поле между toml-таблицей и переменной
+    /// @param loading true - загрузка, false - сохранение
+    template <typename T>
+    void Sync(toml::table &tbl, const char *key, T &value, bool loading)
+    {
+        if (loading)
+            value = tbl[key].value_or(value);
+        else
+            tbl.insert_or_assign(key, value);
+    }
+
+    /// @brief Синхронизировать все поля ApplicationData с toml-таблицей
+    /// @param loading true - загрузка, false - сохранение
+    void SyncAllSettings(toml::table &tbl, ApplicationData &appData, bool loading)
+    {
+        Sync(tbl, "mainScale", appData.mainScale, loading);
+        Sync(tbl, "windowRounding", appData.windowRounding, loading);
+        Sync(tbl, "frameRounding", appData.frameRounding, loading);
+        Sync(tbl, "grabRounding", appData.grabRounding, loading);
+        Sync(tbl, "fontSize", appData.fontSize, loading);
+        Sync(tbl, "guiStyle", appData.style, loading);
+        Sync(tbl, "vsyncMode", appData.mode, loading);
+    }
 }
 
 void ApplicationData::LoadSettings(const std::filesystem::path &path)
 {
+    if (!std::filesystem::exists(path))
+    {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
+                    "Config file '%s' not found, using default settings.\n",
+                    path.string().c_str());
+        return;
+    }
+
     toml::table tbl;
     try
     {
@@ -27,25 +57,13 @@ void ApplicationData::LoadSettings(const std::filesystem::path &path)
         return;
     }
 
-    mainScale = tbl["mainScale"].value_or(mainScale);
-    windowRounding = tbl["windowRounding"].value_or(windowRounding);
-    frameRounding = tbl["frameRounding"].value_or(frameRounding);
-    grabRounding = tbl["grabRounding"].value_or(grabRounding);
-    fontSize = tbl["fontSize"].value_or(fontSize);
-    style = tbl["guiStyle"].value_or(style);
-    mode = tbl["vsyncMode"].value_or(mode);
+    SyncAllSettings(tbl, *this, true);
 }
 
 void ApplicationData::SaveSettings(const std::filesystem::path &path)
 {
     toml::table tbl;
-    tbl.insert_or_assign("mainScale", mainScale);
-    tbl.insert_or_assign("windowRounding", windowRounding);
-    tbl.insert_or_assign("frameRounding", frameRounding);
-    tbl.insert_or_assign("grabRounding", grabRounding);
-    tbl.insert_or_assign("fontSize", fontSize);
-    tbl.insert_or_assign("guiStyle", style);
-    tbl.insert_or_assign("vsyncMode", mode);
+    SyncAllSettings(tbl, *this, false);
     std::ofstream file(path);
     if (!file)
     {
@@ -56,4 +74,9 @@ void ApplicationData::SaveSettings(const std::filesystem::path &path)
     }
     file << tbl;
     SDL_Log("Settings saved to '%s'", path.string().c_str());
+}
+
+ApplicationData::~ApplicationData()
+{
+    SaveSettings();
 }
