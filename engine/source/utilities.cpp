@@ -45,7 +45,7 @@ namespace NDT
 	tm ParseDateString(const std::string &date)
 	{
 		int year = 1900, month = 1, day = 1;
-		std::sscanf(date.c_str(), "%d-%d-%d", &year, &month, &day);
+		sscanf_s(date.c_str(), "%d-%d-%d", &year, &month, &day);
 
 		tm result{};
 		result.tm_isdst = -1;
@@ -90,7 +90,7 @@ namespace NDT
 
 	float GetPerimeter(int diam)
 	{
-		return diam * M_PI;
+		return diam * 3.14159265358979323846f;
 	}
 	std::chrono::year_month_day GetTerm(const std::chrono::year_month_day &date1, const std::chrono::year_month_day &date2)
 	{
@@ -121,7 +121,7 @@ namespace NDT
 		using namespace std::chrono;
 
 		int y = 1900, m = 1, d = 1;
-		std::sscanf(isoDate.c_str(), "%d-%d-%d", &y, &m, &d);
+		sscanf_s(isoDate.c_str(), "%d-%d-%d", &y, &m, &d);
 
 		return year_month_day{year{y}, month{static_cast<unsigned>(m)}, day{static_cast<unsigned>(d)}};
 	}
