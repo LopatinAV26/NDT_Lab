@@ -3,7 +3,7 @@
 #include <cfloat>
 #include "laboratory.hpp"
 
-void DefectCreateWindow::ShowDefectCreateWindow(ReportData &report, bool &isOpen)
+void DefectCreateWindow::ShowDefectCreateWindow(Report &report, bool &isOpen)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);

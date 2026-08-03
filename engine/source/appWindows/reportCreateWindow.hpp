@@ -7,7 +7,7 @@ struct ReportData;
 class ReportCreateWindow
 {
 public:
-    void Show(ReportData &report, bool &isOpen);
+    void Show(Report &report, bool &isOpen);
 
 private:
     bool defectWindowIsOpen = false;

@@ -4,7 +4,7 @@
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
 
-void ReportCreateWindow::Show(ReportData &report, bool &isOpen)
+void ReportCreateWindow::Show(Report &report, bool &isOpen)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);

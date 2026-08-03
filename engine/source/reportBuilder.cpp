@@ -8,11 +8,11 @@ ReportBuilder::ReportBuilder()
 {
 }
 
-void ReportBuilder::BuildReportRGC(const std::vector<ReportData> &reportList, const std::vector<int> &reportIndexes)
+void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const std::vector<int> &reportIndexes)
 {
 	for (const auto &index : reportIndexes)
 	{
-		const ReportData &reportData = reportList.at(index);
+		const Report &reportData = reportList.at(index);
 		PdfManager pdfManager;
 		pdfManager.NewPage();
 
@@ -145,7 +145,7 @@ void ReportBuilder::BuildReportRGC(const std::vector<ReportData> &reportList, co
 		pdfManager.cursorRowY = {pdfManager.yEnd - signHeight * 4.0};
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.controllerNameTitle, 8},
-											   {40, reportData.controllerNameList.at(reportData.controllerNameIndex), 8, PoDoFo::PdfHorizontalAlignment::Center},
+											   {40, reportData.controllerName, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {100, reportData.controllerOrganization + ", " + reportData.controllerCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
 											   {0, reportData.controlDate, 8, PoDoFo::PdfHorizontalAlignment::Center}});

@@ -2,13 +2,13 @@
 
 #include "imgui.h"
 
-class ReportData;
+class Report;
 class DefRT;
 
 class DefectCreateWindow
 {
 public:
-    void ShowDefectCreateWindow(ReportData &report, bool &isOpen);
+    void ShowDefectCreateWindow(Report &report, bool &isOpen);
 
 private:
     void ConstructDefectRGCString(DefRT &input);
@@ -17,6 +17,6 @@ private:
         // ImGuiWindowFlags_NoDecoration |
         // ImGuiWindowFlags_NoTitleBar |
         // ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize |
+        //ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoCollapse;
 };

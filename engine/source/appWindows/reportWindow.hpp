@@ -9,7 +9,7 @@ class ReportData;
 class ReportWindow
 {
 public:
-	void ShowReportsWindow(std::vector<ReportData> &repList);
+	void ShowReportsWindow(std::vector<Report> &repList);
 
 private:
 	ReportBuilder builder;
