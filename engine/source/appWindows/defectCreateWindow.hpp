@@ -3,7 +3,7 @@
 #include "imgui.h"
 
 class Report;
-class DefRT;
+struct DefRT;
 
 class DefectCreateWindow
 {

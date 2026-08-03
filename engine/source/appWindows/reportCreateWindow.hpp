@@ -2,7 +2,6 @@
 
 #include "defectCreateWindow.hpp"
 
-struct ReportData;
 class Laboratory;
 
 class ReportCreateWindow
