@@ -231,19 +231,19 @@ void NomogramWindow::DrawMarkers(const std::vector<CurvesRef> &curves, float thi
 			{
 			case Measure::mAxmin:
 				ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true,
-								   "%s S=%.1f  T=%.1f %s", line.label.c_str(), px, py, "мА х мин");
+								   "%s S=%.1f %s  T=%.1f %s", line.label.c_str(), px, "мм", py, "мА х мин");
 				break;
 			case Measure::min:
 				ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true,
-								   "%s S=%.1f  T=%.1f %s", line.label.c_str(), px, py, "мин");
+								   "%s S=%.1f %s  T=%.1f %s", line.label.c_str(), px, "мм", py, "мин");
 				break;
 			case Measure::sec:
 				ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true,
-								   "%s S=%.1f  T=%.0f %s", line.label.c_str(), px, py, "с");
+								   "%s S=%.1f %s  T=%.0f %s", line.label.c_str(), px, "мм", py, "с");
 				break;
 			default:
 				ImPlot::Annotation(px, py, fillColor, ImVec2(8.0f, -14.0f), true,
-								   "%s S=%.1f  T=%.1f", line.label.c_str(), px, py);
+								   "%s S=%.1f %s  T=%.1f %s", line.label.c_str(), px, "мм", py, "мА");
 				break;
 			}
 			break;
