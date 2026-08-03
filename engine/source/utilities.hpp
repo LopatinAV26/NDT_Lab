@@ -16,17 +16,17 @@ namespace NDT
 	/// @param desc Текст подсказки
 	void HelpMarker(const char *desc);
 
-	/// @brief Получить текущую локальную дату
-	std::string GetCurrentDateString();
+	/// @brief Получить текущую локальную дату в формате ISO 8601 (YYYY-MM-DD) - для хранения
+	std::string GetCurrentIsoDate();
 
 	/// @brief Разобрать дату в формате ISO 8601 (YYYY-MM-DD);
 	/// @brief при ошибке разбора возвращает 1900-01-01
 	/// @return std::tm
-	tm ParseDateString(const std::string &date);
+	tm ParseIsoDateTm(const std::string &date);
 
 	/// @brief Преобразовать дату tm в формат ISO 8601 (YYYY-MM-DD) - для хранения в БД
 	/// @return std::string в формате ISO 8601 (YYYY-MM-DD)
-	std::string FormatDateString(const tm &date);
+	std::string FormatIsoDateTm(const tm &date);
 
 	/// @brief Преобразовать ISO-дату в формат ДД.ММ.ГГГГ - для отображения в UI
 	/// @return std::string в формате ДД.ММ.ГГГГ

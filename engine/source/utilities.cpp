@@ -52,13 +52,13 @@ namespace NDT
 		}
 	}
 
-	std::string GetCurrentDateString()
+	std::string GetCurrentIsoDate()
 	{
 		auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
-		return std::format("{:%d.%m.%Y}", today);
+		return std::format("{:%Y-%m-%d}", today);
 	}
 
-	tm ParseDateString(const std::string &date)
+	tm ParseIsoDateTm(const std::string &date)
 	{
 		int year, month, day;
 		ParseIsoDateParts(date, year, month, day);
@@ -71,14 +71,14 @@ namespace NDT
 		return result;
 	}
 
-	std::string FormatDateString(const tm &date)
+	std::string FormatIsoDateTm(const tm &date)
 	{
 		return std::format("{:04d}-{:02d}-{:02d}", date.tm_year + 1900, date.tm_mon + 1, date.tm_mday);
 	}
 
 	std::string FormatDateForDisplay(const std::string &isoDate)
 	{
-		tm date = ParseDateString(isoDate);
+		tm date = ParseIsoDateTm(isoDate);
 		return std::format("{:02d}.{:02d}.{:04d}", date.tm_mday, date.tm_mon + 1, date.tm_year + 1900);
 	}
 

@@ -35,6 +35,18 @@ class Report
 public:
     Report();
 
+    static inline const std::string controllerNameTitle{"Контроль произвёл"};
+    std::string controllerName;
+    std::string controllerOrganization;
+    std::string controllerCertNumber;
+
+
+
+
+
+
+
+
     std::string id = NDT::GenerateUuidV4(); // UUID v4, генерируется на клиенте при создании записи
     std::chrono::sys_seconds updatedAt =
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
@@ -47,8 +59,8 @@ public:
 
     static inline const std::string protocolNumberTitle{"ЗАКЛЮЧЕНИЕ №"};
     std::string protocolNumber{"XXXX-XXXX"};
-    std::string controlDate{"15.07.2026"};
-    std::string protocolDate{"16.07.2026"};
+    std::string controlDate{"2026-07-15"};   ///< хранится в ISO 8601 (YYYY-MM-DD), для отображения см. NDT::FormatDateForDisplay
+    std::string protocolDate{"2026-07-16"};  ///< хранится в ISO 8601 (YYYY-MM-DD), для отображения см. NDT::FormatDateForDisplay
 
     static inline const std::string objectNameTitle{"Наименование объекта"};
     std::string objectName{};
@@ -148,10 +160,7 @@ public:
     float minWidthOfWeld = 0.f;
     float edgeDisplacement = 0.f;
 
-    static inline const std::string controllerNameTitle{"Контроль произвёл"};
-    std::string controllerName; /// вставляется через combo box
-    std::string controllerOrganization = {"ООО Транснефть - Дальний Восток"};
-    std::string controllerCertNumber = {"РСКТН-09050-2021"};
+    
 
     static inline const std::string protocolCreateNameTitle{"Заключение выдал"};
     int protocolCreateNameIndex = 0;

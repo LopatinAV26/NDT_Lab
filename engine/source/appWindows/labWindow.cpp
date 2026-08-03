@@ -56,7 +56,7 @@ void LabWindow::Show(bool &isOpen)
 
             if (ImGui::BeginTabItem("Отчёты контроля"))
             {
-                reportWindow.ShowReportsWindow(lab.reportList);
+                reportWindow.ShowReportsWindow(lab.reportList, lab);
                 ImGui::EndTabItem();
             }
 

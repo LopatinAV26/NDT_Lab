@@ -5,11 +5,12 @@
 #include "reportCreateWindow.hpp"
 
 class ReportData;
+class Laboratory;
 
 class ReportWindow
 {
 public:
-	void ShowReportsWindow(std::vector<Report> &repList);
+	void ShowReportsWindow(std::vector<Report> &repList, Laboratory &lab);
 
 private:
 	ReportBuilder builder;

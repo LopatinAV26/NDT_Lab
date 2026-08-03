@@ -37,10 +37,10 @@ void EmployeeEditingWindow::Show(Employee &empl, bool &isOpen)
         ImGui::TextDisabled("Дата трудоустройства");
         ImGui::SetNextItemWidth(-FLT_MIN);
         {
-            tm date = NDT::ParseDateString(empl.employeementDate);
-            if (ImGui::DatePicker("##employeementDate#", date, true))
+            tm date = NDT::ParseIsoDateTm(empl.employeementDate);
+            if (ImGui::DatePicker("##employeementDate#", date))
             {
-                empl.employeementDate = NDT::FormatDateString(date);
+                empl.employeementDate = NDT::FormatIsoDateTm(date);
                 changed = true;
             }
         }
@@ -60,10 +60,10 @@ void EmployeeEditingWindow::Show(Employee &empl, bool &isOpen)
         ImGui::TextDisabled("Дата истечения ВИК");
         ImGui::SetNextItemWidth(-FLT_MIN);
         {
-            tm date = NDT::ParseDateString(empl.certificateEndDateVT);
-            if (ImGui::DatePicker("##Дата истечения ВИК#", date, true))
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateVT);
+            if (ImGui::DatePicker("##Дата истечения ВИК#", date))
             {
-                empl.certificateEndDateVT = NDT::FormatDateString(date);
+                empl.certificateEndDateVT = NDT::FormatIsoDateTm(date);
                 changed = true;
             }
         }
@@ -71,10 +71,10 @@ void EmployeeEditingWindow::Show(Employee &empl, bool &isOpen)
         ImGui::TextDisabled("Дата истечения УК");
         ImGui::SetNextItemWidth(-FLT_MIN);
         {
-            tm date = NDT::ParseDateString(empl.certificateEndDateUT);
-            if (ImGui::DatePicker("##Дата истечения УК#", date, true))
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateUT);
+            if (ImGui::DatePicker("##Дата истечения УК#", date))
             {
-                empl.certificateEndDateUT = NDT::FormatDateString(date);
+                empl.certificateEndDateUT = NDT::FormatIsoDateTm(date);
                 changed = true;
             }
         }
@@ -82,10 +82,10 @@ void EmployeeEditingWindow::Show(Employee &empl, bool &isOpen)
         ImGui::TextDisabled("Дата истечения РК");
         ImGui::SetNextItemWidth(-FLT_MIN);
         {
-            tm date = NDT::ParseDateString(empl.certificateEndDateRT);
-            if (ImGui::DatePicker("##Дата истечения РК#", date, true))
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateRT);
+            if (ImGui::DatePicker("##Дата истечения РК#", date))
             {
-                empl.certificateEndDateRT = NDT::FormatDateString(date);
+                empl.certificateEndDateRT = NDT::FormatIsoDateTm(date);
                 changed = true;
             }
         }
@@ -93,10 +93,10 @@ void EmployeeEditingWindow::Show(Employee &empl, bool &isOpen)
         ImGui::TextDisabled("Дата истечения ПВК");
         ImGui::SetNextItemWidth(-FLT_MIN);
         {
-            tm date = NDT::ParseDateString(empl.certificateEndDatePT);
-            if (ImGui::DatePicker("##Дата истечения ПВК#", date, true))
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDatePT);
+            if (ImGui::DatePicker("##Дата истечения ПВК#", date))
             {
-                empl.certificateEndDatePT = NDT::FormatDateString(date);
+                empl.certificateEndDatePT = NDT::FormatIsoDateTm(date);
                 changed = true;
             }
         }
@@ -104,10 +104,10 @@ void EmployeeEditingWindow::Show(Employee &empl, bool &isOpen)
         ImGui::TextDisabled("Дата истечения МК");
         ImGui::SetNextItemWidth(-FLT_MIN);
         {
-            tm date = NDT::ParseDateString(empl.certificateEndDateMT);
-            if (ImGui::DatePicker("##Дата истечения МК#", date, true))
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateMT);
+            if (ImGui::DatePicker("##Дата истечения МК#", date))
             {
-                empl.certificateEndDateMT = NDT::FormatDateString(date);
+                empl.certificateEndDateMT = NDT::FormatIsoDateTm(date);
                 changed = true;
             }
         }
@@ -115,10 +115,10 @@ void EmployeeEditingWindow::Show(Employee &empl, bool &isOpen)
         ImGui::TextDisabled("Дата истечения ПВТ");
         ImGui::SetNextItemWidth(-FLT_MIN);
         {
-            tm date = NDT::ParseDateString(empl.certificateEndDateLT);
-            if (ImGui::DatePicker("##Дата истечения ПВТ#", date, true))
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateLT);
+            if (ImGui::DatePicker("##Дата истечения ПВТ#", date))
             {
-                empl.certificateEndDateLT = NDT::FormatDateString(date);
+                empl.certificateEndDateLT = NDT::FormatIsoDateTm(date);
                 changed = true;
             }
         }

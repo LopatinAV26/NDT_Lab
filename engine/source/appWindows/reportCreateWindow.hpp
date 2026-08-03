@@ -3,11 +3,12 @@
 #include "defectCreateWindow.hpp"
 
 struct ReportData;
+class Laboratory;
 
 class ReportCreateWindow
 {
 public:
-    void Show(Report &report, bool &isOpen);
+    void Show(Report &report, bool &isOpen, Laboratory &lab);
 
 private:
     bool defectWindowIsOpen = false;

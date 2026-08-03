@@ -28,7 +28,7 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 		sumY += c40.h;
 
 		sumX = c10.w;
-		Cell c12 = pdfManager.TableCreateCell(sumX, 0, sumY, {90, reportData.protocolNumberTitle + reportData.protocolNumber + "\nОт " + reportData.protocolDate, 10, PoDoFo::PdfHorizontalAlignment::Center});
+		Cell c12 = pdfManager.TableCreateCell(sumX, 0, sumY, {90, reportData.protocolNumberTitle + reportData.protocolNumber + "\nОт " + NDT::FormatDateForDisplay(reportData.protocolDate), 10, PoDoFo::PdfHorizontalAlignment::Center});
 
 		sumX += c12.w;
 		sumY = 0.0;
@@ -148,28 +148,28 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 											   {40, reportData.controllerName, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {100, reportData.controllerOrganization + ", " + reportData.controllerCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
-											   {0, reportData.controlDate, 8, PoDoFo::PdfHorizontalAlignment::Center}});
+											   {0, NDT::FormatDateForDisplay(reportData.controlDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.protocolCreateNameTitle, 8},
 											   {40, reportData.protocolCreateNameList.at(reportData.protocolCreateNameIndex), 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {100, reportData.protocolCreateOrganization + ", " + reportData.protocolCreateCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
-											   {0, reportData.protocolDate, 8, PoDoFo::PdfHorizontalAlignment::Center}});
+											   {0, NDT::FormatDateForDisplay(reportData.protocolDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.inspectorNameTitle, 7},
 											   {40, reportData.inspectorNameList.at(reportData.inspectorNameIndex), 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {100, reportData.inspectorOrganization + ", " + reportData.inspectorCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
-											   {0, reportData.protocolDate, 8, PoDoFo::PdfHorizontalAlignment::Center}});
+											   {0, NDT::FormatDateForDisplay(reportData.protocolDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.masterNameTitle, 7},
 											   {40, reportData.masterNameList.at(reportData.masterNameIndex), 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {100, reportData.masterOrganization + ", " + reportData.masterCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
-											   {0, reportData.protocolDate, 8, PoDoFo::PdfHorizontalAlignment::Center}});
+											   {0, NDT::FormatDateForDisplay(reportData.protocolDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 
 		pdfManager.NewPage();
 
-		pdfManager.SaveDocument(std::format("{:s} {:s} от {:s}.pdf", NDT::GetCurrentDateString(), reportData.protocolNumber, reportData.protocolDate));
+		pdfManager.SaveDocument(std::format("{:s} {:s} от {:s}.pdf", NDT::GetCurrentIsoDate(), reportData.protocolNumber, reportData.protocolDate));
 	}
 }

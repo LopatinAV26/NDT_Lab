@@ -6,7 +6,7 @@
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
 
-void ReportWindow::ShowReportsWindow(std::vector<Report> &repList)
+void ReportWindow::ShowReportsWindow(std::vector<Report> &repList, Laboratory &lab)
 {
 	static int tableRows = 0;			   ///< количество строк в таблице отчётов
 	static int editingIndex = -1;		   ///< текущий индекс отчёта, который создаётся/редактируется
@@ -49,7 +49,7 @@ void ReportWindow::ShowReportsWindow(std::vector<Report> &repList)
 
 			ImGui::TableNextColumn(); //-----------------------------------------------------
 
-			ImGui::TextUnformatted(std::format("{:s}", repList.at(row).protocolDate).c_str());
+			ImGui::TextUnformatted(NDT::FormatDateForDisplay(repList.at(row).protocolDate).c_str());
 
 			ImGui::PopID();
 		}
@@ -61,7 +61,7 @@ void ReportWindow::ShowReportsWindow(std::vector<Report> &repList)
 	{
 		tableRows++;
 		repList.resize(tableRows);
-		repList.back().protocolDate = NDT::GetCurrentDateString();
+		repList.back().protocolDate = NDT::GetCurrentIsoDate();
 		reportCreateWindowIsOpen = true;
 		editingIndex = tableRows - 1;
 	}
@@ -88,5 +88,5 @@ void ReportWindow::ShowReportsWindow(std::vector<Report> &repList)
 
 	if (reportCreateWindowIsOpen && editingIndex >= 0 &&
 		editingIndex < static_cast<int>(repList.size()))
-		reportCreateWindow.Show(repList.at(editingIndex), reportCreateWindowIsOpen);
+		reportCreateWindow.Show(repList.at(editingIndex), reportCreateWindowIsOpen, lab);
 }
