@@ -265,7 +265,11 @@ namespace ImGui
         if (clampToBorder)
             SetNextItemWidth(GetContentRegionAvail().x);
 
-        const ImVec2 windowSize = ImVec2(274.5f, 301.5f);
+        // Размер попапа привязан к GetFrameHeight() (масштабируется вместе со шрифтом/стилем,
+        // см. Gui::ApplyScale) - жёстко заданные пиксели ломали раскладку при DPI-масштабе != 1 (issue #6)
+        const float cellSize = GetFrameHeight();
+        const ImVec2 windowSize = ImVec2(cellSize * 7.0f + GetStyle().CellPadding.x * 14.0f + GetStyle().WindowPadding.x * 2.0f,
+                                          cellSize * 10.0f + GetStyle().CellPadding.y * 14.0f + GetStyle().WindowPadding.y * 2.0f + GetStyle().ItemSpacing.y * 4.0f);
         SetNextWindowSize(windowSize);
 
         if (BeginCombo(std::string("##" + myLabel).c_str(), TimePointToLongString(v).c_str()))
@@ -349,7 +353,7 @@ namespace ImGui
             if (BeginTable(std::string("##Table_" + myLabel).c_str(), 7, TABLE_FLAGS, GetContentRegionAvail()))
             {
                 for (const auto& day : DAYS)
-                    TableSetupColumn(day.c_str(), ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderWidth, 30.0f);
+                    TableSetupColumn(day.c_str(), ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderWidth, cellSize);
 
                 PushStyleColor(ImGuiCol_HeaderHovered, GetStyleColorVec4(ImGuiCol_TableHeaderBg));
                 PushStyleColor(ImGuiCol_HeaderActive, GetStyleColorVec4(ImGuiCol_TableHeaderBg));
