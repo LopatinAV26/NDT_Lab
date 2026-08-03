@@ -24,11 +24,36 @@ void Gui::InitImGui()
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 	io.IniFilename = appData.pathToImGuiIniFile;
 
-	// Шрифт грузится один раз под fontSizeMax - атлас в этой версии ImGui рендерит глифы под
+	// Шрифты грузятся один раз под fontSizeMax - атлас в этой версии ImGui рендерит глифы под
 	// итоговый масштабированный размер на лету (style.FontScaleMain/FontScaleDpi), пересборка
-	// атласа при смене масштаба не нужна.
-	if (ImFont *font = LoadEmbeddedShareTechMono(io, appData.fontSizeMax))
-		io.FontDefault = font;
+	// атласа при смене масштаба не нужна. Все доступные шрифты грузятся сразу, чтобы переключение
+	// в настройках не требовало пересборки атласа.
+	appData.fontShareTechMono = LoadEmbeddedShareTechMono(io, appData.fontSizeMax);
+
+	auto notoSans = LoadEmbeddedNotoSansImGuiFonts(io, appData.fontSizeMax);
+	appData.fontNotoSansRegular = notoSans[0];
+	appData.fontNotoSansBold = notoSans[1];
+	appData.fontNotoSansItalic = notoSans[2];
+	appData.fontNotoSansBoldItalic = notoSans[3];
+
+	switch (appData.font)
+	{
+	case AppFont::ShareTechMono:
+		io.FontDefault = appData.fontShareTechMono;
+		break;
+	case AppFont::NotoSansRegular:
+		io.FontDefault = appData.fontNotoSansRegular;
+		break;
+	case AppFont::NotoSansBold:
+		io.FontDefault = appData.fontNotoSansBold;
+		break;
+	case AppFont::NotoSansItalic:
+		io.FontDefault = appData.fontNotoSansItalic;
+		break;
+	case AppFont::NotoSansBoldItalic:
+		io.FontDefault = appData.fontNotoSansBoldItalic;
+		break;
+	}
 
 	switch (appData.style)
 	{

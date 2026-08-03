@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include "imgui.h"
 #include <filesystem>
 #include <string>
 
@@ -9,6 +10,15 @@ enum class GuiStyle
 	Dark,
 	Light,
 	Classic
+};
+
+enum class AppFont
+{
+	ShareTechMono,
+	NotoSansRegular,
+	NotoSansBold,
+	NotoSansItalic,
+	NotoSansBoldItalic
 };
 
 enum class Vsync
@@ -40,6 +50,14 @@ public:
 	float grabRounding = 0.0f;
 	float fontSize = 10.0f;
 	const float fontSizeMax = 24.0f; // размер, на котором печётся атлас шрифта; fontSize только уменьшает через FontGlobalScale
+	AppFont font = AppFont::ShareTechMono;
+
+	// Заполняются в Gui::InitImGui после загрузки шрифтов в атлас
+	ImFont *fontShareTechMono = nullptr;
+	ImFont *fontNotoSansRegular = nullptr;
+	ImFont *fontNotoSansBold = nullptr;
+	ImFont *fontNotoSansItalic = nullptr;
+	ImFont *fontNotoSansBoldItalic = nullptr;
 	int windowWidth = 1920;
 	int windowHeight = 1080;
 	float windowScreenPercent = 0.8f; // доля от usable-области экрана

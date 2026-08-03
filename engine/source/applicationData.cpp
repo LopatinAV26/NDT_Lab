@@ -28,6 +28,7 @@ namespace
         Sync(tbl, "frameRounding", appData.frameRounding, loading);
         Sync(tbl, "grabRounding", appData.grabRounding, loading);
         Sync(tbl, "fontSize", appData.fontSize, loading);
+        Sync(tbl, "font", appData.font, loading);
         Sync(tbl, "guiStyle", appData.style, loading);
         Sync(tbl, "vsyncMode", appData.mode, loading);
     }

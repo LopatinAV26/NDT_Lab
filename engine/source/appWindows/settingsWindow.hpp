@@ -12,6 +12,7 @@ private:
 	void GetAppInformation() const;
 	void SetVsyncMode();
 	void SetGuiStyle();
+	void SetFont();
 
 	ApplicationData &appData;
 };

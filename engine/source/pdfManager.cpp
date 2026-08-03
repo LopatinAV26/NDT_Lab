@@ -1,22 +1,11 @@
 #include "pdfManager.hpp"
 #include <SDL3/SDL.h>
-// #include "embeddedFonts.hpp"
-#include "NotoSansRegular.cpp"
-#include "NotoSansBold.cpp"
-#include "NotoSansItalic.cpp"
-#include "NotoSansBoldItalic.cpp"
+#include "embeddedFonts.hpp"
 
 PdfManager::PdfManager()
 {
 	pageRect = PoDoFo::PdfPage::CreateStandardPageSize(PoDoFo::PdfPageSize::A4, isLandscape);
-	fonts.at(static_cast<uint8_t>(FontStyle::Regular)) = &doc.GetFonts().GetOrCreateFontFromBuffer(
-		PoDoFo::bufferview(reinterpret_cast<const char *>(NotoSansRegular_data), NotoSansRegular_data_len));
-	fonts.at(static_cast<uint8_t>(FontStyle::Bold)) = &doc.GetFonts().GetOrCreateFontFromBuffer(
-		PoDoFo::bufferview(reinterpret_cast<const char *>(NotoSansBold_data), NotoSansBold_data_len));
-	fonts.at(static_cast<uint8_t>(FontStyle::Italic)) = &doc.GetFonts().GetOrCreateFontFromBuffer(
-		PoDoFo::bufferview(reinterpret_cast<const char *>(NotoSansItalic_data), NotoSansItalic_data_len));
-	fonts.at(static_cast<uint8_t>(FontStyle::BoldItalic)) = &doc.GetFonts().GetOrCreateFontFromBuffer(
-		PoDoFo::bufferview(reinterpret_cast<const char *>(NotoSansBoldItalic_data), NotoSansBoldItalic_data_len));
+	fonts = LoadEmbeddedNotoSansFonts(doc);
 
 	mmToPt = 72.0 / 25.4;
 	xEnd = pageRect.Width / mmToPt - rightIndent;

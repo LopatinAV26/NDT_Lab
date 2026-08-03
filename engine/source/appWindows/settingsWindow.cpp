@@ -31,6 +31,8 @@ void SettingsWindow::Show(bool& isOpen)
 		if (ImGui::SliderFloat("##FontSize#", &appData.fontSize, 6.0f, appData.fontSizeMax, "Font size: %.0f"))
 			ImGui::GetStyle().FontScaleMain = appData.fontSize / appData.fontSizeMax;
 
+		SetFont();
+
 		ImGui::Spacing();
 
 		ImGui::SeparatorText("Rounding");
@@ -99,6 +101,40 @@ void SettingsWindow::SetVsyncMode()
 		default:
 			SDL_SetRenderVSync(appData.renderer, SDL_RENDERER_VSYNC_DISABLED);
 			appData.vsyncModeName = "Vsync: disabled";
+			break;
+		}
+	}
+}
+
+void SettingsWindow::SetFont()
+{
+	static constexpr const char *fontNames[] = {
+		"ShareTechMono",
+		"NotoSans Regular",
+		"NotoSans Bold",
+		"NotoSans Italic",
+		"NotoSans Bold Italic"};
+
+	int currentFontIndex = static_cast<int>(appData.font);
+	if (ImGui::Combo("##FontFamily#", &currentFontIndex, fontNames, IM_ARRAYSIZE(fontNames)))
+	{
+		appData.font = static_cast<AppFont>(currentFontIndex);
+		switch (appData.font)
+		{
+		case AppFont::ShareTechMono:
+			ImGui::GetIO().FontDefault = appData.fontShareTechMono;
+			break;
+		case AppFont::NotoSansRegular:
+			ImGui::GetIO().FontDefault = appData.fontNotoSansRegular;
+			break;
+		case AppFont::NotoSansBold:
+			ImGui::GetIO().FontDefault = appData.fontNotoSansBold;
+			break;
+		case AppFont::NotoSansItalic:
+			ImGui::GetIO().FontDefault = appData.fontNotoSansItalic;
+			break;
+		case AppFont::NotoSansBoldItalic:
+			ImGui::GetIO().FontDefault = appData.fontNotoSansBoldItalic;
 			break;
 		}
 	}
