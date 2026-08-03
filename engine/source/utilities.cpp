@@ -1,6 +1,6 @@
 #include "utilities.hpp"
 
-#include <cstdio>
+#include <charconv>
 #include <cmath>
 
 namespace
@@ -19,6 +19,22 @@ namespace
 			return few;
 
 		return many;
+	}
+
+	/// @brief Разобрать год/месяц/день из строки ISO 8601 (YYYY-MM-DD, фиксированная ширина);
+	/// при слишком короткой/пустой строке оставляет значения по умолчанию (1900-01-01)
+	void ParseIsoDateParts(const std::string &date, int &year, int &month, int &day)
+	{
+		year = 1900;
+		month = 1;
+		day = 1;
+
+		if (date.size() < 10)
+			return;
+
+		std::from_chars(date.data(), date.data() + 4, year);
+		std::from_chars(date.data() + 5, date.data() + 7, month);
+		std::from_chars(date.data() + 8, date.data() + 10, day);
 	}
 }
 
@@ -44,8 +60,8 @@ namespace NDT
 
 	tm ParseDateString(const std::string &date)
 	{
-		int year = 1900, month = 1, day = 1;
-		sscanf_s(date.c_str(), "%d-%d-%d", &year, &month, &day);
+		int year, month, day;
+		ParseIsoDateParts(date, year, month, day);
 
 		tm result{};
 		result.tm_isdst = -1;
@@ -120,8 +136,8 @@ namespace NDT
 	{
 		using namespace std::chrono;
 
-		int y = 1900, m = 1, d = 1;
-		sscanf_s(isoDate.c_str(), "%d-%d-%d", &y, &m, &d);
+		int y, m, d;
+		ParseIsoDateParts(isoDate, y, m, d);
 
 		return year_month_day{year{y}, month{static_cast<unsigned>(m)}, day{static_cast<unsigned>(d)}};
 	}

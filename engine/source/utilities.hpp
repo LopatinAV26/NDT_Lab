@@ -21,9 +21,10 @@ namespace NDT
 
 	/// @brief Разобрать дату в формате ISO 8601 (YYYY-MM-DD);
 	/// @brief при ошибке разбора возвращает 1900-01-01
+	/// @return std::tm
 	tm ParseDateString(const std::string &date);
 
-	/// @brief Отформатировать дату в формате ISO 8601 (YYYY-MM-DD) - для хранения в БД
+	/// @brief Преобразовать дату tm в формат ISO 8601 (YYYY-MM-DD) - для хранения в БД
 	/// @return std::string в формате ISO 8601 (YYYY-MM-DD)
 	std::string FormatDateString(const tm &date);
 
