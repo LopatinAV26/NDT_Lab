@@ -45,11 +45,11 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
 			}
 
 			ImGui::SameLine();
-			ImGui::TextUnformatted(std::format("{:s}", repList.at(row).protocolNumber).c_str());
+			ImGui::TextUnformatted(std::format("{:s}", repList.at(row).reportNumber).c_str());
 
 			ImGui::TableNextColumn(); //-----------------------------------------------------
 
-			ImGui::TextUnformatted(NDT::FormatDateForDisplay(repList.at(row).protocolDate).c_str());
+			ImGui::TextUnformatted(NDT::FormatDateForDisplay(repList.at(row).reportDate).c_str());
 
 			ImGui::PopID();
 		}
@@ -61,7 +61,6 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
 	{
 		tableRows++;
 		repList.resize(tableRows);
-		repList.back().protocolDate = NDT::GetCurrentIsoDate();
 		reportCreateWindowIsOpen = true;
 		editingIndex = tableRows - 1;
 	}

@@ -40,6 +40,33 @@ public:
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
     std::optional<std::chrono::sys_seconds> deletedAt;                              // nullopt = не удалена; иначе - момент "мягкого" удаления
 
+    std::string controlDate; ///< дата НК
+    std::string reportDate;  ///< дата выдачи заключения
+
+    std::string nameLabTitle{"Наименование ЛНК"};
+    std::string nameLab;
+    std::string numberAttestationTitle{"Номер свидетельства об аттестации"};
+    std::string numberAttestation;
+
+    std::string weldNumberTitle{"Номер сварного соединения по журналу сварки"};
+    std::string weldNumber;
+
+    std::string reportNumberTitle{"ЗАКЛЮЧЕНИЕ №"};
+    std::string reportNumber;
+
+    std::string objectNameTitle{"Наименование объекта"};
+    std::string objectName;
+
+    static inline const std::string pipeCategoryTitle = {"Категория трубопровода"};
+    int pipeCategoryIndex = 0;
+    static inline const std::array<std::string, 5> pipeCategoryList = {"В", "I", "II", "III", "IV"};
+    std::string pipeCategory;
+
+
+
+
+
+
     static inline std::string controllerNameTitle{"Контроль произвёл"};
     std::string controllerName;
     std::string controllerOrganization;
@@ -47,22 +74,11 @@ public:
 
     
 
-    static inline const std::string nameLabTitle{"Наименование ЛНК"};
-    static inline std::string nameLab{"Лаборатория неразрушающего контроля ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" База производственного обеспечения \"Белогорск\""};
-    static inline const std::string numberAttestationTitle{"Номер свидетельства об аттестации"};
-    static inline std::string numberAttestation{"XXXXXXXXXX"};
+    
 
-    static inline const std::string protocolNumberTitle{"ЗАКЛЮЧЕНИЕ №"};
-    std::string protocolNumber{"XXXX-XXXX"};
-    std::string controlDate{"2026-07-15"};  ///< хранится в ISO 8601 (YYYY-MM-DD), для отображения см. NDT::FormatDateForDisplay
-    std::string protocolDate{"2026-07-16"}; ///< хранится в ISO 8601 (YYYY-MM-DD), для отображения см. NDT::FormatDateForDisplay
+    
 
-    static inline const std::string objectNameTitle{"Наименование объекта"};
-    std::string objectName{};
-
-    static inline const std::string pipeCategoryTitle = {"Категория трубопровода"};
-    int pipeCategoryIndex = 0;
-    static inline const std::array<std::string, 6> pipeCategory = {"В", "I", "II", "III", "IV", "-"};
+    
 
     static inline const std::string contractorOrganizationTitle{"Подрядная организация"};
     int contractorOrganizationIndex = 0;
@@ -84,8 +100,7 @@ public:
     static inline const std::string equipmentTitle{"Оборудование и материалы в соответствии с операционной технологической картой"};
     std::string equipment{};
 
-    static inline const std::string weldNumberTitle{"Номер сварного соединения по журналу сварки"};
-    std::string weldNumber{};
+    
 
     static inline const std::array<std::string, 8> methodList = {"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
     int methodIndex{0};

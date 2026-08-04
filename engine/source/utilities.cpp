@@ -42,7 +42,7 @@ namespace NDT
 {
 	void HelpMarker(const char *desc)
 	{
-		ImGui::TextDisabled("(?)");
+		ImGui::Text("(?)");
 		if (ImGui::BeginItemTooltip())
 		{
 			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
