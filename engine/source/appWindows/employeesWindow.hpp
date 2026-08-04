@@ -8,7 +8,7 @@ struct Employee;
 class EmployeesWindow
 {
 public:
-    void ShowEmployeesWindow(std::vector<Employee> &empl);
+    void Show(std::vector<Employee> &empl);
 
 private:
     bool employeeEditWindowIsOpen = false;

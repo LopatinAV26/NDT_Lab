@@ -40,11 +40,17 @@ namespace
         {"level", "TEXT"},
         {"certificate_number", "TEXT"},
         {"certificate_date", "TEXT"},
+        {"has_vt", "INTEGER DEFAULT 1"}, // DEFAULT 1 - у существующих строк после ALTER TABLE ADD COLUMN считаем, что допуск есть (как было раньше, до этих флагов)
         {"certificate_end_vt", "TEXT"},
+        {"has_ut", "INTEGER DEFAULT 1"},
         {"certificate_end_ut", "TEXT"},
+        {"has_rt", "INTEGER DEFAULT 1"},
         {"certificate_end_rt", "TEXT"},
+        {"has_pt", "INTEGER DEFAULT 1"},
         {"certificate_end_pt", "TEXT"},
+        {"has_mt", "INTEGER DEFAULT 1"},
         {"certificate_end_mt", "TEXT"},
+        {"has_lt", "INTEGER DEFAULT 1"},
         {"certificate_end_lt", "TEXT"},
     };
 
@@ -152,12 +158,18 @@ void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
         sqlite3_bind_text(stmt, 10, e.level.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 11, e.certificateNumber.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 12, e.certificateDate.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 13, e.certificateEndDateVT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 14, e.certificateEndDateUT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 15, e.certificateEndDateRT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 16, e.certificateEndDatePT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 17, e.certificateEndDateMT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 18, e.certificateEndDateLT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 13, e.hasVT ? 1 : 0);
+        sqlite3_bind_text(stmt, 14, e.certificateEndDateVT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 15, e.hasUT ? 1 : 0);
+        sqlite3_bind_text(stmt, 16, e.certificateEndDateUT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 17, e.hasRT ? 1 : 0);
+        sqlite3_bind_text(stmt, 18, e.certificateEndDateRT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 19, e.hasPT ? 1 : 0);
+        sqlite3_bind_text(stmt, 20, e.certificateEndDatePT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 21, e.hasMT ? 1 : 0);
+        sqlite3_bind_text(stmt, 22, e.certificateEndDateMT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 23, e.hasLT ? 1 : 0);
+        sqlite3_bind_text(stmt, 24, e.certificateEndDateLT.c_str(), -1, SQLITE_TRANSIENT);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveEmployees: вставка/обновление не удались: %s", sqlite3_errmsg(db));
@@ -214,12 +226,18 @@ std::vector<Employee> DatabaseManager::LoadEmployees()
         e.level = GetColumnText(stmt, 9);
         e.certificateNumber = GetColumnText(stmt, 10);
         e.certificateDate = GetColumnText(stmt, 11);
-        e.certificateEndDateVT = GetColumnText(stmt, 12);
-        e.certificateEndDateUT = GetColumnText(stmt, 13);
-        e.certificateEndDateRT = GetColumnText(stmt, 14);
-        e.certificateEndDatePT = GetColumnText(stmt, 15);
-        e.certificateEndDateMT = GetColumnText(stmt, 16);
-        e.certificateEndDateLT = GetColumnText(stmt, 17);
+        e.hasVT = sqlite3_column_int(stmt, 12) != 0;
+        e.certificateEndDateVT = GetColumnText(stmt, 13);
+        e.hasUT = sqlite3_column_int(stmt, 14) != 0;
+        e.certificateEndDateUT = GetColumnText(stmt, 15);
+        e.hasRT = sqlite3_column_int(stmt, 16) != 0;
+        e.certificateEndDateRT = GetColumnText(stmt, 17);
+        e.hasPT = sqlite3_column_int(stmt, 18) != 0;
+        e.certificateEndDatePT = GetColumnText(stmt, 19);
+        e.hasMT = sqlite3_column_int(stmt, 20) != 0;
+        e.certificateEndDateMT = GetColumnText(stmt, 21);
+        e.hasLT = sqlite3_column_int(stmt, 22) != 0;
+        e.certificateEndDateLT = GetColumnText(stmt, 23);
 
         employees.push_back(std::move(e));
     }

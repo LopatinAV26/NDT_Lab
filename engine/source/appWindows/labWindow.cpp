@@ -56,13 +56,19 @@ void LabWindow::Show(bool &isOpen)
 
             if (ImGui::BeginTabItem("Отчёты контроля"))
             {
-                reportWindow.ShowReportsWindow(lab.reportList, lab);
+                reportWindow.Show(lab.reportList, lab);
                 ImGui::EndTabItem();
             }
 
             if (ImGui::BeginTabItem("Сотрудники"))
             {
-                emplWindow.ShowEmployeesWindow(lab.employeesList);
+                emplWindow.Show(lab.employeesList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Сотрудники надзора"))
+            {
+                otherEmplWindow.Show(lab.inspectorsList);
                 ImGui::EndTabItem();
             }
 

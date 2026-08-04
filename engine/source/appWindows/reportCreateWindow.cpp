@@ -61,5 +61,5 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
     ImGui::End();
 
     if (defectWindowIsOpen)
-        defectCreateWindow.ShowDefectCreateWindow(report, defectWindowIsOpen);
+        defectCreateWindow.Show(report, defectWindowIsOpen);
 }

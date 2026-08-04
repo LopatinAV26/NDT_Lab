@@ -8,7 +8,7 @@ struct DefRT;
 class DefectCreateWindow
 {
 public:
-    void ShowDefectCreateWindow(Report &report, bool &isOpen);
+    void Show(Report &report, bool &isOpen);
 
 private:
     void ConstructDefectRGCString(DefRT &input);

@@ -10,7 +10,7 @@ class Laboratory;
 class ReportWindow
 {
 public:
-	void ShowReportsWindow(std::vector<Report> &repList, Laboratory &lab);
+	void Show(std::vector<Report> &repList, Laboratory &lab);
 
 private:
 	ReportBuilder builder;

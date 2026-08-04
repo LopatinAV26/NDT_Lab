@@ -28,11 +28,17 @@ struct Employee ///< Сотрудник ЛНК
 	std::string level;
 	std::string certificateNumber;
 	std::string certificateDate;
+	bool hasVT = true;
 	std::string certificateEndDateVT;
+	bool hasUT = true;
 	std::string certificateEndDateUT;
+	bool hasRT = true;
 	std::string certificateEndDateRT;
+	bool hasPT = true;
 	std::string certificateEndDatePT;
+	bool hasMT = true;
 	std::string certificateEndDateMT;
+	bool hasLT = true;
 	std::string certificateEndDateLT;
 };
 
@@ -44,22 +50,21 @@ struct Inspector ///< Сотрудник надзора
 	std::optional<std::chrono::sys_seconds> deletedAt;								// nullopt = не удалена; иначе - момент "мягкого" удаления
 	std::string name;
 	std::string organization;
-	//std::string department;
-	//std::string position;
-	//std::string employeementDate;
-	//std::string personalCode;
-	//std::string level;
 	std::string certificateNumber;
 	std::string certificateDate;
+	bool hasVT = true;
 	std::string certificateEndDateVT;
+	bool hasUT = true;
 	std::string certificateEndDateUT;
+	bool hasRT = true;
 	std::string certificateEndDateRT;
+	bool hasPT = true;
 	std::string certificateEndDatePT;
+	bool hasMT = true;
 	std::string certificateEndDateMT;
+	bool hasLT = true;
 	std::string certificateEndDateLT;
 };
-
-
 
 class Laboratory
 {
@@ -68,8 +73,9 @@ public:
 
 	void SaveDB();
 
-	std::vector<Employee> employeesList;		  /// список сотрудников
-	std::vector<Report> reportList; /// Список отчётов
+	std::vector<Employee> employeesList; /// список сотрудников
+	std::vector<Inspector> inspectorsList; /// список сотрудников надзора
+	std::vector<Report> reportList;		 /// Список отчётов
 
 private:
 	std::unique_ptr<DatabaseManager> dbManager;
