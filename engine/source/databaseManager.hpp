@@ -5,6 +5,7 @@
 
 struct sqlite3;
 struct Employee;
+struct Inspector;
 
 class DatabaseManager
 {
@@ -19,11 +20,17 @@ public:
     void SaveEmployees(const std::vector<Employee> &employees);
     std::vector<Employee> LoadEmployees();
 
+    void SaveInspectors(const std::vector<Inspector> &inspectors);
+    std::vector<Inspector> LoadInspectors();
+
 private:
     /// @brief Создать таблицу employees, если её ещё нет, и дозаполнить отсутствующие колонки
     /// в уже существующей таблице (ALTER TABLE ADD COLUMN) - на случай, если Employee получил
     /// новое поле после того, как база уже была создана на диске старой версией приложения
     void EnsureEmployeesTable();
+
+    /// @brief Аналогично EnsureEmployeesTable, но для таблицы inspectors
+    void EnsureInspectorsTable();
 
     sqlite3 *db = nullptr;
 };
