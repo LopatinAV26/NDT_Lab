@@ -57,6 +57,17 @@ void EmployeeEditingWindow::Show(Employee &empl, bool &isOpen)
         ImGui::SetNextItemWidth(-FLT_MIN);
         changed |= ImGui::InputText("##certificateNumber#", &empl.certificateNumber);
 
+        ImGui::TextDisabled("Дата выдачи удостоверения");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.certificateDate);
+            if (ImGui::DatePicker("##certificateDate#", date))
+            {
+                empl.certificateDate = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+
         ImGui::TextDisabled("Дата истечения ВИК");
         ImGui::SetNextItemWidth(-FLT_MIN);
         {

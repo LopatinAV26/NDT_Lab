@@ -35,22 +35,17 @@ class Report
 public:
     Report();
 
-    static inline const std::string controllerNameTitle{"Контроль произвёл"};
-    std::string controllerName;
-    std::string controllerOrganization;
-    std::string controllerCertNumber;
-
-
-
-
-
-
-
-
     std::string id = NDT::GenerateUuidV4(); // UUID v4, генерируется на клиенте при создании записи
     std::chrono::sys_seconds updatedAt =
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
     std::optional<std::chrono::sys_seconds> deletedAt;                              // nullopt = не удалена; иначе - момент "мягкого" удаления
+
+    static inline std::string controllerNameTitle{"Контроль произвёл"};
+    std::string controllerName;
+    std::string controllerOrganization;
+    std::string controllerCertNumber;
+
+    
 
     static inline const std::string nameLabTitle{"Наименование ЛНК"};
     static inline std::string nameLab{"Лаборатория неразрушающего контроля ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" База производственного обеспечения \"Белогорск\""};
@@ -59,8 +54,8 @@ public:
 
     static inline const std::string protocolNumberTitle{"ЗАКЛЮЧЕНИЕ №"};
     std::string protocolNumber{"XXXX-XXXX"};
-    std::string controlDate{"2026-07-15"};   ///< хранится в ISO 8601 (YYYY-MM-DD), для отображения см. NDT::FormatDateForDisplay
-    std::string protocolDate{"2026-07-16"};  ///< хранится в ISO 8601 (YYYY-MM-DD), для отображения см. NDT::FormatDateForDisplay
+    std::string controlDate{"2026-07-15"};  ///< хранится в ISO 8601 (YYYY-MM-DD), для отображения см. NDT::FormatDateForDisplay
+    std::string protocolDate{"2026-07-16"}; ///< хранится в ISO 8601 (YYYY-MM-DD), для отображения см. NDT::FormatDateForDisplay
 
     static inline const std::string objectNameTitle{"Наименование объекта"};
     std::string objectName{};
@@ -159,8 +154,6 @@ public:
     float maxWidthOfWeld = 0.f;
     float minWidthOfWeld = 0.f;
     float edgeDisplacement = 0.f;
-
-    
 
     static inline const std::string protocolCreateNameTitle{"Заключение выдал"};
     int protocolCreateNameIndex = 0;

@@ -16,6 +16,8 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
     }
 
     SDL_Log("Database '%s' opened successfully.", pathToDb.string().c_str());
+
+    EnsureEmployeesTable();
 }
 
 DatabaseManager::~DatabaseManager()
@@ -37,6 +39,7 @@ namespace
         {"personal_code", "TEXT"},
         {"level", "TEXT"},
         {"certificate_number", "TEXT"},
+        {"certificate_date", "TEXT"},
         {"certificate_end_vt", "TEXT"},
         {"certificate_end_ut", "TEXT"},
         {"certificate_end_rt", "TEXT"},
@@ -44,9 +47,17 @@ namespace
         {"certificate_end_mt", "TEXT"},
         {"certificate_end_lt", "TEXT"},
     };
+
+    /// @brief sqlite3_column_text возвращает nullptr для NULL-значения (например, у старых строк
+    /// после ALTER TABLE ADD COLUMN) - присваивание nullptr в std::string это UB/сегфолт
+    std::string GetColumnText(sqlite3_stmt *stmt, int col)
+    {
+        const unsigned char *text = sqlite3_column_text(stmt, col);
+        return text ? reinterpret_cast<const char *>(text) : std::string{};
+    }
 }
 
-void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
+void DatabaseManager::EnsureEmployeesTable()
 {
     if (!db)
         return;
@@ -64,10 +75,27 @@ void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
     char *errMsg = nullptr;
     if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveEmployees: не удалось создать таблицу: %s", errMsg);
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureEmployeesTable: не удалось создать таблицу: %s", errMsg);
         sqlite3_free(errMsg);
         return;
     }
+
+    // Если таблица уже существовала (создана более старой версией приложения без каких-то полей) -
+    // CREATE TABLE IF NOT EXISTS её не тронул, поэтому дозаполняем недостающие колонки поштучно.
+    // "duplicate column name" здесь ожидаема и безопасно игнорируется - колонка уже есть.
+    for (size_t i = 1; i < employeeColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE employees ADD COLUMN " + employeeColumns[i].first + " " + employeeColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
+}
+
+void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
+{
+    if (!db)
+        return;
+
+    EnsureEmployeesTable();
 
     sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
 
@@ -123,12 +151,13 @@ void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
         sqlite3_bind_text(stmt, 9, e.personalCode.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 10, e.level.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 11, e.certificateNumber.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 12, e.certificateEndDateVT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 13, e.certificateEndDateUT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 14, e.certificateEndDateRT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 15, e.certificateEndDatePT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 16, e.certificateEndDateMT.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 17, e.certificateEndDateLT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 12, e.certificateDate.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 13, e.certificateEndDateVT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 14, e.certificateEndDateUT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 15, e.certificateEndDateRT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 16, e.certificateEndDatePT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 17, e.certificateEndDateMT.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 18, e.certificateEndDateLT.c_str(), -1, SQLITE_TRANSIENT);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveEmployees: вставка/обновление не удались: %s", sqlite3_errmsg(db));
@@ -170,26 +199,27 @@ std::vector<Employee> DatabaseManager::LoadEmployees()
     {
         Employee e;
 
-        e.id = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+        e.id = GetColumnText(stmt, 0);
         e.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
 
         if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
             e.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
 
-        e.name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
-        e.organization = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 4));
-        e.department = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 5));
-        e.position = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 6));
-        e.employeementDate = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 7));
-        e.personalCode = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 8));
-        e.level = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 9));
-        e.certificateNumber = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 10));
-        e.certificateEndDateVT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 11));
-        e.certificateEndDateUT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 12));
-        e.certificateEndDateRT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 13));
-        e.certificateEndDatePT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 14));
-        e.certificateEndDateMT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 15));
-        e.certificateEndDateLT = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 16));
+        e.name = GetColumnText(stmt, 3);
+        e.organization = GetColumnText(stmt, 4);
+        e.department = GetColumnText(stmt, 5);
+        e.position = GetColumnText(stmt, 6);
+        e.employeementDate = GetColumnText(stmt, 7);
+        e.personalCode = GetColumnText(stmt, 8);
+        e.level = GetColumnText(stmt, 9);
+        e.certificateNumber = GetColumnText(stmt, 10);
+        e.certificateDate = GetColumnText(stmt, 11);
+        e.certificateEndDateVT = GetColumnText(stmt, 12);
+        e.certificateEndDateUT = GetColumnText(stmt, 13);
+        e.certificateEndDateRT = GetColumnText(stmt, 14);
+        e.certificateEndDatePT = GetColumnText(stmt, 15);
+        e.certificateEndDateMT = GetColumnText(stmt, 16);
+        e.certificateEndDateLT = GetColumnText(stmt, 17);
 
         employees.push_back(std::move(e));
     }

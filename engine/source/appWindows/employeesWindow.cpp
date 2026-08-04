@@ -15,7 +15,7 @@ void EmployeesWindow::ShowEmployeesWindow(std::vector<Employee> &emplList)
     static std::vector<int> indexesList; ///< Список индексов для печати в pdf
     static std::vector<bool> selected;
 
-    if (ImGui::BeginTable("Сотрудники", 15, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
+    if (ImGui::BeginTable("Сотрудники", 16, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
     {
         ImGui::TableSetupColumn("Имя");
         ImGui::TableSetupColumn("Организация");
@@ -26,6 +26,7 @@ void EmployeesWindow::ShowEmployeesWindow(std::vector<Employee> &emplList)
         ImGui::TableSetupColumn("Личный\nкод");
         ImGui::TableSetupColumn("Разряд");
         ImGui::TableSetupColumn("Номер\nудостоверения");
+        ImGui::TableSetupColumn("Дата выдачи\nудостоверения");
         ImGui::TableSetupColumn("Срокд ействия\nВИК");
         ImGui::TableSetupColumn("Срок действия\nУК");
         ImGui::TableSetupColumn("Срок действия\nРК");
@@ -50,7 +51,7 @@ void EmployeesWindow::ShowEmployeesWindow(std::vector<Employee> &emplList)
             const std::string *cellTexts[] = {
                 &employeeRow.name, &employeeRow.organization, &employeeRow.department, &employeeRow.position,
                 &employeeRow.employeementDate, &experienceStr, &employeeRow.personalCode, &employeeRow.level,
-                &employeeRow.certificateNumber, &employeeRow.certificateEndDateVT, &employeeRow.certificateEndDateUT,
+                &employeeRow.certificateNumber, &employeeRow.certificateDate, &employeeRow.certificateEndDateVT, &employeeRow.certificateEndDateUT,
                 &employeeRow.certificateEndDateRT, &employeeRow.certificateEndDatePT, &employeeRow.certificateEndDateMT,
                 &employeeRow.certificateEndDateLT};
 
@@ -124,6 +125,11 @@ void EmployeesWindow::ShowEmployeesWindow(std::vector<Employee> &emplList)
             ImGui::TableNextColumn();
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
             ImGui::TextUnformatted(std::format("{:s}", emplList.at(row).certificateNumber).c_str());
+            ImGui::PopTextWrapPos();
+
+            ImGui::TableNextColumn();
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
+            ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).certificateDate).c_str());
             ImGui::PopTextWrapPos();
 
             ImGui::TableNextColumn();
