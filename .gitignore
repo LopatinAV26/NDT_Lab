@@ -10,3 +10,4 @@ normative/
 devices_manual/
 resources/settings.toml
 resources/imgui.ini
+resources/*.aps
