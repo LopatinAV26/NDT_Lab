@@ -24,6 +24,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     imGuiDatePicker
     sqlite3
     tomlplusplus::tomlplusplus
+    stb_image
     SDL3::SDL3-static
     resources
     libpqxx::pqxx
