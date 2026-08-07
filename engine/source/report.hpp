@@ -57,10 +57,17 @@ public:
     std::string objectNameTitle{"Наименование объекта"};
     std::string objectName;
 
-    static inline const std::string pipeCategoryTitle = {"Категория трубопровода"};
-    int pipeCategoryIndex = 0;
-    static inline const std::array<std::string, 5> pipeCategoryList = {"В", "I", "II", "III", "IV"};
+    std::array<std::string, 5> pipeCategoryList = {"В", "I", "II", "III", "IV"};
+    std::string pipeCategoryTitle{"Категория трубопровода"};
     std::string pipeCategory;
+
+    std::string contractorOrganizationTitle{"Подрядная организация"};
+    //int contractorOrganizationIndex = 0;
+    std::string contractorOrganization;
+
+
+
+
 
 
 
@@ -71,18 +78,6 @@ public:
     std::string controllerName;
     std::string controllerOrganization;
     std::string controllerCertNumber;
-
-    
-
-    
-
-    
-
-    
-
-    static inline const std::string contractorOrganizationTitle{"Подрядная организация"};
-    int contractorOrganizationIndex = 0;
-    std::vector<std::string> contractorOrganizationList{"ООО \"Транснефть - Дальний Восток\" РНУ \"Белогорск\" БПО \"Белогорск\" ЛНК"};
 
     static inline const std::string customerOrganizationTitle{"Организация заказчика"};
     int customerOrganizationIndex = 0;
@@ -99,8 +94,6 @@ public:
 
     static inline const std::string equipmentTitle{"Оборудование и материалы в соответствии с операционной технологической картой"};
     std::string equipment{};
-
-    
 
     static inline const std::array<std::string, 8> methodList = {"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
     int methodIndex{0};

@@ -76,6 +76,7 @@ public:
 	std::vector<Employee> employeesList; /// список сотрудников
 	std::vector<Inspector> inspectorsList; /// список сотрудников надзора
 	std::vector<Report> reportList;		 /// Список отчётов
+	
 
 private:
 	std::unique_ptr<DatabaseManager> dbManager;

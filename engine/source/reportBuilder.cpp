@@ -44,9 +44,9 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 		sumY = 0.0;
 		Cell c14 = pdfManager.TableCreateCell(sumX, sumY, c13.h, {0, reportData.objectName});
 		sumY += c14.h;
-		Cell c24 = pdfManager.TableCreateCell(sumX, sumY, c23.h, {0, reportData.pipeCategoryList.at(reportData.pipeCategoryIndex)});
+		Cell c24 = pdfManager.TableCreateCell(sumX, sumY, c23.h, {0, reportData.pipeCategory});
 		sumY += c24.h;
-		Cell c34 = pdfManager.TableCreateCell(sumX, sumY, c33.h, {0, reportData.contractorOrganizationList.at(reportData.contractorOrganizationIndex)});
+		Cell c34 = pdfManager.TableCreateCell(sumX, sumY, c33.h, {0, reportData.contractorOrganization});
 		sumY += c34.h;
 		Cell c44 = pdfManager.TableCreateCell(sumX, sumY, c43.h, {0, reportData.customerOrganizationList.at(reportData.customerOrganizationIndex)});
 		sumY += c44.h;

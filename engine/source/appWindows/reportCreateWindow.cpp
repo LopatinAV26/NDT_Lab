@@ -75,7 +75,8 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::EndCombo();
         }
         
-
+        ImGui::TextDisabled("Подрядная организация");
+        ImGui::InputText("##Подрядная организация#", &report.contractorOrganization);
 
 
         
