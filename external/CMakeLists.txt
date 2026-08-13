@@ -18,7 +18,7 @@ set(HAVE_GETRESGID 1 CACHE INTERNAL "" FORCE)
 FetchContent_Declare(SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
     GIT_TAG release-3.4.14
-    GIT_SHALLOW TRUE
+    #GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(SDL3)
 
@@ -26,7 +26,7 @@ FetchContent_MakeAvailable(SDL3)
 FetchContent_Declare(tomlplusplus
     GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
     GIT_TAG v3.4.0
-    GIT_SHALLOW TRUE
+    #GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(tomlplusplus)
 

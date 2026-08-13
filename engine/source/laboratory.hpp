@@ -44,10 +44,10 @@ struct Employee ///< Сотрудник ЛНК
 
 struct Inspector ///< Сотрудник надзора
 {
-	std::string id = NDT::GenerateUuidV4(); // UUID v4, генерируется на клиенте при создании записи
+	std::string id = NDT::GenerateUuidV4();
 	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
-	std::optional<std::chrono::sys_seconds> deletedAt;								// nullopt = не удалена; иначе - момент "мягкого" удаления
+		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	std::optional<std::chrono::sys_seconds> deletedAt;
 	std::string name;
 	std::string organization;
 	std::string certificateNumber;
@@ -66,6 +66,46 @@ struct Inspector ///< Сотрудник надзора
 	std::string certificateEndDateLT;
 };
 
+struct Master ///< Производитель СМР
+{
+	std::string id = NDT::GenerateUuidV4();
+	std::chrono::sys_seconds updatedAt =
+		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	std::optional<std::chrono::sys_seconds> deletedAt;
+	std::string name;
+	std::string organization;
+	std::string department;
+	std::string position;
+	std::string personalCode;
+	std::string certificateNumber;
+	std::string certificateEndDate;
+};
+
+struct Welder ///< Сварщик
+{
+	std::string id = NDT::GenerateUuidV4();
+	std::chrono::sys_seconds updatedAt =
+		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	std::optional<std::chrono::sys_seconds> deletedAt;
+	std::string name;
+	std::string organization;
+	std::string department;
+	std::string position;
+	std::string personalCode;
+	std::string certificateNumber;
+	std::string certificateEndDate;
+};
+
+struct ControlMap ///Технологическая карта контроля
+{
+	
+};
+
+struct Equipment
+{
+
+};
+
 class Laboratory
 {
 public:
@@ -73,10 +113,15 @@ public:
 
 	void SaveDB();
 
-	std::vector<Employee> employeesList; /// список сотрудников
+	std::string laboratoryName;
+    std::string numberAttestation;
+	std::string attestationEndDate;
+
+	std::vector<Employee> employeesList;   /// список сотрудников
 	std::vector<Inspector> inspectorsList; /// список сотрудников надзора
-	std::vector<Report> reportList;		 /// Список отчётов
-	
+	std::vector<Master> mastersList;		   /// производители СМР
+	std::vector<Welder> weldersList;		   /// сварщики
+	std::vector<Report> reportsList;		   /// список отчётов
 
 private:
 	std::unique_ptr<DatabaseManager> dbManager;

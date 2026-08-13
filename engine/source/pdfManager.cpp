@@ -5,7 +5,7 @@
 PdfManager::PdfManager()
 {
 	pageRect = PoDoFo::PdfPage::CreateStandardPageSize(PoDoFo::PdfPageSize::A4, isLandscape);
-	fonts = LoadEmbeddedNotoSansFonts(doc);
+	fonts = LoadEmbeddedPDFFonts(doc);
 
 	mmToPt = 72.0 / 25.4;
 	xEnd = pageRect.Width / mmToPt - rightIndent;

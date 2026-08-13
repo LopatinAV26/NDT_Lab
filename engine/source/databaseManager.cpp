@@ -180,9 +180,7 @@ void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
         }
     }
 
-    std::string insertSql = "INSERT INTO employees (" + columnNames + ") VALUES (" + placeholders + ") "
-                                                                                                    "ON CONFLICT(id) DO UPDATE SET " +
-                            updateSet + ";";
+    std::string insertSql = "INSERT INTO employees (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
 
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
@@ -331,9 +329,7 @@ void DatabaseManager::SaveInspectors(const std::vector<Inspector> &inspectors)
         }
     }
 
-    std::string insertSql = "INSERT INTO inspectors (" + columnNames + ") VALUES (" + placeholders + ") "
-                                                                                                      "ON CONFLICT(id) DO UPDATE SET " +
-                            updateSet + ";";
+    std::string insertSql = "INSERT INTO inspectors (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
 
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)

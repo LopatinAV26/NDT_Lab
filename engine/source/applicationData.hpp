@@ -9,16 +9,17 @@ enum class GuiStyle
 {
 	Dark,
 	Light,
-	Classic
+	Classic,
+	Custom
 };
 
 enum class AppFont
 {
-	ShareTechMono,
 	NotoSansRegular,
 	NotoSansBold,
 	NotoSansItalic,
-	NotoSansBoldItalic
+	NotoSansBoldItalic,
+	ShareTechMonoRegular
 };
 
 enum class Vsync
@@ -49,15 +50,16 @@ public:
 	float frameRounding = 0.0f;
 	float grabRounding = 0.0f;
 	float fontSize = 10.0f;
-	const float fontSizeMax = 24.0f; // размер, на котором печётся атлас шрифта; fontSize только уменьшает через FontGlobalScale
-	AppFont font = AppFont::ShareTechMono;
+	const float fontSizeMax = 32.0f; // размер, на котором печётся атлас шрифта; fontSize только уменьшает через FontGlobalScale
+	AppFont font = AppFont::NotoSansRegular;
 
 	// Заполняются в Gui::InitImGui после загрузки шрифтов в атлас
-	ImFont *fontShareTechMono = nullptr;
+	//ImFont *fontShareTechMono = nullptr;
 	ImFont *fontNotoSansRegular = nullptr;
 	ImFont *fontNotoSansBold = nullptr;
 	ImFont *fontNotoSansItalic = nullptr;
 	ImFont *fontNotoSansBoldItalic = nullptr;
+	ImFont* fontShareTechMonoRegular = nullptr;
 	int windowWidth = 1920;
 	int windowHeight = 1080;
 	float windowScreenPercent = 0.8f; // доля от usable-области экрана

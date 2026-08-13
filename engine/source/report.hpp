@@ -30,15 +30,35 @@ struct DefUC
     static inline const std::array<std::string, 5> defNameUC{"SH", "LS", "LB", "TD", "CC"};
 };
 
+enum class Method : uint8_t
+{
+	VT,
+	RT,
+	UT,
+	DRT,
+	PT,
+	MT,
+	DT /// Delamination - расслоение
+	// LT
+};
+
 class Report
 {
 public:
     Report();
 
+    /// @brief Получить заголовок отчёта
+    /// @param name 
+    /// @return 
+    std::string GetMethodTitle(Method name) const;
+
     std::string id = NDT::GenerateUuidV4(); // UUID v4, генерируется на клиенте при создании записи
     std::chrono::sys_seconds updatedAt =
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
     std::optional<std::chrono::sys_seconds> deletedAt;                              // nullopt = не удалена; иначе - момент "мягкого" удаления
+
+    Method methodValue;
+    std::string method;
 
     std::string controlDate; ///< дата НК
     std::string reportDate;  ///< дата выдачи заключения
@@ -62,28 +82,42 @@ public:
     std::string pipeCategory;
 
     std::string contractorOrganizationTitle{"Подрядная организация"};
-    //int contractorOrganizationIndex = 0;
     std::string contractorOrganization;
 
+    std::string customerOrganizationTitle{"Организация заказчика"};
+    std::string customerOrganization;
 
-
-
-
-
-
-
-
-
-    static inline std::string controllerNameTitle{"Контроль произвёл"};
+    std::string controllerNameTitle{"Контроль произвёл"};
     std::string controllerName;
     std::string controllerOrganization;
     std::string controllerCertNumber;
 
-    static inline const std::string customerOrganizationTitle{"Организация заказчика"};
-    int customerOrganizationIndex = 0;
-    std::vector<std::string> customerOrganizationList{"ООО \"Транснефть - Дальний Восток\""};
+    std::string protocolCreateNameTitle{"Заключение выдал"};
+    std::string protocolCreateName;
+    std::string protocolCreateOrganization;
+    std::string protocolCreateCertNumber;
 
-    std::string methodTitle{"ПО КОНТРОЛЮ СВАРНЫХ СОЕДИНЕНИЙ РАДИОГРАФИЧЕСКИМ МЕТОДОМ"};
+    std::string inspectorNameTitle{"Подтвердил полноту проведенного контроля и соответствие оценки качества проконтролированных соединений требованиям НД"};
+    std::string inspectorName;
+    std::string inspectorOrganization;
+    std::string inspectorCertNumber;
+
+    std::string masterNameTitle{"Производитель сварочно-монтажных работ с результатами контроля ознакомлен и заключение получил"};
+    std::string masterName;
+    std::string masterOrganization;
+    std::string masterCertNumber;
+
+
+
+
+
+
+
+
+
+
+
+    
 
     static inline const std::string technologicalControlMapTitle{"Контроль выполнен в соответствии с операционной технологической картой"};
     int technologicalControlMapIndex = 0;
@@ -94,9 +128,6 @@ public:
 
     static inline const std::string equipmentTitle{"Оборудование и материалы в соответствии с операционной технологической картой"};
     std::string equipment{};
-
-    static inline const std::array<std::string, 8> methodList = {"ВИК", "ПВК", "УК", "РК", "ЦРК", "МК", "ПВТ", "Расслоение"};
-    int methodIndex{0};
 
     static inline const std::string weldTypeTitle{"Тип сварного соединения, способ сварки"};
     int weldTypeIndex = 0;
@@ -162,24 +193,6 @@ public:
     float maxWidthOfWeld = 0.f;
     float minWidthOfWeld = 0.f;
     float edgeDisplacement = 0.f;
-
-    static inline const std::string protocolCreateNameTitle{"Заключение выдал"};
-    int protocolCreateNameIndex = 0;
-    static inline std::vector<std::string> protocolCreateNameList{"Лопатин А.В.", "Кухаренко И.А.", "Крылов А.Н.", "Федоренко А.Н."};
-    std::string protocolCreateOrganization = {"ООО Транснефть - Дальний Восток"};
-    std::string protocolCreateCertNumber = {"РСКТН-09050-2021"};
-
-    static inline const std::string inspectorNameTitle{"Подтвердил полноту проведенного контроля и соответствие оценки качества проконтролированных соединений требованиям НД"};
-    int inspectorNameIndex = 0;
-    static inline std::vector<std::string> inspectorNameList{"Караблин Ю.Н."};
-    std::string inspectorOrganization = {"ООО Транснефть Надзор"};
-    std::string inspectorCertNumber = {"РСКТН-ХХХХХ-ХХХХ"};
-
-    static inline const std::string masterNameTitle{"Производитель сварочно-монтажных работ с результатами контроля ознакомлен и заключение получил"};
-    int masterNameIndex = 0;
-    static inline std::vector<std::string> masterNameList{"Протасевич А.А."};
-    std::string masterOrganization = {"ООО Транснефть - Дальний Восток"};
-    std::string masterCertNumber = {"ТОР-9АЦ-II-ХХХХ"};
 
     std::vector<DefRT> defRGCList; ///< Список дефектов
 };

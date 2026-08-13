@@ -36,7 +36,7 @@ void EmployeesWindow::Show(std::vector<Employee> &emplList)
         ImGui::TableSetupScrollFreeze(1, 1);
         ImGui::TableHeadersRow();
 
-        tableRows = emplList.size();
+        tableRows = static_cast<int>(emplList.size());
         selected.resize(tableRows);
         for (int row = 0; row < tableRows; ++row)
         {
@@ -64,7 +64,7 @@ void EmployeesWindow::Show(std::vector<Employee> &emplList)
                 rowHeight = std::max(rowHeight, ImGui::CalcTextSize(cellTexts[col]->c_str(), nullptr, false, colWidth).y);
             }
 
-            ImGui::TableSetColumnIndex(0); // возвращаемся к первому столбцу для настоящей отрисовки
+            ImGui::TableSetColumnIndex(0);                                                                 // возвращаемся к первому столбцу для настоящей отрисовки
             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg)); /// подсвечиваем закреплённый столбец как шапку таблицы
             if (ImGui::Selectable("###", selected.at(row), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick, ImVec2(0, rowHeight)))
             {

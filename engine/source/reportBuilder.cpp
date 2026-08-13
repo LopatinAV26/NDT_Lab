@@ -4,10 +4,6 @@
 #include "pdfManager.hpp"
 #include "utilities.hpp"
 
-ReportBuilder::ReportBuilder()
-{
-}
-
 void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const std::vector<int> &reportIndexes)
 {
 	for (const auto &index : reportIndexes)
@@ -48,12 +44,12 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 		sumY += c24.h;
 		Cell c34 = pdfManager.TableCreateCell(sumX, sumY, c33.h, {0, reportData.contractorOrganization});
 		sumY += c34.h;
-		Cell c44 = pdfManager.TableCreateCell(sumX, sumY, c43.h, {0, reportData.customerOrganizationList.at(reportData.customerOrganizationIndex)});
+		Cell c44 = pdfManager.TableCreateCell(sumX, sumY, c43.h, {0, reportData.customerOrganization});
 		sumY += c44.h;
 
 		pdfManager.cursorRowY = sumY;
 		pdfManager.TableNewRow();
-		pdfManager.TableCreateRow(5, {{0, reportData.methodTitle, 8, PoDoFo::PdfHorizontalAlignment::Center, PoDoFo::PdfVerticalAlignment::Center, FontStyle::Bold}});
+		pdfManager.TableCreateRow(5, {{0, reportData.method, 8, PoDoFo::PdfHorizontalAlignment::Center, PoDoFo::PdfVerticalAlignment::Center, FontStyle::Bold}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(4, {{0, reportData.technologicalControlMapTitle + " " + reportData.technologicalControlMap.at(reportData.technologicalControlMapIndex)}});
 		pdfManager.TableNewRow();
@@ -151,19 +147,19 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 											   {0, NDT::FormatDateForDisplay(reportData.controlDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.protocolCreateNameTitle, 8},
-											   {40, reportData.protocolCreateNameList.at(reportData.protocolCreateNameIndex), 8, PoDoFo::PdfHorizontalAlignment::Center},
+											   {40, reportData.protocolCreateName, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {100, reportData.protocolCreateOrganization + ", " + reportData.protocolCreateCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
 											   {0, NDT::FormatDateForDisplay(reportData.reportDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.inspectorNameTitle, 7},
-											   {40, reportData.inspectorNameList.at(reportData.inspectorNameIndex), 8, PoDoFo::PdfHorizontalAlignment::Center},
+											   {40, reportData.inspectorName, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {100, reportData.inspectorOrganization + ", " + reportData.inspectorCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
 											   {0, NDT::FormatDateForDisplay(reportData.reportDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.masterNameTitle, 7},
-											   {40, reportData.masterNameList.at(reportData.masterNameIndex), 8, PoDoFo::PdfHorizontalAlignment::Center},
+											   {40, reportData.masterName, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {100, reportData.masterOrganization + ", " + reportData.masterCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
 											   {0, NDT::FormatDateForDisplay(reportData.reportDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});

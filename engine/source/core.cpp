@@ -87,7 +87,7 @@ SDL_AppResult Core::Iterate()
 	}
 
 	imWindow->IterateImGui();
-	SDL_SetRenderDrawColor(appData.renderer, 64, 64, 64, SDL_ALPHA_OPAQUE);
+	//SDL_SetRenderDrawColor(appData.renderer, 64, 64, 64, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(appData.renderer);
 
 	// Update();
@@ -126,8 +126,6 @@ SDL_AppResult Core::ProcessEvent(const SDL_Event *event)
 
 	case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 		appData.mainScale = SDL_GetWindowDisplayScale(appData.window);
-		if (appData.mainScale <= 0.0f)
-			appData.mainScale = 1.0f;
 		imWindow->ApplyScale();
 		break;
 	}

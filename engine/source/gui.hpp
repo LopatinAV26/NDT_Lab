@@ -24,10 +24,11 @@ public:
 	/// @brief Пересчитать масштаб (шрифт + отступы) от appData.mainScale/fontSize - вызывать при инициализации
 	/// и при смене DPI монитора (SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED)
 	void ApplyScale();
+	static void SetCustomTheme();
 
 private:
 	void ButtonsWindow();
-	void SetRadiationTheme();
+	
 
 	ApplicationData &appData;
 	ResourceManager &resManager;

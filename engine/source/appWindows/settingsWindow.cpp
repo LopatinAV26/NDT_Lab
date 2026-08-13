@@ -1,6 +1,7 @@
 #include "settingsWindow.hpp"
 #include "imgui.h"
 #include "applicationData.hpp"
+#include "gui.hpp"
 
 SettingsWindow::SettingsWindow(ApplicationData& coreAppData)
 	: appData{ coreAppData }
@@ -13,7 +14,8 @@ void SettingsWindow::Show(bool& isOpen)
 
 	ImGuiWindowFlags window_flags =
 		ImGuiWindowFlags_AlwaysAutoResize |
-		ImGuiWindowFlags_NoSavedSettings;
+		ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_NoCollapse;
 
 	if (ImGui::Begin("Settings", &isOpen, window_flags))
 	{
@@ -109,20 +111,20 @@ void SettingsWindow::SetVsyncMode()
 void SettingsWindow::SetFont()
 {
 	static constexpr const char *fontNames[] = {
-		"ShareTechMono",
 		"NotoSans Regular",
 		"NotoSans Bold",
 		"NotoSans Italic",
-		"NotoSans Bold Italic"};
+		"NotoSans Bold Italic",
+		"ShareTechMonoRegular" };
 
 	int currentFontIndex = static_cast<int>(appData.font);
-	if (ImGui::Combo("##FontFamily#", &currentFontIndex, fontNames, IM_ARRAYSIZE(fontNames)))
+	if (ImGui::Combo("##Font#", &currentFontIndex, fontNames, IM_ARRAYSIZE(fontNames)))
 	{
 		appData.font = static_cast<AppFont>(currentFontIndex);
 		switch (appData.font)
 		{
-		case AppFont::ShareTechMono:
-			ImGui::GetIO().FontDefault = appData.fontShareTechMono;
+		case AppFont::ShareTechMonoRegular:
+			ImGui::GetIO().FontDefault = appData.fontShareTechMonoRegular;
 			break;
 		case AppFont::NotoSansRegular:
 			ImGui::GetIO().FontDefault = appData.fontNotoSansRegular;
@@ -150,6 +152,8 @@ void SettingsWindow::SetGuiStyle()
 	ImGui::RadioButton("Light", &currentStyleIndex, static_cast<int>(GuiStyle::Light));
 	ImGui::SameLine();
 	ImGui::RadioButton("Classic", &currentStyleIndex, static_cast<int>(GuiStyle::Classic));
+	ImGui::SameLine();
+	ImGui::RadioButton("Custom", &currentStyleIndex, static_cast<int>(GuiStyle::Custom));
 
 	if (currentStyleIndex == static_cast<int>(appData.style))
 		return;
@@ -168,6 +172,10 @@ void SettingsWindow::SetGuiStyle()
 
 	case GuiStyle::Classic:
 		ImGui::StyleColorsClassic();
+		break;
+	
+	case GuiStyle::Custom:
+		Gui::SetCustomTheme();
 		break;
 	}
 }

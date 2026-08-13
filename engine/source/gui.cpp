@@ -19,7 +19,7 @@ void Gui::InitImGui()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImPlot::CreateContext();
-	[[maybe_unused]] ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO &io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 	io.IniFilename = appData.pathToImGuiIniFile;
@@ -28,18 +28,19 @@ void Gui::InitImGui()
 	// итоговый масштабированный размер на лету (style.FontScaleMain/FontScaleDpi), пересборка
 	// атласа при смене масштаба не нужна. Все доступные шрифты грузятся сразу, чтобы переключение
 	// в настройках не требовало пересборки атласа.
-	appData.fontShareTechMono = LoadEmbeddedShareTechMono(io, appData.fontSizeMax);
+	//appData.fontShareTechMonoRegular = LoadEmbeddedShareTechMono(io, appData.fontSizeMax);
 
-	auto notoSans = LoadEmbeddedNotoSansImGuiFonts(io, appData.fontSizeMax);
-	appData.fontNotoSansRegular = notoSans[0];
-	appData.fontNotoSansBold = notoSans[1];
-	appData.fontNotoSansItalic = notoSans[2];
-	appData.fontNotoSansBoldItalic = notoSans[3];
+	auto fonts = LoadEmbeddedImGuiFonts(io, appData.fontSizeMax);
+	appData.fontNotoSansRegular = fonts.at(0);
+	appData.fontNotoSansBold = fonts.at(1);
+	appData.fontNotoSansItalic = fonts.at(2);
+	appData.fontNotoSansBoldItalic = fonts.at(3);
+	appData.fontShareTechMonoRegular = fonts.at(4);
 
 	switch (appData.font)
 	{
-	case AppFont::ShareTechMono:
-		io.FontDefault = appData.fontShareTechMono;
+	case AppFont::ShareTechMonoRegular:
+		io.FontDefault = appData.fontShareTechMonoRegular;
 		break;
 	case AppFont::NotoSansRegular:
 		io.FontDefault = appData.fontNotoSansRegular;
@@ -68,6 +69,11 @@ void Gui::InitImGui()
 	case GuiStyle::Classic:
 		ImGui::StyleColorsClassic();
 		break;
+
+	case GuiStyle::Custom:
+		Gui::SetCustomTheme();
+		break;
+
 	default:
 		ImGui::StyleColorsClassic();
 		break;
@@ -148,7 +154,7 @@ void Gui::RenderImGui()
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), appData.renderer);
 }
 
-void Gui::SetRadiationTheme()
+void Gui::SetCustomTheme()
 {
 	ImGuiStyle &style = ImGui::GetStyle();
 	ImVec4 *colors = style.Colors;

@@ -30,7 +30,7 @@ void OtherEmployeesWindow::Show(std::vector<Inspector> &inspectorsList)
         ImGui::TableSetupScrollFreeze(1, 1);
         ImGui::TableHeadersRow();
 
-        tableRows = inspectorsList.size();
+        tableRows = static_cast<int>(inspectorsList.size());
         selected.resize(tableRows);
         for (int row = 0; row < tableRows; ++row)
         {

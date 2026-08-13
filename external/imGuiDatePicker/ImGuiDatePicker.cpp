@@ -222,7 +222,7 @@ namespace ImGui
     {
         bool res = false;
 
-        ImGui::PushFont(altFont);
+        ImGui::PushFont(altFont, altFont ? altFont->LegacySize : 0.0f);
         if (ImGui::BeginCombo(label.c_str(), items[v].c_str()))
         {
             for (int i = 0; i < items.size(); ++i)
@@ -357,7 +357,7 @@ namespace ImGui
 
                 PushStyleColor(ImGuiCol_HeaderHovered, GetStyleColorVec4(ImGuiCol_TableHeaderBg));
                 PushStyleColor(ImGuiCol_HeaderActive, GetStyleColorVec4(ImGuiCol_TableHeaderBg));
-                PushFont(altFont);
+                PushFont(altFont, altFont ? altFont->LegacySize : 0.0f);
                 TableHeadersRow();
                 PopStyleColor(2);
                 PopFont();
