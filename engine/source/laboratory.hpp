@@ -98,11 +98,14 @@ struct Welder ///< Сварщик
 
 struct ControlMap ///Технологическая карта контроля
 {
-	
+	std::string name;
+	std::string code;
+	std::string method;
 };
 
 struct Equipment
 {
+	std::string name;
 
 };
 

@@ -48,6 +48,12 @@ void LabWindow::Show(bool &isOpen)
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
         {
+            if (ImGui::BeginTabItem("Главная"))
+            {
+                
+                ImGui::EndTabItem();
+            }
+
             if (ImGui::BeginTabItem("Параметры контроля"))
             {
                 nomogramWindow.Show();
