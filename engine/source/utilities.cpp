@@ -198,4 +198,29 @@ namespace NDT
 						   static_cast<uint16_t>(b >> 48),
 						   b & 0xFFFFFFFFFFFFULL);
 	}
+
+	std::string GenerateUuidV7()
+	{
+		static std::random_device rd;
+		static std::mt19937_64 gen(rd());
+		static std::uniform_int_distribution<uint64_t> dist;
+
+		uint64_t unixMs = static_cast<uint64_t>(
+			std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+
+		uint64_t a = (unixMs << 16) | (dist(gen) & 0xFFFFULL);
+		uint64_t b = dist(gen);
+
+		// версия 7 (время + случайность) - биты 12-15 второй половины `a` = 0111
+		a = (a & 0xFFFFFFFFFFFF0FFFULL) | 0x0000000000007000ULL;
+		// вариант RFC 4122 - два старших бита `b` = "10"
+		b = (b & 0x3FFFFFFFFFFFFFFFULL) | 0x8000000000000000ULL;
+
+		return std::format("{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
+						   static_cast<uint32_t>(a >> 32),
+						   static_cast<uint16_t>(a >> 16),
+						   static_cast<uint16_t>(a),
+						   static_cast<uint16_t>(b >> 48),
+						   b & 0xFFFFFFFFFFFFULL);
+	}
 }

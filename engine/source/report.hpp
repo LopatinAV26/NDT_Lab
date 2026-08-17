@@ -52,7 +52,7 @@ public:
     /// @return 
     std::string GetMethodTitle(Method name) const;
 
-    std::string id = NDT::GenerateUuidV4(); // UUID v4, генерируется на клиенте при создании записи
+    std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
     std::chrono::sys_seconds updatedAt =
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
     std::optional<std::chrono::sys_seconds> deletedAt;                              // nullopt = не удалена; иначе - момент "мягкого" удаления

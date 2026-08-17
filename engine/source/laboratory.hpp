@@ -15,7 +15,7 @@ class ApplicationData;
 
 struct Employee ///< Сотрудник ЛНК
 {
-	std::string id = NDT::GenerateUuidV4(); // UUID v4, генерируется на клиенте при создании записи
+	std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
 	std::chrono::sys_seconds updatedAt =
 		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
 	std::optional<std::chrono::sys_seconds> deletedAt;								// nullopt = не удалена; иначе - момент "мягкого" удаления
@@ -44,7 +44,7 @@ struct Employee ///< Сотрудник ЛНК
 
 struct Inspector ///< Сотрудник надзора
 {
-	std::string id = NDT::GenerateUuidV4();
+	std::string id = NDT::GenerateUuidV7();
 	std::chrono::sys_seconds updatedAt =
 		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 	std::optional<std::chrono::sys_seconds> deletedAt;
@@ -68,7 +68,7 @@ struct Inspector ///< Сотрудник надзора
 
 struct Master ///< Производитель СМР
 {
-	std::string id = NDT::GenerateUuidV4();
+	std::string id = NDT::GenerateUuidV7();
 	std::chrono::sys_seconds updatedAt =
 		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 	std::optional<std::chrono::sys_seconds> deletedAt;
@@ -83,7 +83,7 @@ struct Master ///< Производитель СМР
 
 struct Welder ///< Сварщик
 {
-	std::string id = NDT::GenerateUuidV4();
+	std::string id = NDT::GenerateUuidV7();
 	std::chrono::sys_seconds updatedAt =
 		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 	std::optional<std::chrono::sys_seconds> deletedAt;

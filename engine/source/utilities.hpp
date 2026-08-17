@@ -57,4 +57,8 @@ namespace NDT
 	float GetMetalDensity(int negBright);
 
 	std::string GenerateUuidV4();
+
+	/// @brief Сгенерировать UUID v7 (первые 48 бит - unix-время в мс, остальное - случайность)
+	/// @brief упорядочен по времени создания - лучше для индекса первичного ключа в БД, чем v4
+	std::string GenerateUuidV7();
 }
