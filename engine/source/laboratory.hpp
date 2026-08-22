@@ -109,6 +109,17 @@ struct Equipment
 
 };
 
+struct LaboratoryInfo{
+	std::string id = NDT::GenerateUuidV7();
+	std::chrono::sys_seconds updatedAt =
+		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	std::optional<std::chrono::sys_seconds> deletedAt;
+
+	std::string laboratoryName;
+    std::string numberAttestation;
+	std::string attestationEndDate;
+};
+
 class Laboratory
 {
 public:
@@ -116,10 +127,7 @@ public:
 
 	void SaveDB();
 
-	std::string laboratoryName;
-    std::string numberAttestation;
-	std::string attestationEndDate;
-
+	LaboratoryInfo labInfo;
 	std::vector<Employee> employeesList;   /// список сотрудников
 	std::vector<Inspector> inspectorsList; /// список сотрудников надзора
 	std::vector<Master> mastersList;		   /// производители СМР

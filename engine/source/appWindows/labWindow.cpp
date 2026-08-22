@@ -3,8 +3,10 @@
 #include <cfloat>
 #include "imgui.h"
 #include "imgui_stdlib.h"
+#include "ImGuiDatePicker.hpp"
 #include "applicationData.hpp"
 #include "resourceManager.hpp"
+#include "utilities.hpp"
 
 LabWindow::LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager)
     : lab{coreAppData},
@@ -50,7 +52,7 @@ void LabWindow::Show(bool &isOpen)
         {
             if (ImGui::BeginTabItem("Главная"))
             {
-                
+                ShowMain();
                 ImGui::EndTabItem();
             }
 
@@ -82,4 +84,52 @@ void LabWindow::Show(bool &isOpen)
         }
         ImGui::End();
     }
+}
+
+void LabWindow::ShowMain()
+{
+    const float availWidth = ImGui::GetContentRegionAvail().x;
+    bool changed = false;
+
+    auto centeredText = [availWidth](const std::string &text)
+    {
+        float textWidth = ImGui::CalcTextSize(text.c_str()).x;
+        ImGui::SetCursorPosX((availWidth - textWidth) * 0.5f);
+        ImGui::TextUnformatted(text.c_str());
+    };
+
+    if (!editingLabInfo)
+    {
+        centeredText(lab.labInfo.laboratoryName);
+        centeredText(lab.labInfo.numberAttestation);
+        centeredText(NDT::FormatDateForDisplay(lab.labInfo.attestationEndDate));
+    }
+    else
+    {
+        ImGui::TextDisabled("Наименование лаборатории");
+        //ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##Наименование лаборатории#", &lab.labInfo.laboratoryName);
+        ImGui::TextDisabled("Номер свидетельства об аттестации");
+        //ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##Номер свидетельства об аттестации#", &lab.labInfo.numberAttestation);
+
+        ImGui::TextDisabled("Дата окончания действия аттестации");
+        tm date = NDT::ParseIsoDateTm(lab.labInfo.attestationEndDate);
+        //ImGui::SetNextItemWidth(-FLT_MIN);
+        if (ImGui::DatePicker("##Дата окончания действия аттестации#", date))
+        {
+            lab.labInfo.attestationEndDate = NDT::FormatIsoDateTm(date);
+            changed = true;
+        }
+    }
+
+    if (changed)
+        lab.labInfo.updatedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+
+    ImGui::Spacing();
+    const char *linkLabel = editingLabInfo ? "Готово" : "Изменить";
+    float linkWidth = ImGui::CalcTextSize(linkLabel).x;
+    ImGui::SetCursorPosX((availWidth - linkWidth) * 0.5f);
+    if (ImGui::TextLink(linkLabel))
+        editingLabInfo = !editingLabInfo;
 }

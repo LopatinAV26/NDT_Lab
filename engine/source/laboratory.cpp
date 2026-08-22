@@ -5,6 +5,7 @@
 Laboratory::Laboratory(ApplicationData &appData)
 {
 	dbManager = std::make_unique<DatabaseManager>(appData.pathToDatabase);
+	dbManager->LoadLaboratoryInfo(*this);
 	employeesList = dbManager->LoadEmployees();
 	inspectorsList = dbManager->LoadInspectors();
 	// metalOptDenMax = static_cast<float>(std::log10(negatoscopeBrightness) - 2.0f);
@@ -14,6 +15,7 @@ Laboratory::Laboratory(ApplicationData &appData)
 
 void Laboratory::SaveDB()
 {
+	dbManager->SaveLaboratoryInfo(*this);
 	dbManager->SaveEmployees(employeesList);
 	dbManager->SaveInspectors(inspectorsList);
 }

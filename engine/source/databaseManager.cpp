@@ -17,6 +17,7 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
 
     SDL_Log("Database '%s' opened successfully.", pathToDb.string().c_str());
 
+    EnsureLaboratoryInfoTable();
     EnsureEmployeesTable();
     EnsureInspectorsTable();
 }
@@ -28,6 +29,15 @@ DatabaseManager::~DatabaseManager()
 
 namespace
 {
+    const std::vector<std::pair<std::string, std::string>> laboratoryInfoColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"laboratory_name", "TEXT"},
+        {"number_attestation", "TEXT"},
+        {"attestation_end_date", "TEXT"},
+    };
+
     const std::vector<std::pair<std::string, std::string>> employeeColumns = {
         {"id", "TEXT PRIMARY KEY"},
         {"updated_at", "INTEGER"},
@@ -83,6 +93,36 @@ namespace
     {
         const unsigned char *text = sqlite3_column_text(stmt, col);
         return text ? reinterpret_cast<const char *>(text) : std::string{};
+    }
+}
+
+void DatabaseManager::EnsureLaboratoryInfoTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS laboratory_info (";
+    for (size_t i = 0; i < laboratoryInfoColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += laboratoryInfoColumns[i].first + " " + laboratoryInfoColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureLaboratoryInfoTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < laboratoryInfoColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE laboratory_info ADD COLUMN " + laboratoryInfoColumns[i].first + " " + laboratoryInfoColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
     }
 }
 
@@ -435,4 +475,75 @@ std::vector<Inspector> DatabaseManager::LoadInspectors()
     sqlite3_finalize(stmt);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Inspectors loaded.");
     return inspectors;
+}
+
+void DatabaseManager::SaveLaboratoryInfo(const Laboratory &lab)
+{
+    if (!db)
+        return;
+
+    EnsureLaboratoryInfoTable();
+
+    std::string insertSql = "INSERT INTO laboratory_info (id, updated_at, deleted_at, laboratory_name, number_attestation, attestation_end_date) "
+                             "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET "
+                             "updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, "
+                             "laboratory_name = excluded.laboratory_name, number_attestation = excluded.number_attestation, "
+                             "attestation_end_date = excluded.attestation_end_date;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveLaboratoryInfo: prepare не удался: %s", sqlite3_errmsg(db));
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, lab.labInfo.id.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, 2, lab.labInfo.updatedAt.time_since_epoch().count());
+
+    if (lab.labInfo.deletedAt.has_value())
+        sqlite3_bind_int64(stmt, 3, lab.labInfo.deletedAt->time_since_epoch().count());
+    else
+        sqlite3_bind_null(stmt, 3);
+
+    sqlite3_bind_text(stmt, 4, lab.labInfo.laboratoryName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, lab.labInfo.numberAttestation.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, lab.labInfo.attestationEndDate.c_str(), -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveLaboratoryInfo: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+    sqlite3_finalize(stmt);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Laboratory info saved.");
+}
+
+void DatabaseManager::LoadLaboratoryInfo(Laboratory &lab)
+{
+    if (!db)
+        return;
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, "SELECT id, updated_at, deleted_at, laboratory_name, number_attestation, attestation_end_date FROM laboratory_info LIMIT 1;", -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadLaboratoryInfo: prepare не удался: %s", sqlite3_errmsg(db));
+        return;
+    }
+
+    // если строки ещё нет (первый запуск) - оставляем lab.id таким, каким его сгенерировал
+    // конструктор Laboratory; первый SaveDB() создаст именно эту запись
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        lab.labInfo.id = GetColumnText(stmt, 0);
+        lab.labInfo.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
+
+        if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            lab.labInfo.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
+
+        lab.labInfo.laboratoryName = GetColumnText(stmt, 3);
+        lab.labInfo.numberAttestation = GetColumnText(stmt, 4);
+        lab.labInfo.attestationEndDate = GetColumnText(stmt, 5);
+    }
+
+    sqlite3_finalize(stmt);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Laboratory info loaded.");
 }

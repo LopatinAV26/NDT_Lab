@@ -15,6 +15,8 @@ public:
     LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager);
     void Show(bool &isOpen);
 
+    void ShowMain();
+
 private:
     Laboratory lab;
     NomogramWindow nomogramWindow;
@@ -23,4 +25,5 @@ private:
     OtherEmployeesWindow otherEmplWindow;
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration;
+    bool editingLabInfo = false;
 };

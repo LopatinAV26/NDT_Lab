@@ -199,6 +199,18 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::SetNextItemWidth(-FLT_MIN);
             if (ImGui::BeginCombo("##Надзор#", report.inspectorName.c_str())) ////////////////////////////////////////
             {
+                const bool noneSelected = report.inspectorName.empty();
+                if (ImGui::Selectable("—", noneSelected))
+                {
+                    report.inspectorName.clear();
+                    report.inspectorOrganization.clear();
+                    report.inspectorCertNumber.clear();
+                    changed = true;
+                }
+
+                if (noneSelected)
+                    ImGui::SetItemDefaultFocus();
+
                 for (const auto &inspector : lab.inspectorsList)
                 {
                     if (inspector.deletedAt.has_value())
@@ -223,6 +235,18 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::SetNextItemWidth(-FLT_MIN);
             if (ImGui::BeginCombo("##Мастер#", report.masterName.c_str())) ////////////////////////////////////////
             {
+                const bool noneSelected = report.masterName.empty();
+                if (ImGui::Selectable("—", noneSelected))
+                {
+                    report.masterName.clear();
+                    report.masterOrganization.clear();
+                    report.masterCertNumber.clear();
+                    changed = true;
+                }
+
+                if (noneSelected)
+                    ImGui::SetItemDefaultFocus();
+
                 for (const auto &master : lab.mastersList)
                 {
                     if (master.deletedAt.has_value())

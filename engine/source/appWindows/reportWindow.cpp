@@ -61,8 +61,8 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
 	{
 		tableRows++;
 		repList.resize(tableRows);
-		repList.back().nameLab = lab.laboratoryName;
-		repList.back().numberAttestation = lab.numberAttestation;
+		repList.back().nameLab = lab.labInfo.laboratoryName;
+		repList.back().numberAttestation = lab.labInfo.numberAttestation;
 		reportCreateWindowIsOpen = true;
 		editingIndex = tableRows - 1;
 	}
