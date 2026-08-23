@@ -1,4 +1,4 @@
-#include "otherEmployeesWindow.hpp"
+#include "inspectorsWindow.hpp"
 
 #include <cfloat>
 #include <algorithm>
@@ -8,7 +8,7 @@
 #include "laboratory.hpp"
 #include "utilities.hpp"
 
-void OtherEmployeesWindow::Show(std::vector<Inspector> &inspectorsList)
+void InspectorsWindow::Show(std::vector<Inspector> &inspectorsList)
 {
     static int tableRows = 0;            ///< количество строк в таблице
     static int editingIndex = -1;        ///< текущий индекс инспектора, который создаётся/редактируется

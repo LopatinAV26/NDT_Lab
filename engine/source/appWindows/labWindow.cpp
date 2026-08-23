@@ -76,7 +76,25 @@ void LabWindow::Show(bool &isOpen)
 
             if (ImGui::BeginTabItem("Сотрудники надзора"))
             {
-                otherEmplWindow.Show(lab.inspectorsList);
+                inspectorsWindow.Show(lab.inspectorsList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Производители СМР"))
+            {
+                mastersWindow.Show(lab.mastersList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Сварщики"))
+            {
+                weldersWindow.Show(lab.weldersList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Оборудование"))
+            {
+                equipmentWindow.Show(lab.equpmentsList);
                 ImGui::EndTabItem();
             }
 

@@ -76,7 +76,6 @@ struct Master ///< Производитель СМР
 	std::string organization;
 	std::string department;
 	std::string position;
-	std::string personalCode;
 	std::string certificateNumber;
 	std::string certificateEndDate;
 };
@@ -91,32 +90,68 @@ struct Welder ///< Сварщик
 	std::string organization;
 	std::string department;
 	std::string position;
-	std::string personalCode;
+	std::string personalCode; /// Шифр клейма
 	std::string certificateNumber;
 	std::string certificateEndDate;
 };
 
-struct ControlMap ///Технологическая карта контроля
+struct ControlMap /// Технологическая карта контроля
 {
+	std::string id = NDT::GenerateUuidV7();
+	std::chrono::sys_seconds updatedAt =
+		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	std::optional<std::chrono::sys_seconds> deletedAt;
+
 	std::string name;
 	std::string code;
 	std::string method;
 };
 
-struct Equipment
+struct Equipment /// оборудование лаборатории по "СДАНК-01-2020"
 {
-	std::string name;
+	std::string id = NDT::GenerateUuidV7();
+	std::chrono::sys_seconds updatedAt =
+		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	std::optional<std::chrono::sys_seconds> deletedAt;
 
+	std::string name;									 /// Наименование оборудования
+	std::string method;									 /// Метод контроля, для которого используется оборудование
+	std::string function;								 /// назначение
+	std::string manufacturer;							 /// Производитель
+	std::string serialNumber;							 /// Серийный номер
+	std::string yearOfManufacture;						 /// Год выпуска
+	std::string yearOfCommissioning;					 /// Год ввода в эксплуатацию
+	std::string technicalAndMetrologicalCharacteristics; /// Технические и метрологические характеристики
+	std::string owner;									 /// Владелец
+	std::string certificateNumber;						 /// Номер документа о поверке/калибровке
+	std::string certificateDate;						 /// Дата документа о поверке/калибровке
+	std::string certificateEndDate;						 /// Дата окончания действия документа о поверке/калибровке
+	std::string state;									 /// Состояние оборудования: (И - исправны (используют в работе); К - законсеpвиpованы (в pаботе не используют); Р - подлежат ремонту; С - подлежат списанию.)
+	bool forVT = false;
+	bool forUT = false;
+	bool forRT = false;
+	bool forDRT = false;
+	bool forPT = false;
+	bool forMT = false;
+	bool forLT = false;
+	bool forECT = false;
+
+	bool isOperational = true;		// исправно
+	bool isUnderRepair = false;		// в ремонте
+	bool isFaulty = false;			// неисправно
+	bool isPendingDisposal = false; // подлежит списанию
+	bool isPreserved = false;		// законсервировано
 };
 
-struct LaboratoryInfo{
+struct LaboratoryInfo
+{
 	std::string id = NDT::GenerateUuidV7();
 	std::chrono::sys_seconds updatedAt =
 		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 	std::optional<std::chrono::sys_seconds> deletedAt;
 
 	std::string laboratoryName;
-    std::string numberAttestation;
+	std::string numberAttestation;
 	std::string attestationEndDate;
 };
 
@@ -128,11 +163,13 @@ public:
 	void SaveDB();
 
 	LaboratoryInfo labInfo;
-	std::vector<Employee> employeesList;   /// список сотрудников
-	std::vector<Inspector> inspectorsList; /// список сотрудников надзора
-	std::vector<Master> mastersList;		   /// производители СМР
-	std::vector<Welder> weldersList;		   /// сварщики
-	std::vector<Report> reportsList;		   /// список отчётов
+	std::vector<Employee> employeesList;	 /// список сотрудников
+	std::vector<Inspector> inspectorsList;	 /// список сотрудников надзора
+	std::vector<Master> mastersList;		 /// производители СМР
+	std::vector<Welder> weldersList;		 /// сварщики
+	std::vector<Report> reportsList;		 /// список отчётов
+	std::vector<ControlMap> controlMapsList; /// тех. карты
+	std::vector<Equipment> equpmentsList;	 /// список оборудования
 
 private:
 	std::unique_ptr<DatabaseManager> dbManager;

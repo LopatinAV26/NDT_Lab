@@ -20,6 +20,9 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
     EnsureLaboratoryInfoTable();
     EnsureEmployeesTable();
     EnsureInspectorsTable();
+    EnsureMastersTable();
+    EnsureWeldersTable();
+    EnsureEquipmentTable();
 }
 
 DatabaseManager::~DatabaseManager()
@@ -63,6 +66,63 @@ namespace
         {"certificate_end_mt", "TEXT"},
         {"has_lt", "INTEGER DEFAULT 1"},
         {"certificate_end_lt", "TEXT"},
+    };
+
+    const std::vector<std::pair<std::string, std::string>> masterColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"name", "TEXT"},
+        {"organization", "TEXT"},
+        {"department", "TEXT"},
+        {"position", "TEXT"},
+        {"certificate_number", "TEXT"},
+        {"certificate_end_date", "TEXT"},
+    };
+
+    const std::vector<std::pair<std::string, std::string>> welderColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"name", "TEXT"},
+        {"organization", "TEXT"},
+        {"department", "TEXT"},
+        {"position", "TEXT"},
+        {"personal_code", "TEXT"},
+        {"certificate_number", "TEXT"},
+        {"certificate_end_date", "TEXT"},
+    };
+
+    const std::vector<std::pair<std::string, std::string>> equipmentColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"name", "TEXT"},
+        {"method", "TEXT"},
+        {"function", "TEXT"},
+        {"manufacturer", "TEXT"},
+        {"serial_number", "TEXT"},
+        {"year_of_manufacture", "TEXT"},
+        {"year_of_commissioning", "TEXT"},
+        {"technical_and_metrological_characteristics", "TEXT"},
+        {"owner", "TEXT"},
+        {"certificate_number", "TEXT"},
+        {"certificate_date", "TEXT"},
+        {"certificate_end_date", "TEXT"},
+        {"state", "TEXT"},
+        {"for_vt", "INTEGER DEFAULT 0"},
+        {"for_ut", "INTEGER DEFAULT 0"},
+        {"for_rt", "INTEGER DEFAULT 0"},
+        {"for_drt", "INTEGER DEFAULT 0"},
+        {"for_pt", "INTEGER DEFAULT 0"},
+        {"for_mt", "INTEGER DEFAULT 0"},
+        {"for_lt", "INTEGER DEFAULT 0"},
+        {"for_ect", "INTEGER DEFAULT 0"},
+        {"is_operational", "INTEGER DEFAULT 1"},
+        {"is_under_repair", "INTEGER DEFAULT 0"},
+        {"is_faulty", "INTEGER DEFAULT 0"},
+        {"is_pending_disposal", "INTEGER DEFAULT 0"},
+        {"is_preserved", "INTEGER DEFAULT 0"},
     };
 
     const std::vector<std::pair<std::string, std::string>> inspectorColumns = {
@@ -185,6 +245,96 @@ void DatabaseManager::EnsureInspectorsTable()
     for (size_t i = 1; i < inspectorColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
     {
         std::string alterSql = "ALTER TABLE inspectors ADD COLUMN " + inspectorColumns[i].first + " " + inspectorColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
+}
+
+void DatabaseManager::EnsureMastersTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS masters (";
+    for (size_t i = 0; i < masterColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += masterColumns[i].first + " " + masterColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureMastersTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < masterColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE masters ADD COLUMN " + masterColumns[i].first + " " + masterColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
+}
+
+void DatabaseManager::EnsureWeldersTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS welders (";
+    for (size_t i = 0; i < welderColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += welderColumns[i].first + " " + welderColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureWeldersTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < welderColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE welders ADD COLUMN " + welderColumns[i].first + " " + welderColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
+}
+
+void DatabaseManager::EnsureEquipmentTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS equipment (";
+    for (size_t i = 0; i < equipmentColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += equipmentColumns[i].first + " " + equipmentColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureEquipmentTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < equipmentColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE equipment ADD COLUMN " + equipmentColumns[i].first + " " + equipmentColumns[i].second + ";";
         sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
     }
 }
@@ -475,6 +625,405 @@ std::vector<Inspector> DatabaseManager::LoadInspectors()
     sqlite3_finalize(stmt);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Inspectors loaded.");
     return inspectors;
+}
+
+void DatabaseManager::SaveMasters(const std::vector<Master> &masters)
+{
+    if (!db)
+        return;
+
+    EnsureMastersTable();
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    std::string columnNames, placeholders, updateSet;
+
+    for (size_t i = 0; i < masterColumns.size(); ++i)
+    {
+        const std::string &name = masterColumns[i].first;
+
+        if (i > 0)
+        {
+            columnNames += ", ";
+            placeholders += ", ";
+        }
+        columnNames += name;
+        placeholders += "?";
+
+        if (name != "id") // первичный ключ не обновляем при конфликте, только вставляем один раз
+        {
+            if (!updateSet.empty())
+                updateSet += ", ";
+            updateSet += name + " = excluded." + name;
+        }
+    }
+
+    std::string insertSql = "INSERT INTO masters (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveMasters: prepare не удался: %s", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return;
+    }
+
+    for (const Master &m : masters)
+    {
+        sqlite3_bind_text(stmt, 1, m.id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, 2, m.updatedAt.time_since_epoch().count());
+
+        if (m.deletedAt.has_value())
+            sqlite3_bind_int64(stmt, 3, m.deletedAt->time_since_epoch().count());
+        else
+            sqlite3_bind_null(stmt, 3);
+
+        sqlite3_bind_text(stmt, 4, m.name.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 5, m.organization.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 6, m.department.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 7, m.position.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 8, m.certificateNumber.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 9, m.certificateEndDate.c_str(), -1, SQLITE_TRANSIENT);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveMasters: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+        sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Masters saved.");
+}
+
+std::vector<Master> DatabaseManager::LoadMasters()
+{
+    std::vector<Master> masters;
+
+    if (!db)
+        return masters;
+
+    std::string columnNames;
+    for (size_t i = 0; i < masterColumns.size(); ++i)
+    {
+        if (i > 0)
+            columnNames += ", ";
+        columnNames += masterColumns[i].first;
+    }
+
+    std::string selectSql = "SELECT " + columnNames + " FROM masters;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, selectSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadMasters: prepare не удался: %s", sqlite3_errmsg(db));
+        return masters;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        Master m;
+
+        m.id = GetColumnText(stmt, 0);
+        m.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
+
+        if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            m.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
+
+        m.name = GetColumnText(stmt, 3);
+        m.organization = GetColumnText(stmt, 4);
+        m.department = GetColumnText(stmt, 5);
+        m.position = GetColumnText(stmt, 6);
+        m.certificateNumber = GetColumnText(stmt, 7);
+        m.certificateEndDate = GetColumnText(stmt, 8);
+
+        masters.push_back(std::move(m));
+    }
+
+    sqlite3_finalize(stmt);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Masters loaded.");
+    return masters;
+}
+
+void DatabaseManager::SaveWelders(const std::vector<Welder> &welders)
+{
+    if (!db)
+        return;
+
+    EnsureWeldersTable();
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    std::string columnNames, placeholders, updateSet;
+
+    for (size_t i = 0; i < welderColumns.size(); ++i)
+    {
+        const std::string &name = welderColumns[i].first;
+
+        if (i > 0)
+        {
+            columnNames += ", ";
+            placeholders += ", ";
+        }
+        columnNames += name;
+        placeholders += "?";
+
+        if (name != "id") // первичный ключ не обновляем при конфликте, только вставляем один раз
+        {
+            if (!updateSet.empty())
+                updateSet += ", ";
+            updateSet += name + " = excluded." + name;
+        }
+    }
+
+    std::string insertSql = "INSERT INTO welders (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveWelders: prepare не удался: %s", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return;
+    }
+
+    for (const Welder &w : welders)
+    {
+        sqlite3_bind_text(stmt, 1, w.id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, 2, w.updatedAt.time_since_epoch().count());
+
+        if (w.deletedAt.has_value())
+            sqlite3_bind_int64(stmt, 3, w.deletedAt->time_since_epoch().count());
+        else
+            sqlite3_bind_null(stmt, 3);
+
+        sqlite3_bind_text(stmt, 4, w.name.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 5, w.organization.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 6, w.department.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 7, w.position.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 8, w.personalCode.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 9, w.certificateNumber.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 10, w.certificateEndDate.c_str(), -1, SQLITE_TRANSIENT);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveWelders: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+        sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Welders saved.");
+}
+
+std::vector<Welder> DatabaseManager::LoadWelders()
+{
+    std::vector<Welder> welders;
+
+    if (!db)
+        return welders;
+
+    std::string columnNames;
+    for (size_t i = 0; i < welderColumns.size(); ++i)
+    {
+        if (i > 0)
+            columnNames += ", ";
+        columnNames += welderColumns[i].first;
+    }
+
+    std::string selectSql = "SELECT " + columnNames + " FROM welders;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, selectSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadWelders: prepare не удался: %s", sqlite3_errmsg(db));
+        return welders;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        Welder w;
+
+        w.id = GetColumnText(stmt, 0);
+        w.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
+
+        if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            w.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
+
+        w.name = GetColumnText(stmt, 3);
+        w.organization = GetColumnText(stmt, 4);
+        w.department = GetColumnText(stmt, 5);
+        w.position = GetColumnText(stmt, 6);
+        w.personalCode = GetColumnText(stmt, 7);
+        w.certificateNumber = GetColumnText(stmt, 8);
+        w.certificateEndDate = GetColumnText(stmt, 9);
+
+        welders.push_back(std::move(w));
+    }
+
+    sqlite3_finalize(stmt);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Welders loaded.");
+    return welders;
+}
+
+void DatabaseManager::SaveEquipment(const std::vector<Equipment> &equipmentList)
+{
+    if (!db)
+        return;
+
+    EnsureEquipmentTable();
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    std::string columnNames, placeholders, updateSet;
+
+    for (size_t i = 0; i < equipmentColumns.size(); ++i)
+    {
+        const std::string &name = equipmentColumns[i].first;
+
+        if (i > 0)
+        {
+            columnNames += ", ";
+            placeholders += ", ";
+        }
+        columnNames += name;
+        placeholders += "?";
+
+        if (name != "id") // первичный ключ не обновляем при конфликте, только вставляем один раз
+        {
+            if (!updateSet.empty())
+                updateSet += ", ";
+            updateSet += name + " = excluded." + name;
+        }
+    }
+
+    std::string insertSql = "INSERT INTO equipment (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveEquipment: prepare не удался: %s", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return;
+    }
+
+    for (const Equipment &eq : equipmentList)
+    {
+        sqlite3_bind_text(stmt, 1, eq.id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, 2, eq.updatedAt.time_since_epoch().count());
+
+        if (eq.deletedAt.has_value())
+            sqlite3_bind_int64(stmt, 3, eq.deletedAt->time_since_epoch().count());
+        else
+            sqlite3_bind_null(stmt, 3);
+
+        sqlite3_bind_text(stmt, 4, eq.name.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 5, eq.method.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 6, eq.function.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 7, eq.manufacturer.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 8, eq.serialNumber.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 9, eq.yearOfManufacture.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 10, eq.yearOfCommissioning.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 11, eq.technicalAndMetrologicalCharacteristics.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 12, eq.owner.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 13, eq.certificateNumber.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 14, eq.certificateDate.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 15, eq.certificateEndDate.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 16, eq.state.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 17, eq.forVT ? 1 : 0);
+        sqlite3_bind_int(stmt, 18, eq.forUT ? 1 : 0);
+        sqlite3_bind_int(stmt, 19, eq.forRT ? 1 : 0);
+        sqlite3_bind_int(stmt, 20, eq.forDRT ? 1 : 0);
+        sqlite3_bind_int(stmt, 21, eq.forPT ? 1 : 0);
+        sqlite3_bind_int(stmt, 22, eq.forMT ? 1 : 0);
+        sqlite3_bind_int(stmt, 23, eq.forLT ? 1 : 0);
+        sqlite3_bind_int(stmt, 24, eq.forECT ? 1 : 0);
+        sqlite3_bind_int(stmt, 25, eq.isOperational ? 1 : 0);
+        sqlite3_bind_int(stmt, 26, eq.isUnderRepair ? 1 : 0);
+        sqlite3_bind_int(stmt, 27, eq.isFaulty ? 1 : 0);
+        sqlite3_bind_int(stmt, 28, eq.isPendingDisposal ? 1 : 0);
+        sqlite3_bind_int(stmt, 29, eq.isPreserved ? 1 : 0);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveEquipment: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+        sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Equipment saved.");
+}
+
+std::vector<Equipment> DatabaseManager::LoadEquipment()
+{
+    std::vector<Equipment> equipmentList;
+
+    if (!db)
+        return equipmentList;
+
+    std::string columnNames;
+    for (size_t i = 0; i < equipmentColumns.size(); ++i)
+    {
+        if (i > 0)
+            columnNames += ", ";
+        columnNames += equipmentColumns[i].first;
+    }
+
+    std::string selectSql = "SELECT " + columnNames + " FROM equipment;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, selectSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadEquipment: prepare не удался: %s", sqlite3_errmsg(db));
+        return equipmentList;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        Equipment eq;
+
+        eq.id = GetColumnText(stmt, 0);
+        eq.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
+
+        if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            eq.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
+
+        eq.name = GetColumnText(stmt, 3);
+        eq.method = GetColumnText(stmt, 4);
+        eq.function = GetColumnText(stmt, 5);
+        eq.manufacturer = GetColumnText(stmt, 6);
+        eq.serialNumber = GetColumnText(stmt, 7);
+        eq.yearOfManufacture = GetColumnText(stmt, 8);
+        eq.yearOfCommissioning = GetColumnText(stmt, 9);
+        eq.technicalAndMetrologicalCharacteristics = GetColumnText(stmt, 10);
+        eq.owner = GetColumnText(stmt, 11);
+        eq.certificateNumber = GetColumnText(stmt, 12);
+        eq.certificateDate = GetColumnText(stmt, 13);
+        eq.certificateEndDate = GetColumnText(stmt, 14);
+        eq.state = GetColumnText(stmt, 15);
+        eq.forVT = sqlite3_column_int(stmt, 16) != 0;
+        eq.forUT = sqlite3_column_int(stmt, 17) != 0;
+        eq.forRT = sqlite3_column_int(stmt, 18) != 0;
+        eq.forDRT = sqlite3_column_int(stmt, 19) != 0;
+        eq.forPT = sqlite3_column_int(stmt, 20) != 0;
+        eq.forMT = sqlite3_column_int(stmt, 21) != 0;
+        eq.forLT = sqlite3_column_int(stmt, 22) != 0;
+        eq.forECT = sqlite3_column_int(stmt, 23) != 0;
+        eq.isOperational = sqlite3_column_int(stmt, 24) != 0;
+        eq.isUnderRepair = sqlite3_column_int(stmt, 25) != 0;
+        eq.isFaulty = sqlite3_column_int(stmt, 26) != 0;
+        eq.isPendingDisposal = sqlite3_column_int(stmt, 27) != 0;
+        eq.isPreserved = sqlite3_column_int(stmt, 28) != 0;
+
+        equipmentList.push_back(std::move(eq));
+    }
+
+    sqlite3_finalize(stmt);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Equipment loaded.");
+    return equipmentList;
 }
 
 void DatabaseManager::SaveLaboratoryInfo(const Laboratory &lab)

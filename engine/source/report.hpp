@@ -50,7 +50,7 @@ public:
     /// @brief Получить заголовок отчёта
     /// @param name 
     /// @return 
-    std::string GetMethodTitle(Method name) const;
+    std::string GetMethodTitle(Method value) const;
 
     std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
     std::chrono::sys_seconds updatedAt =

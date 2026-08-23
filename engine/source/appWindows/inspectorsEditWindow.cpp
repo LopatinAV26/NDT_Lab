@@ -1,11 +1,11 @@
-#include "otherEmployeesEditWindow.hpp"
+#include "inspectorsEditWindow.hpp"
 
 #include "laboratory.hpp"
 #include "utilities.hpp"
 #include "imgui_stdlib.h"
 #include "ImGuiDatePicker.hpp"
 
-void OtherEmployeesEditWindow::Show(Inspector &inspector, bool &isOpen)
+void InspectorsEditWindow::Show(Inspector &inspector, bool &isOpen)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
@@ -124,9 +124,7 @@ void OtherEmployeesEditWindow::Show(Inspector &inspector, bool &isOpen)
         ImGui::EndDisabled();
 
         if (changed)
-        {
             inspector.updatedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-        }
     }
     ImGui::End();
 }

@@ -2,12 +2,12 @@
 
 #include "imgui.h"
 
-struct Inspector;
+struct Welder;
 
-class OtherEmployeesEditWindow
+class WeldersEditWindow
 {
 public:
-    void Show(Inspector &inspector, bool &isOpen);
+    void Show(Welder &welder, bool &isOpen);
 
 private:
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;

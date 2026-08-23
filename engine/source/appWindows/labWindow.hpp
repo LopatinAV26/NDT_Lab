@@ -4,7 +4,10 @@
 #include "appWindows/nomogramWindow.hpp"
 #include "appWindows/reportWindow.hpp"
 #include "appWindows/employeesWindow.hpp"
-#include "appWindows/otherEmployeesWindow.hpp"
+#include "appWindows/inspectorsWindow.hpp"
+#include "appWindows/mastersWindow.hpp"
+#include "appWindows/weldersWindow.hpp"
+#include "appWindows/equipmentWindow.hpp"
 
 class ApplicationData;
 class ResourceManager;
@@ -22,7 +25,10 @@ private:
     NomogramWindow nomogramWindow;
     ReportWindow reportWindow;
     EmployeesWindow emplWindow;
-    OtherEmployeesWindow otherEmplWindow;
+    InspectorsWindow inspectorsWindow;
+    MastersWindow mastersWindow;
+    WeldersWindow weldersWindow;
+    EquipmentWindow equipmentWindow;
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration;
     bool editingLabInfo = false;

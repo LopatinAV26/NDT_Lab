@@ -1,16 +1,16 @@
 #pragma once
 
 #include <vector>
-#include "otherEmployeesEditWindow.hpp"
+#include "inspectorsEditWindow.hpp"
 
 struct Inspector;
 
-class OtherEmployeesWindow
+class InspectorsWindow
 {
 public:
     void Show(std::vector<Inspector> &inspectorsList);
 
 private:
     bool inspectorEditWindowIsOpen = false;
-    OtherEmployeesEditWindow inspectorEditWindow;
+    InspectorsEditWindow inspectorEditWindow;
 };
