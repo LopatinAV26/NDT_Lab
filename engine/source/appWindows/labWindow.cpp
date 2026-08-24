@@ -98,6 +98,12 @@ void LabWindow::Show(bool &isOpen)
                 ImGui::EndTabItem();
             }
 
+            if (ImGui::BeginTabItem("Технологические карты"))
+            {
+                controlMapsWindow.Show(lab.controlMapsList);
+                ImGui::EndTabItem();
+            }
+
             ImGui::EndTabBar();
         }
         ImGui::End();

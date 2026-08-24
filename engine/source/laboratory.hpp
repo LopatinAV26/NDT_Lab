@@ -6,6 +6,7 @@
 #include <array>
 #include <vector>
 #include <chrono>
+#include <cstdint>
 
 #include "utilities.hpp"
 #include "databaseManager.hpp"
@@ -102,9 +103,14 @@ struct ControlMap /// Технологическая карта контроля
 		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 	std::optional<std::chrono::sys_seconds> deletedAt;
 
-	std::string name;
-	std::string code;
+	std::string code; /// шифр техкарты
 	std::string method;
+	std::string diameter;
+	std::string thickness;
+	std::string description;
+
+	std::string fileName;              /// исходное имя прикреплённого файла (сохраняет расширение)
+	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (PDF/скан/Word)
 };
 
 struct Equipment /// оборудование лаборатории по "СДАНК-01-2020"

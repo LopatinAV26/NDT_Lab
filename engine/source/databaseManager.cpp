@@ -23,6 +23,7 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
     EnsureMastersTable();
     EnsureWeldersTable();
     EnsureEquipmentTable();
+    EnsureControlMapsTable();
 }
 
 DatabaseManager::~DatabaseManager()
@@ -93,6 +94,19 @@ namespace
         {"certificate_end_date", "TEXT"},
     };
 
+    const std::vector<std::pair<std::string, std::string>> controlMapColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"code", "TEXT"},
+        {"method", "TEXT"},
+        {"diameter", "TEXT"},
+        {"thickness", "TEXT"},
+        {"description", "TEXT"},
+        {"file_name", "TEXT"},
+        {"file_data", "BLOB"},
+    };
+
     const std::vector<std::pair<std::string, std::string>> equipmentColumns = {
         {"id", "TEXT PRIMARY KEY"},
         {"updated_at", "INTEGER"},
@@ -153,6 +167,18 @@ namespace
     {
         const unsigned char *text = sqlite3_column_text(stmt, col);
         return text ? reinterpret_cast<const char *>(text) : std::string{};
+    }
+
+    /// @brief Аналогично GetColumnText, но для BLOB-колонки
+    std::vector<std::uint8_t> GetColumnBlob(sqlite3_stmt *stmt, int col)
+    {
+        const void *data = sqlite3_column_blob(stmt, col);
+        int size = sqlite3_column_bytes(stmt, col);
+        if (!data || size <= 0)
+            return {};
+
+        const std::uint8_t *bytes = static_cast<const std::uint8_t *>(data);
+        return std::vector<std::uint8_t>(bytes, bytes + size);
     }
 }
 
@@ -335,6 +361,36 @@ void DatabaseManager::EnsureEquipmentTable()
     for (size_t i = 1; i < equipmentColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
     {
         std::string alterSql = "ALTER TABLE equipment ADD COLUMN " + equipmentColumns[i].first + " " + equipmentColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
+}
+
+void DatabaseManager::EnsureControlMapsTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS control_maps (";
+    for (size_t i = 0; i < controlMapColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += controlMapColumns[i].first + " " + controlMapColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureControlMapsTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < controlMapColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE control_maps ADD COLUMN " + controlMapColumns[i].first + " " + controlMapColumns[i].second + ";";
         sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
     }
 }
@@ -1024,6 +1080,127 @@ std::vector<Equipment> DatabaseManager::LoadEquipment()
     sqlite3_finalize(stmt);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Equipment loaded.");
     return equipmentList;
+}
+
+void DatabaseManager::SaveControlMaps(const std::vector<ControlMap> &controlMaps)
+{
+    if (!db)
+        return;
+
+    EnsureControlMapsTable();
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    std::string columnNames, placeholders, updateSet;
+
+    for (size_t i = 0; i < controlMapColumns.size(); ++i)
+    {
+        const std::string &name = controlMapColumns[i].first;
+
+        if (i > 0)
+        {
+            columnNames += ", ";
+            placeholders += ", ";
+        }
+        columnNames += name;
+        placeholders += "?";
+
+        if (name != "id") // первичный ключ не обновляем при конфликте, только вставляем один раз
+        {
+            if (!updateSet.empty())
+                updateSet += ", ";
+            updateSet += name + " = excluded." + name;
+        }
+    }
+
+    std::string insertSql = "INSERT INTO control_maps (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveControlMaps: prepare не удался: %s", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return;
+    }
+
+    for (const ControlMap &cm : controlMaps)
+    {
+        sqlite3_bind_text(stmt, 1, cm.id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, 2, cm.updatedAt.time_since_epoch().count());
+
+        if (cm.deletedAt.has_value())
+            sqlite3_bind_int64(stmt, 3, cm.deletedAt->time_since_epoch().count());
+        else
+            sqlite3_bind_null(stmt, 3);
+
+        sqlite3_bind_text(stmt, 4, cm.code.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 5, cm.method.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 6, cm.diameter.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 7, cm.thickness.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 8, cm.description.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 9, cm.fileName.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(stmt, 10, cm.fileData.data(), static_cast<int>(cm.fileData.size()), SQLITE_TRANSIENT);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveControlMaps: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+        sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Control maps saved.");
+}
+
+std::vector<ControlMap> DatabaseManager::LoadControlMaps()
+{
+    std::vector<ControlMap> controlMaps;
+
+    if (!db)
+        return controlMaps;
+
+    std::string columnNames;
+    for (size_t i = 0; i < controlMapColumns.size(); ++i)
+    {
+        if (i > 0)
+            columnNames += ", ";
+        columnNames += controlMapColumns[i].first;
+    }
+
+    std::string selectSql = "SELECT " + columnNames + " FROM control_maps;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, selectSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadControlMaps: prepare не удался: %s", sqlite3_errmsg(db));
+        return controlMaps;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        ControlMap cm;
+
+        cm.id = GetColumnText(stmt, 0);
+        cm.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
+
+        if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            cm.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
+
+        cm.code = GetColumnText(stmt, 3);
+        cm.method = GetColumnText(stmt, 4);
+        cm.diameter = GetColumnText(stmt, 5);
+        cm.thickness = GetColumnText(stmt, 6);
+        cm.description = GetColumnText(stmt, 7);
+        cm.fileName = GetColumnText(stmt, 8);
+        cm.fileData = GetColumnBlob(stmt, 9);
+
+        controlMaps.push_back(std::move(cm));
+    }
+
+    sqlite3_finalize(stmt);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Control maps loaded.");
+    return controlMaps;
 }
 
 void DatabaseManager::SaveLaboratoryInfo(const Laboratory &lab)

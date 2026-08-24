@@ -8,6 +8,7 @@
 #include "appWindows/mastersWindow.hpp"
 #include "appWindows/weldersWindow.hpp"
 #include "appWindows/equipmentWindow.hpp"
+#include "appWindows/controlMapsWindow.hpp"
 
 class ApplicationData;
 class ResourceManager;
@@ -29,6 +30,7 @@ private:
     MastersWindow mastersWindow;
     WeldersWindow weldersWindow;
     EquipmentWindow equipmentWindow;
+    ControlMapsWindow controlMapsWindow;
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration;
     bool editingLabInfo = false;

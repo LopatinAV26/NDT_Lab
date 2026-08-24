@@ -2,6 +2,8 @@
 
 #include <charconv>
 #include <cmath>
+#include <fstream>
+#include <filesystem>
 
 namespace
 {
@@ -201,5 +203,16 @@ namespace NDT
 						   static_cast<uint16_t>(a),
 						   static_cast<uint16_t>(b >> 48),
 						   b & 0xFFFFFFFFFFFFULL);
+	}
+
+	void OpenFileFromBytes(const std::string &fileName, const std::vector<std::uint8_t> &fileData)
+	{
+		std::filesystem::path tempPath = std::filesystem::temp_directory_path() / fileName;
+
+		std::ofstream tempFile(tempPath, std::ios::binary | std::ios::trunc);
+		tempFile.write(reinterpret_cast<const char *>(fileData.data()), static_cast<std::streamsize>(fileData.size()));
+		tempFile.close();
+
+		ImGui::GetPlatformIO().Platform_OpenInShellFn(ImGui::GetCurrentContext(), tempPath.string().c_str());
 	}
 }

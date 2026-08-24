@@ -59,4 +59,9 @@ namespace NDT
 	/// @brief Сгенерировать UUID v7 (первые 48 бит - unix-время в мс, остальное - случайность)
 	/// @brief упорядочен по времени создания - лучше для индекса первичного ключа в БД, чем v4
 	std::string GenerateUuidV7();
+
+	/// @brief Сбросить fileData во временный файл с именем fileName и открыть его
+	/// ассоциированным приложением ОС (через ImGui::GetPlatformIO().Platform_OpenInShellFn -
+	/// кросс-платформенно: ShellExecuteW на Windows, system("open ...")/xdg-open на macOS/Linux)
+	void OpenFileFromBytes(const std::string &fileName, const std::vector<std::uint8_t> &fileData);
 }
