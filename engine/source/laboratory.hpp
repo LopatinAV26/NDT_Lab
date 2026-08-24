@@ -147,6 +147,9 @@ struct Equipment /// оборудование лаборатории по "СД�
 	bool isFaulty = false;			// неисправно
 	bool isPendingDisposal = false; // подлежит списанию
 	bool isPreserved = false;		// законсервировано
+
+	std::string fileName;              /// исходное имя прикреплённого файла (сохраняет расширение)
+	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (паспорт/формуляр и т.п.)
 };
 
 struct LaboratoryInfo

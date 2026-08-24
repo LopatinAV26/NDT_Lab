@@ -15,7 +15,7 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
     static std::vector<int> indexesList; ///< Список индексов для печати в pdf
     static std::vector<bool> selected;
 
-    if (ImGui::BeginTable("Оборудование", 13, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
+    if (ImGui::BeginTable("Оборудование", 14, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
     {
         ImGui::TableSetupColumn("Наименование");
         ImGui::TableSetupColumn("Метод контроля");
@@ -29,7 +29,8 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
         ImGui::TableSetupColumn("Номер документа\nо поверке/калибровке");
         ImGui::TableSetupColumn("Дата документа\nо поверке/калибровке");
         ImGui::TableSetupColumn("Срок действия\nдокумента");
-        ImGui::TableSetupColumn("Состояние"/*, ImGuiTableColumnFlags_WidthStretch*/);
+        ImGui::TableSetupColumn("Состояние");
+        ImGui::TableSetupColumn("Файл\nсвидетельства");
         ImGui::TableSetupScrollFreeze(1, 1);
         ImGui::TableHeadersRow();
 
@@ -50,7 +51,7 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
                 &equipmentRow.yearOfManufacture, &equipmentRow.yearOfCommissioning,
                 &equipmentRow.technicalAndMetrologicalCharacteristics, &equipmentRow.owner,
                 &equipmentRow.certificateNumber, &equipmentRow.certificateDate,
-                &equipmentRow.certificateEndDate, &equipmentRow.state};
+                &equipmentRow.certificateEndDate, &equipmentRow.state, &equipmentRow.fileName};
 
             // первый проход - только измеряем нужную высоту строки, ничего не рисуем
             float rowHeight = 0.0f;
@@ -63,7 +64,8 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
 
             ImGui::TableSetColumnIndex(0);                                                                 // возвращаемся к первому столбцу для настоящей отрисовки
             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg)); /// подсвечиваем закреплённый столбец как шапку таблицы
-            if (ImGui::Selectable("###", selected.at(row), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick, ImVec2(0, rowHeight)))
+            /// ImGuiSelectableFlags_AllowOverlap - иначе Selectable, растянутый на всю строку, перехватывает клики по ссылке в столбце "Файл"
+            if (ImGui::Selectable("###", selected.at(row), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowOverlap, ImVec2(0, rowHeight)))
             {
                 if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                 {
@@ -142,6 +144,17 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
             ImGui::TableNextColumn();
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
             ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).state).c_str());
+            ImGui::PopTextWrapPos();
+
+            ImGui::TableNextColumn();
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
+            {
+                Equipment &equipment = equipmentList.at(row);
+                if (equipment.fileName.empty())
+                    ImGui::TextUnformatted("(не прикреплён)");
+                else if (ImGui::TextLink(equipment.fileName.c_str()))
+                    NDT::OpenFileFromBytes(equipment.fileName, equipment.fileData);
+            }
             ImGui::PopTextWrapPos();
 
             ImGui::PopID();

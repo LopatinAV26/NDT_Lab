@@ -56,39 +56,9 @@ void LabWindow::Show(bool &isOpen)
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Параметры контроля"))
-            {
-                nomogramWindow.Show();
-                ImGui::EndTabItem();
-            }
-
-            if (ImGui::BeginTabItem("Отчёты контроля"))
-            {
-                reportWindow.Show(lab.reportsList, lab);
-                ImGui::EndTabItem();
-            }
-
             if (ImGui::BeginTabItem("Сотрудники"))
             {
                 emplWindow.Show(lab.employeesList);
-                ImGui::EndTabItem();
-            }
-
-            if (ImGui::BeginTabItem("Сотрудники надзора"))
-            {
-                inspectorsWindow.Show(lab.inspectorsList);
-                ImGui::EndTabItem();
-            }
-
-            if (ImGui::BeginTabItem("Производители СМР"))
-            {
-                mastersWindow.Show(lab.mastersList);
-                ImGui::EndTabItem();
-            }
-
-            if (ImGui::BeginTabItem("Сварщики"))
-            {
-                weldersWindow.Show(lab.weldersList);
                 ImGui::EndTabItem();
             }
 
@@ -101,6 +71,36 @@ void LabWindow::Show(bool &isOpen)
             if (ImGui::BeginTabItem("Технологические карты"))
             {
                 controlMapsWindow.Show(lab.controlMapsList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Отчёты контроля"))
+            {
+                reportWindow.Show(lab.reportsList, lab);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Сварщики"))
+            {
+                weldersWindow.Show(lab.weldersList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Производители СМР"))
+            {
+                mastersWindow.Show(lab.mastersList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Сотрудники надзора"))
+            {
+                inspectorsWindow.Show(lab.inspectorsList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Параметры контроля"))
+            {
+                nomogramWindow.Show();
                 ImGui::EndTabItem();
             }
 
@@ -131,15 +131,15 @@ void LabWindow::ShowMain()
     else
     {
         ImGui::TextDisabled("Наименование лаборатории");
-        //ImGui::SetNextItemWidth(-FLT_MIN);
+        // ImGui::SetNextItemWidth(-FLT_MIN);
         changed |= ImGui::InputText("##Наименование лаборатории#", &lab.labInfo.laboratoryName);
         ImGui::TextDisabled("Номер свидетельства об аттестации");
-        //ImGui::SetNextItemWidth(-FLT_MIN);
+        // ImGui::SetNextItemWidth(-FLT_MIN);
         changed |= ImGui::InputText("##Номер свидетельства об аттестации#", &lab.labInfo.numberAttestation);
 
         ImGui::TextDisabled("Дата окончания действия аттестации");
         tm date = NDT::ParseIsoDateTm(lab.labInfo.attestationEndDate);
-        //ImGui::SetNextItemWidth(-FLT_MIN);
+        // ImGui::SetNextItemWidth(-FLT_MIN);
         if (ImGui::DatePicker("##Дата окончания действия аттестации#", date))
         {
             lab.labInfo.attestationEndDate = NDT::FormatIsoDateTm(date);

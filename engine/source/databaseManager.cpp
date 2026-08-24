@@ -137,6 +137,8 @@ namespace
         {"is_faulty", "INTEGER DEFAULT 0"},
         {"is_pending_disposal", "INTEGER DEFAULT 0"},
         {"is_preserved", "INTEGER DEFAULT 0"},
+        {"file_name", "TEXT"},
+        {"file_data", "BLOB"},
     };
 
     const std::vector<std::pair<std::string, std::string>> inspectorColumns = {
@@ -1000,6 +1002,8 @@ void DatabaseManager::SaveEquipment(const std::vector<Equipment> &equipmentList)
         sqlite3_bind_int(stmt, 27, eq.isFaulty ? 1 : 0);
         sqlite3_bind_int(stmt, 28, eq.isPendingDisposal ? 1 : 0);
         sqlite3_bind_int(stmt, 29, eq.isPreserved ? 1 : 0);
+        sqlite3_bind_text(stmt, 30, eq.fileName.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(stmt, 31, eq.fileData.data(), static_cast<int>(eq.fileData.size()), SQLITE_TRANSIENT);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveEquipment: вставка/обновление не удались: %s", sqlite3_errmsg(db));
@@ -1073,6 +1077,8 @@ std::vector<Equipment> DatabaseManager::LoadEquipment()
         eq.isFaulty = sqlite3_column_int(stmt, 26) != 0;
         eq.isPendingDisposal = sqlite3_column_int(stmt, 27) != 0;
         eq.isPreserved = sqlite3_column_int(stmt, 28) != 0;
+        eq.fileName = GetColumnText(stmt, 29);
+        eq.fileData = GetColumnBlob(stmt, 30);
 
         equipmentList.push_back(std::move(eq));
     }

@@ -3,11 +3,23 @@
 #include <array>
 #include <utility>
 #include <string>
+#include <fstream>
+#include <filesystem>
 
 #include "laboratory.hpp"
 #include "utilities.hpp"
 #include "imgui_stdlib.h"
 #include "ImGuiDatePicker.hpp"
+
+void SDLCALL EquipmentEditWindow::OnFileSelected(void *userdata, const char *const *filelist, int /*filter*/)
+{
+    auto *self = static_cast<EquipmentEditWindow *>(userdata);
+
+    if (filelist && filelist[0])
+        self->pendingFilePath = filelist[0];
+
+    self->fileDialogResultReady = true;
+}
 
 void EquipmentEditWindow::Show(Equipment &equipment, bool &isOpen)
 {
@@ -135,6 +147,43 @@ void EquipmentEditWindow::Show(Equipment &equipment, bool &isOpen)
             {
                 equipment.state = label;
                 break;
+            }
+        }
+
+        ImGui::TextDisabled("Файл свидетельства");
+        if (equipment.fileName.empty())
+            ImGui::TextUnformatted("(не прикреплён)");
+        else if (ImGui::TextLink(equipment.fileName.c_str()))
+            NDT::OpenFileFromBytes(equipment.fileName, equipment.fileData);
+
+        if (ImGui::Button("Прикрепить файл..."))
+            SDL_ShowOpenFileDialog(&EquipmentEditWindow::OnFileSelected, this, nullptr, nullptr, 0, nullptr, false);
+
+        ImGui::BeginDisabled(equipment.fileName.empty());
+        ImGui::SameLine();
+        if (ImGui::Button("Открепить"))
+        {
+            equipment.fileName.clear();
+            equipment.fileData.clear();
+            changed = true;
+        }
+        ImGui::EndDisabled();
+
+        if (fileDialogResultReady)
+        {
+            fileDialogResultReady = false;
+
+            if (!pendingFilePath.empty())
+            {
+                std::ifstream file(pendingFilePath, std::ios::binary);
+                if (file)
+                {
+                    equipment.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+                    equipment.fileName = std::filesystem::path(pendingFilePath).filename().string();
+                    changed = true;
+                }
+
+                pendingFilePath.clear();
             }
         }
 
