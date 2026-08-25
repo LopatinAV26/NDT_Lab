@@ -93,6 +93,10 @@ void EquipmentEditWindow::Show(Equipment &equipment, bool &isOpen)
         ImGui::SetNextItemWidth(-FLT_MIN);
         changed |= ImGui::InputText("##owner#", &equipment.owner);
 
+        changed |= ImGui::Checkbox("Поверяется/калибруется", &equipment.isCalibrated);
+
+        ImGui::BeginDisabled(!equipment.isCalibrated);
+
         ImGui::TextDisabled("Номер документа о поверке/калибровке");
         ImGui::SetNextItemWidth(-FLT_MIN);
         changed |= ImGui::InputText("##certificateNumber#", &equipment.certificateNumber);
@@ -119,12 +123,51 @@ void EquipmentEditWindow::Show(Equipment &equipment, bool &isOpen)
             }
         }
 
+        ImGui::TextDisabled("Файл свидетельства");
+        if (equipment.fileName.empty())
+            ImGui::TextUnformatted("(не прикреплён)");
+        else if (ImGui::TextLink(equipment.fileName.c_str()))
+            NDT::OpenFileFromBytes(equipment.fileName, equipment.fileData);
+
+        if (ImGui::Button("Прикрепить файл..."))
+            SDL_ShowOpenFileDialog(&EquipmentEditWindow::OnFileSelected, this, nullptr, nullptr, 0, nullptr, false);
+
+        ImGui::BeginDisabled(equipment.fileName.empty());
+        ImGui::SameLine();
+        if (ImGui::Button("Открепить"))
+        {
+            equipment.fileName.clear();
+            equipment.fileData.clear();
+            changed = true;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::EndDisabled(); // !equipment.isCalibrated
+
+        if (fileDialogResultReady)
+        {
+            fileDialogResultReady = false;
+
+            if (!pendingFilePath.empty())
+            {
+                std::ifstream file(pendingFilePath, std::ios::binary);
+                if (file)
+                {
+                    equipment.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+                    equipment.fileName = std::filesystem::path(pendingFilePath).filename().string();
+                    changed = true;
+                }
+
+                pendingFilePath.clear();
+            }
+        }
+
         ImGui::TextDisabled("Состояние оборудования");
         std::array<std::pair<bool *, std::string>, 5> stateFlags = {{{&equipment.isOperational, "Исправно"},
-                                                                      {&equipment.isUnderRepair, "В ремонте"},
-                                                                      {&equipment.isFaulty, "Неисправно"},
-                                                                      {&equipment.isPendingDisposal, "Подлежит списанию"},
-                                                                      {&equipment.isPreserved, "Законсервировано"}}};
+                                                                     {&equipment.isUnderRepair, "В ремонте"},
+                                                                     {&equipment.isFaulty, "Неисправно"},
+                                                                     {&equipment.isPendingDisposal, "Подлежит списанию"},
+                                                                     {&equipment.isPreserved, "Законсервировано"}}};
 
         for (size_t i = 0; i < stateFlags.size(); ++i)
         {
@@ -147,43 +190,6 @@ void EquipmentEditWindow::Show(Equipment &equipment, bool &isOpen)
             {
                 equipment.state = label;
                 break;
-            }
-        }
-
-        ImGui::TextDisabled("Файл свидетельства");
-        if (equipment.fileName.empty())
-            ImGui::TextUnformatted("(не прикреплён)");
-        else if (ImGui::TextLink(equipment.fileName.c_str()))
-            NDT::OpenFileFromBytes(equipment.fileName, equipment.fileData);
-
-        if (ImGui::Button("Прикрепить файл..."))
-            SDL_ShowOpenFileDialog(&EquipmentEditWindow::OnFileSelected, this, nullptr, nullptr, 0, nullptr, false);
-
-        ImGui::BeginDisabled(equipment.fileName.empty());
-        ImGui::SameLine();
-        if (ImGui::Button("Открепить"))
-        {
-            equipment.fileName.clear();
-            equipment.fileData.clear();
-            changed = true;
-        }
-        ImGui::EndDisabled();
-
-        if (fileDialogResultReady)
-        {
-            fileDialogResultReady = false;
-
-            if (!pendingFilePath.empty())
-            {
-                std::ifstream file(pendingFilePath, std::ios::binary);
-                if (file)
-                {
-                    equipment.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-                    equipment.fileName = std::filesystem::path(pendingFilePath).filename().string();
-                    changed = true;
-                }
-
-                pendingFilePath.clear();
             }
         }
 

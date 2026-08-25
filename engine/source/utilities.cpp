@@ -5,6 +5,10 @@
 #include <fstream>
 #include <filesystem>
 
+// RenderTextEllipsis - внутренняя функция ImGui (используется самим ImGui для заголовков таблиц),
+// авторы просят не использовать её вне imgui.cpp - сигнатура может измениться при обновлении ImGui
+#include "imgui_internal.h"
+
 namespace
 {
 	/// @brief Согласование числительного с существительным в русском языке (1 год, 2 года, 5 лет)
@@ -215,4 +219,73 @@ namespace NDT
 
 		ImGui::GetPlatformIO().Platform_OpenInShellFn(ImGui::GetCurrentContext(), tempPath.string().c_str());
 	}
+
+	std::string ToLowerUtf8(const std::string &s)
+	{
+		std::string out;
+		out.reserve(s.size());
+		for (size_t i = 0; i < s.size();)
+		{
+			unsigned char c0 = static_cast<unsigned char>(s[i]);
+			if (c0 < 0x80)
+			{
+				out += static_cast<char>(std::tolower(c0));
+				++i;
+			}
+			else if (c0 == 0xD0 && i + 1 < s.size())
+			{
+				unsigned char c1 = static_cast<unsigned char>(s[i + 1]);
+				if (c1 == 0x81) // Ё -> ё
+				{
+					out += static_cast<char>(0xD1);
+					out += static_cast<char>(0x91);
+				}
+				else if (c1 >= 0x90 && c1 <= 0x9F) // А-П -> а-п
+				{
+					out += static_cast<char>(0xD0);
+					out += static_cast<char>(c1 + 0x20);
+				}
+				else if (c1 >= 0xA0 && c1 <= 0xAF) // Р-Я -> р-я
+				{
+					out += static_cast<char>(0xD1);
+					out += static_cast<char>(c1 - 0x20);
+				}
+				else
+				{
+					out += static_cast<char>(c0);
+					out += static_cast<char>(c1);
+				}
+				i += 2;
+			}
+			else if (i + 1 < s.size())
+			{
+				out += static_cast<char>(c0);
+				out += s[i + 1];
+				i += 2;
+			}
+			else
+			{
+				out += static_cast<char>(c0);
+				++i;
+			}
+		}
+		return out;
+	}
+
+	void TextWithTooltipIfTruncated(const std::string &text)
+	{
+		ImVec2 pos = ImGui::GetCursorScreenPos();
+		float available = ImGui::GetContentRegionAvail().x;
+		float lineHeight = ImGui::GetTextLineHeight();
+		ImVec2 textSize = ImGui::CalcTextSize(text.c_str());
+
+		/// RenderTextEllipsis сама рисует "..." при обрезке - ровно то же поведение, что у заголовков таблиц ImGui
+		ImGui::RenderTextEllipsis(ImGui::GetWindowDrawList(), pos, ImVec2(pos.x + available, pos.y + lineHeight),
+								   pos.x + available, text.c_str(), text.c_str() + text.size(), &textSize);
+		ImGui::Dummy(ImVec2(available, lineHeight)); /// RenderTextEllipsis не создаёт item сама - вручную продвигаем курсор макета
+
+		if (textSize.x > available && ImGui::IsItemHovered())
+			ImGui::SetTooltip("%s", text.c_str());
+	}
+
 }

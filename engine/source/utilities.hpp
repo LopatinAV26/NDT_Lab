@@ -64,4 +64,11 @@ namespace NDT
 	/// ассоциированным приложением ОС (через ImGui::GetPlatformIO().Platform_OpenInShellFn -
 	/// кросс-платформенно: ShellExecuteW на Windows, system("open ...")/xdg-open на macOS/Linux)
 	void OpenFileFromBytes(const std::string &fileName, const std::vector<std::uint8_t> &fileData);
+
+	/// @brief Привести UTF-8 строку к нижнему регистру (ASCII + кириллица) - для поиска без учёта регистра
+	std::string ToLowerUtf8(const std::string &s);
+
+	/// @brief Рисует однострочный текст ячейки таблицы; если он не влезает по ширине столбца - при наведении
+	/// показывает тултип с полным содержимым (по аналогии с тем, как ImGui сам подсказывает обрезанные заголовки таблицы)
+	void TextWithTooltipIfTruncated(const std::string &text);
 }

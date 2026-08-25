@@ -109,7 +109,7 @@ struct ControlMap /// Технологическая карта контроля
 	std::string thickness;
 	std::string description;
 
-	std::string fileName;              /// исходное имя прикреплённого файла (сохраняет расширение)
+	std::string fileName;				/// исходное имя прикреплённого файла (сохраняет расширение)
 	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (PDF/скан/Word)
 };
 
@@ -142,13 +142,15 @@ struct Equipment /// оборудование лаборатории по "СД�
 	bool forLT = false;
 	bool forECT = false;
 
-	bool isOperational = true;		// исправно
-	bool isUnderRepair = false;		// в ремонте
-	bool isFaulty = false;			// неисправно
-	bool isPendingDisposal = false; // подлежит списанию
-	bool isPreserved = false;		// законсервировано
+	bool isOperational = true;		/// исправно
+	bool isUnderRepair = false;		/// в ремонте
+	bool isFaulty = false;			/// неисправно
+	bool isPendingDisposal = false; /// подлежит списанию
+	bool isPreserved = false;		/// законсервировано
 
-	std::string fileName;              /// исходное имя прикреплённого файла (сохраняет расширение)
+	bool isCalibrated = false; /// Поверяется/калибруется
+
+	std::string fileName;				/// исходное имя прикреплённого файла (сохраняет расширение)
 	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (паспорт/формуляр и т.п.)
 };
 

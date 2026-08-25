@@ -1,8 +1,6 @@
 #include "equipmentWindow.hpp"
 
 #include <cfloat>
-#include <algorithm>
-#include <format>
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
@@ -10,12 +8,14 @@
 
 void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
 {
-    static int tableRows = 0;            ///< количество строк в таблице
-    static int editingIndex = -1;        ///< текущий индекс оборудования, которое создаётся/редактируется
-    static std::vector<int> indexesList; ///< Список индексов для печати в pdf
-    static std::vector<bool> selected;
+    static int tableRows = 0;     ///< количество строк в таблице
+    static int editingIndex = -1; ///< текущий индекс оборудования, которое создаётся/редактируется
+    static std::string searchQuery;
 
-    if (ImGui::BeginTable("Оборудование", 14, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    ImGui::InputTextWithHint("##equipmentSearch", "Поиск по наименованию...", &searchQuery);
+
+    if (ImGui::BeginTable("Оборудование", 14, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
     {
         ImGui::TableSetupColumn("Наименование");
         ImGui::TableSetupColumn("Метод контроля");
@@ -35,153 +35,116 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
         ImGui::TableHeadersRow();
 
         tableRows = static_cast<int>(equipmentList.size());
-        selected.resize(tableRows);
+        const std::string lowerQuery = searchQuery.empty() ? std::string() : NDT::ToLowerUtf8(searchQuery); /// приводим строку поиска к нижнему регистру один раз за кадр, а не на каждой строке
+
+        static std::vector<int> visibleIndices; /// индексы equipmentList, проходящие фильтр удаления/поиска - static, чтобы не аллоцировать вектор заново каждый кадр
+        visibleIndices.clear();
         for (int row = 0; row < tableRows; ++row)
         {
             if (equipmentList.at(row).deletedAt.has_value()) /// если стоит временная метка, не отображаем в UI, т.к. запись помечена как удалённая
                 continue;
 
+            if (!lowerQuery.empty() && NDT::ToLowerUtf8(equipmentList.at(row).name).find(lowerQuery) == std::string::npos)
+                continue;
+
+            visibleIndices.push_back(row);
+        }
+
+        /// только реально видимые строки вместо всех visibleIndices.size()
+        ImGuiListClipper clipper;
+        clipper.Begin(static_cast<int>(visibleIndices.size()));
+        while (clipper.Step())
+        for (int visRow = clipper.DisplayStart; visRow < clipper.DisplayEnd; ++visRow)
+        {
+            int row = visibleIndices[visRow];
+
             ImGui::TableNextRow();
             ImGui::PushID(row);
 
-            const Equipment &equipmentRow = equipmentList.at(row);
-            const std::string *cellTexts[] = {
-                &equipmentRow.name, &equipmentRow.method, &equipmentRow.function,
-                &equipmentRow.manufacturer, &equipmentRow.serialNumber,
-                &equipmentRow.yearOfManufacture, &equipmentRow.yearOfCommissioning,
-                &equipmentRow.technicalAndMetrologicalCharacteristics, &equipmentRow.owner,
-                &equipmentRow.certificateNumber, &equipmentRow.certificateDate,
-                &equipmentRow.certificateEndDate, &equipmentRow.state, &equipmentRow.fileName};
-
-            // первый проход - только измеряем нужную высоту строки, ничего не рисуем
-            float rowHeight = 0.0f;
-            for (int col = 0; col < IM_ARRAYSIZE(cellTexts); ++col)
-            {
-                ImGui::TableSetColumnIndex(col);
-                float colWidth = ImGui::GetContentRegionAvail().x;
-                rowHeight = std::max(rowHeight, ImGui::CalcTextSize(cellTexts[col]->c_str(), nullptr, false, colWidth).y);
-            }
-
-            ImGui::TableSetColumnIndex(0);                                                                 // возвращаемся к первому столбцу для настоящей отрисовки
+            ImGui::TableSetColumnIndex(0);
             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg)); /// подсвечиваем закреплённый столбец как шапку таблицы
             /// ImGuiSelectableFlags_AllowOverlap - иначе Selectable, растянутый на всю строку, перехватывает клики по ссылке в столбце "Файл"
-            if (ImGui::Selectable("###", selected.at(row), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowOverlap, ImVec2(0, rowHeight)))
+            if (ImGui::Selectable("###", false, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowOverlap))
             {
                 if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                 {
                     equipmentEditWindowIsOpen = true;
                     editingIndex = row;
                 }
-                else
-                {
-                    selected.at(row) = !selected.at(row);
-                    if (selected.at(row))
-                        indexesList.push_back(row);
-                    else
-                        std::erase(indexesList, row);
-                }
             }
+
+            if (ImGui::BeginPopupContextItem()) /// правый клик по строке - контекстное меню
+            {
+                if (ImGui::MenuItem("Редактировать"))
+                {
+                    equipmentEditWindowIsOpen = true;
+                    editingIndex = row;
+                }
+                if (ImGui::MenuItem("Удалить"))
+                    equipmentList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                ImGui::EndPopup();
+            }
+
             ImGui::SameLine();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).name).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).name);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).method).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).method);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).function).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).function);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).manufacturer).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).manufacturer);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).serialNumber).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).serialNumber);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).yearOfManufacture).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).yearOfManufacture);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).yearOfCommissioning).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).yearOfCommissioning);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).technicalAndMetrologicalCharacteristics).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).technicalAndMetrologicalCharacteristics);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).owner).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).owner);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).certificateNumber).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).isCalibrated ? equipmentList.at(row).certificateNumber : std::string("не поверяется"));
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(NDT::FormatDateForDisplay(equipmentList.at(row).certificateDate).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).isCalibrated ? NDT::FormatDateForDisplay(equipmentList.at(row).certificateDate) : std::string("-"));
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(NDT::FormatDateForDisplay(equipmentList.at(row).certificateEndDate).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).isCalibrated ? NDT::FormatDateForDisplay(equipmentList.at(row).certificateEndDate) : std::string("-"));
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", equipmentList.at(row).state).c_str());
-            ImGui::PopTextWrapPos();
+            NDT::TextWithTooltipIfTruncated(equipmentList.at(row).state);
 
             ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
             {
                 Equipment &equipment = equipmentList.at(row);
                 if (equipment.fileName.empty())
-                    ImGui::TextUnformatted("(не прикреплён)");
+                    ImGui::TextUnformatted("-");
                 else if (ImGui::TextLink(equipment.fileName.c_str()))
                     NDT::OpenFileFromBytes(equipment.fileName, equipment.fileData);
             }
-            ImGui::PopTextWrapPos();
 
             ImGui::PopID();
         }
         ImGui::EndTable();
     }
-    if (ImGui::Button("+")) //////////////////////////////////////////
+    
+    if (ImGui::Button("Добавить")) //////////////////////////////////////////
     {
         tableRows++;
         equipmentList.resize(tableRows);
         equipmentEditWindowIsOpen = true;
         editingIndex = tableRows - 1;
     }
-    ImGui::SameLine();
-    ImGui::BeginDisabled(indexesList.empty());
-    if (ImGui::Button("Удалить выбранные")) ////////////////////////////////////////
-    {
-        auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-
-        for (int idx : indexesList)
-            equipmentList.at(idx).deletedAt = now; /// помечаем время удаления
-
-        indexesList.clear();
-        std::ranges::fill(selected, false); // индексы после удаления сдвинулись, старые флаги уже не соответствуют строкам
-    }
-    ImGui::EndDisabled();
-
     if (equipmentEditWindowIsOpen && editingIndex >= 0 &&
         editingIndex < static_cast<int>(equipmentList.size()))
         equipmentEditWindow.Show(equipmentList.at(editingIndex), equipmentEditWindowIsOpen);
