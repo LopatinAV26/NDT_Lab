@@ -18,8 +18,32 @@ struct DefRT
     int coord = 0;
     std::string record;
     std::string coordStr;
-    static inline const std::array<std::string, 18> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2"};
+    static inline const std::array<std::string, 20> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2", "Fd", "Mw"};
     static inline const std::array<std::string, 2> end{"≤", ">"};
+};
+
+enum class DefectRT : uint8_t
+{
+    Aa,     /// единичная сферическая и удлиннённая пора
+    Ak,     /// канальная пора
+    Ba,     /// единичное компактное шлаковое включение
+    Ac,     /// скопление пор
+    Bc,     /// скопление шлаковых включений
+    Ab,     /// цепочка пор
+    Bb,     /// цепочка шлаковых включений
+    Da,     /// непровар
+    Dc,     /// несплавление
+    Bd,     /// удлинённый зашлакованный карман
+    Fc2,    /// внутренний подрез
+    E,      /// трещина
+    Fa,     /// вогнутость корня
+    Fb,     /// превышение проплава
+    Fe,     /// дефект сборки, шлифовка околошовной зоны
+    delta1, /// чешуйчатость
+    delta2, /// западание между валиками
+    Fc1,    /// наружный подрез
+    Fd,     /// смещение кромок
+    Mw      /// металлическое включение
 };
 
 struct DefUC
@@ -32,14 +56,16 @@ struct DefUC
 
 enum class Method : uint8_t
 {
-	VT,
-	RT,
-	UT,
-	DRT,
-	PT,
-	MT,
-	DT /// Delamination - расслоение
-	// LT
+    VT,  /// визуальный и измерительный контроль
+    RT,  /// радиографический контроль
+    DRT, /// цифровой радиографический контроль
+    UT,  /// ультразвуковой контроль
+    PT,  /// капиллярный контроль
+    LT,  /// течеискание
+    MT,  /// магнитопорошковый контроль
+    ECT, /// Eddy Current Testing - вихретоковый контроль
+    DT,  /// Delamination - расслоение
+    UTM  /// Ultrasonic Thickness Measurement - ультразвуковое измерение толщины
 };
 
 class Report
@@ -48,8 +74,8 @@ public:
     Report();
 
     /// @brief Получить заголовок отчёта
-    /// @param name 
-    /// @return 
+    /// @param name
+    /// @return
     std::string GetMethodTitle(Method value) const;
 
     std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
@@ -106,18 +132,6 @@ public:
     std::string masterName;
     std::string masterOrganization;
     std::string masterCertNumber;
-
-
-
-
-
-
-
-
-
-
-
-    
 
     static inline const std::string technologicalControlMapTitle{"Контроль выполнен в соответствии с операционной технологической картой"};
     int technologicalControlMapIndex = 0;
@@ -194,5 +208,6 @@ public:
     float minWidthOfWeld = 0.f;
     float edgeDisplacement = 0.f;
 
+    DefectRT defectRtValue;
     std::vector<DefRT> defRGCList; ///< Список дефектов
 };

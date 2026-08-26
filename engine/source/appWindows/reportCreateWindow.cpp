@@ -11,59 +11,11 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    if (ImGui::Begin("Новое заключение", &isOpen, window_flags))
+    const std::string windowTitle = "Заключение " + NDT::ToLowerUtf8(report.method);
+
+    if (ImGui::Begin(windowTitle.c_str(), &isOpen, window_flags))
     {
         bool changed = false;
-
-        ImGui::TextDisabled("Метод контроля");
-        if (ImGui::RadioButton("ВИК", report.methodValue == Method::VT))
-        {
-            report.methodValue = Method::VT;
-            report.method = report.GetMethodTitle(report.methodValue);
-            changed = true;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("РК", report.methodValue == Method::RT))
-        {
-            report.methodValue = Method::RT;
-            report.method = report.GetMethodTitle(report.methodValue);
-            changed = true;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("УК", report.methodValue == Method::UT))
-        {
-            report.methodValue = Method::UT;
-            report.method = report.GetMethodTitle(report.methodValue);
-            changed = true;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("ЦРК", report.methodValue == Method::DRT))
-        {
-            report.methodValue = Method::DRT;
-            report.method = report.GetMethodTitle(report.methodValue);
-            changed = true;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("ПВТ", report.methodValue == Method::PT))
-        {
-            report.methodValue = Method::PT;
-            report.method = report.GetMethodTitle(report.methodValue);
-            changed = true;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("МПК", report.methodValue == Method::MT))
-        {
-            report.methodValue = Method::MT;
-            report.method = report.GetMethodTitle(report.methodValue);
-            changed = true;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Расслоение", report.methodValue == Method::DT))
-        {
-            report.methodValue = Method::DT;
-            report.method = report.GetMethodTitle(report.methodValue);
-            changed = true;
-        }
 
         if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable))
         {

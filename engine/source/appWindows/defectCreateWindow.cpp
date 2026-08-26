@@ -95,16 +95,7 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
                 ImGui::TableSetColumnIndex(6); //////////////////////////////
                 if (tableRows > 0)
                 {
-                    // ImGui::Text("(%d) %s", data.defectList[row].coord, data.defectList[row].record.c_str());
-                    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
                     ImGui::TextUnformatted(std::format("({:d}) {}", def.coord, def.record).c_str()); // безопаснее
-                    ImGui::PopTextWrapPos();
-
-                    if (ImGui::Button("-"))
-                    {
-                        tableRows--;
-                        report.defRGCList.resize(tableRows);
-                    }
                 }
                 ImGui::PopID();
             }
@@ -112,7 +103,7 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
             ImGui::EndTable();
         }
 
-        if (ImGui::Button("+"))
+        if (ImGui::Button("Добавить"))
         {
             tableRows++;
             report.defRGCList.resize(tableRows);
@@ -126,7 +117,7 @@ void DefectCreateWindow::ConstructDefectRGCString(DefRT &input)
     // Ас 25.0 – 2.0 × 1.0 ≤	пример записи дефекта
     // A   B   C  D  E  F  G
     std::string A = input.name.at(input.nameIndex);
-    std::string B;
+    std::string B = std::format("{:.1f}", input.length);
     std::string C = "-";
     std::string D = std::format("{:.1f}", input.width);
     std::string E = "×";
@@ -134,13 +125,15 @@ void DefectCreateWindow::ConstructDefectRGCString(DefRT &input)
     std::string G = input.end.at(input.endIndex);
 
     if (A == "Ac" || A == "Ab")
-        B = std::format("{:.1f}", input.length);
+        input.record = A + B + C + D + E + F + G;
+    else if (A == "E" || A == "Mw")
+        input.record = A + B;
+    else if (A == "Fa" || A == "Fb" || A == "Fe")
+        input.record = A + B + G;
+    else if (A == "Fc1" || A == "Fd" || A == "∆1" || A == "∆2")
+        input.record = A;
     else
-    {
-        B = "";
-        C = "";
-    }
+        input.record = A + D + E + F + G;
 
     input.coordStr = std::format("({:d}) ", input.coord);
-    input.record = A + " " + B + C + D + E + F + G;
 }

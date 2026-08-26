@@ -1,9 +1,10 @@
 #pragma once
 
 #include "imgui.h"
+#include "report.hpp"
 
-class Report;
-struct DefRT;
+//class Report;
+//struct DefRT;
 
 class DefectCreateWindow
 {

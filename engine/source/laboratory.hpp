@@ -166,6 +166,20 @@ struct LaboratoryInfo
 	std::string attestationEndDate;
 };
 
+/* enum class MethodNDT : uint8_t
+{
+    VT,  /// визуальный и измерительный контроль
+    RT,  /// радиографический контроль
+    DRT, /// цифровой радиографический контроль
+    UT,  /// ультразвуковой контроль
+    PT,  /// капиллярный контроль
+    LT,  /// течеискание
+    MT,  /// магнитопорошковый контроль
+    ECT, /// Eddy Current Testing - вихретоковый контроль
+    DT,  /// Delamination - расслоение
+    UTM  /// Ultrasonic Thickness Measurement - ультразвуковое измерение толщины
+}; */
+
 class Laboratory
 {
 public:

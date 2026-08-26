@@ -1,4 +1,5 @@
 #include "report.hpp"
+#include "laboratory.hpp"
 
 Report::Report()
 {
@@ -29,15 +30,15 @@ std::string Report::GetMethodTitle(Method value) const
     case Method::PT:
         result = "ПО КОНТРОЛЮ СВАРНЫХ СОЕДИНЕНИЙ КАПИЛЛЯРНЫМ МЕТОДОМ";
         break;
+    case Method::LT:
+        result = "ПО КОНТРОЛЮ СВАРНЫХ СОЕДИНЕНИЙ МЕТОДОМ ПВТ";
+        break;
     case Method::MT:
         result = "ПО КОНТРОЛЮ СВАРНЫХ СОЕДИНЕНИЙ МАГНИТОПОРОШКОВЫМ МЕТОДОМ";
         break;
     case Method::DT:
         result = "ПО КОНТРОЛЮ СПЛОШНОСТИ КРОМОК СВАРИВАЕМЫХ ЭЛЕМЕНТОВ УЛЬТРАЗВУКОВЫМ МЕТОДОМ";
         break;
-    /* case Method::LT:
-        result = "ПО КОНТРОЛЮ СВАРНЫХ СОЕДИНЕНИЙ МЕТОДОМ ПВТ";
-        break; */
     default:
         break;
     }
