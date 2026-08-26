@@ -6,7 +6,11 @@
 
 DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
 {
-    if (sqlite3_open_v2(pathToDb.string().c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK)
+    // sqlite3_open_v2 ожидает путь в UTF-8; path::string() на Windows конвертирует
+    // в текущую ANSI-кодировку системы и портит некириллические/нелатинские символы пути
+    const std::u8string pathUtf8 = pathToDb.u8string();
+
+    if (sqlite3_open_v2(reinterpret_cast<const char *>(pathUtf8.c_str()), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK)
     {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open database '%s': %s",
                      pathToDb.string().c_str(), sqlite3_errmsg(db));
@@ -1220,10 +1224,10 @@ void DatabaseManager::SaveLaboratoryInfo(const Laboratory &lab)
     EnsureLaboratoryInfoTable();
 
     std::string insertSql = "INSERT INTO laboratory_info (id, updated_at, deleted_at, laboratory_name, number_attestation, attestation_end_date) "
-                             "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET "
-                             "updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, "
-                             "laboratory_name = excluded.laboratory_name, number_attestation = excluded.number_attestation, "
-                             "attestation_end_date = excluded.attestation_end_date;";
+                            "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET "
+                            "updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, "
+                            "laboratory_name = excluded.laboratory_name, number_attestation = excluded.number_attestation, "
+                            "attestation_end_date = excluded.attestation_end_date;";
 
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
