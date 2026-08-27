@@ -1,5 +1,6 @@
 #include "reportCreateWindow.hpp"
 
+#include <cmath>
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "ImGuiDatePicker.hpp"
@@ -98,6 +99,33 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::TextDisabled("Организация заказчика");
             ImGui::SetNextItemWidth(-FLT_MIN);
             changed |= ImGui::InputText("##Организация заказчика#", &report.customerOrganization);
+
+
+
+
+
+
+
+
+
+
+
+
+            if (ImGui::DragInt("##Диаметр#", &report.diameter, 1.f, 10, 1500, "Диаметр %d мм"))
+            {
+                if(report.diameter < 10) report.diameter = 10;
+                if(report.diameter > 1500) report.diameter = 1500;
+                report.perimeter = static_cast<int>(std::lround(report.diameter * 3.141592f));
+                changed = true;
+            }
+
+            if (ImGui::DragInt("##Длина шва#", &report.perimeter, 1.f, 31, 4712, "Длина шва %d мм"))
+            {
+                if(report.perimeter < 31) report.perimeter = 31;
+                if(report.perimeter > 4712) report.perimeter = 4712;
+                report.diameter = static_cast<int>(std::lround(report.perimeter / 3.141592f));
+                changed = true;
+            }
 
             ImGui::TextDisabled("Контроль произвёл");
             ImGui::SetNextItemWidth(-FLT_MIN);

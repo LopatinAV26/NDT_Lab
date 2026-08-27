@@ -26,9 +26,17 @@ public:
 	void ApplyScale();
 	static void SetCustomTheme();
 
+	/// @brief Вызывается из Core::ProcessEvent на SDL_EVENT_QUIT (крестик окна/Alt+F4) - вместо
+	/// немедленного выхода показывает окно подтверждения на следующем кадре
+	void RequestQuit() { quitRequested = true; }
+
+	/// @brief true, когда пользователь подтвердил закрытие приложения в попапе - Core::Iterate
+	/// проверяет это после кадра, чтобы вернуть SDL_APP_SUCCESS
+	bool ShouldQuit() const { return quitConfirmed; }
+
 private:
 	void ButtonsWindow();
-	
+
 
 	ApplicationData &appData;
 	ResourceManager &resManager;
@@ -41,4 +49,7 @@ private:
 	bool buttonsWindowOpen = true;
 	bool settingsWindowOpen = false;
 	bool labWindowIsOpen = false;
+
+	bool quitRequested = false; ///< триггер: открыть попап подтверждения на следующем кадре
+	bool quitConfirmed = false; ///< пользователь подтвердил закрытие приложения
 };

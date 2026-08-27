@@ -33,9 +33,13 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
 
                 ImGui::TableSetColumnIndex(0); /////////////////////////////////////////////////////////////////
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::InputInt("##Координата#", &def.coord, 1, 100);
-                if (def.coord < 0)
-                    def.coord = 0;
+                if (ImGui::InputInt("##Координата#", &def.coord, 1, 100))
+                {
+                    if (def.coord < 0)
+                        def.coord = 0;
+                    if (def.coord > report.perimeter)
+                        def.coord = report.perimeter;
+                }
 
                 ImGui::TableSetColumnIndex(1); //////////////////////////////////////////////////////////////////////
                 ImGui::SetNextItemWidth(-FLT_MIN);
@@ -90,7 +94,7 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
                     ImGui::EndCombo();
                 }
 
-                ConstructDefectRGCString(def);
+                ConstructDefectRGCString(def); /////переделать формирование строки
 
                 ImGui::TableSetColumnIndex(6); //////////////////////////////
                 if (tableRows > 0)
@@ -105,8 +109,11 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
 
         if (ImGui::Button("Добавить"))
         {
+            const int prevCoord = tableRows > 0 ? report.defRGCList.at(tableRows - 1).coord : 0;
+
             tableRows++;
             report.defRGCList.resize(tableRows);
+            report.defRGCList.back().coord = prevCoord;
         }
     }
     ImGui::End();

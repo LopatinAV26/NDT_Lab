@@ -12,6 +12,12 @@ LabWindow::LabWindow(ApplicationData &coreAppData, ResourceManager &resourceMana
     : lab{coreAppData},
       nomogramWindow{coreAppData, resourceManager}
 {
+    lab.LoadDB();
+}
+
+LabWindow::~LabWindow()
+{
+    lab.SaveDB();
 }
 
 void LabWindow::Show(bool &isOpen)
@@ -33,7 +39,6 @@ void LabWindow::Show(bool &isOpen)
 
             if (ImGui::Button("Да", ImVec2(120, 0)))
             {
-                lab.SaveDB();
                 isOpen = false;
                 ImGui::CloseCurrentPopup();
             }
@@ -71,6 +76,12 @@ void LabWindow::Show(bool &isOpen)
             if (ImGui::BeginTabItem("Технологические карты"))
             {
                 controlMapsWindow.Show(lab.controlMapsList);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Нормативные документы"))
+            {
+                normativeDocumentsWindow.Show(lab.normativeDocumentsList);
                 ImGui::EndTabItem();
             }
 

@@ -9,6 +9,7 @@
 #include "appWindows/weldersWindow.hpp"
 #include "appWindows/equipmentWindow.hpp"
 #include "appWindows/controlMapsWindow.hpp"
+#include "appWindows/normativeDocumentsWindow.hpp"
 
 class ApplicationData;
 class ResourceManager;
@@ -17,6 +18,8 @@ class LabWindow
 {
 public:
     LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager);
+    ~LabWindow();
+    
     void Show(bool &isOpen);
 
     void ShowMain();
@@ -31,6 +34,7 @@ private:
     WeldersWindow weldersWindow;
     EquipmentWindow equipmentWindow;
     ControlMapsWindow controlMapsWindow;
+    NormativeDocumentsWindow normativeDocumentsWindow;
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration;
     bool editingLabInfo = false;

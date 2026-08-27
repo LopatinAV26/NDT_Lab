@@ -113,6 +113,23 @@ struct ControlMap /// Технологическая карта контроля
 	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (PDF/скан/Word)
 };
 
+struct NormativeDocument
+{
+	std::string id = NDT::GenerateUuidV7();
+	std::chrono::sys_seconds updatedAt =
+		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	std::optional<std::chrono::sys_seconds> deletedAt;
+
+	std::string code;	/// шифр
+	std::string name;	/// название документа
+	std::string method; /// метод контроля
+	std::string status; /// статус (действующий, отменён, заменён)
+	std::string year;	/// год введения
+
+	std::string fileName;
+	std::vector<std::uint8_t> fileData;
+};
+
 struct Equipment /// оборудование лаборатории по "СДАНК-01-2020"
 {
 	std::string id = NDT::GenerateUuidV7();
@@ -168,16 +185,16 @@ struct LaboratoryInfo
 
 /* enum class MethodNDT : uint8_t
 {
-    VT,  /// визуальный и измерительный контроль
-    RT,  /// радиографический контроль
-    DRT, /// цифровой радиографический контроль
-    UT,  /// ультразвуковой контроль
-    PT,  /// капиллярный контроль
-    LT,  /// течеискание
-    MT,  /// магнитопорошковый контроль
-    ECT, /// Eddy Current Testing - вихретоковый контроль
-    DT,  /// Delamination - расслоение
-    UTM  /// Ultrasonic Thickness Measurement - ультразвуковое измерение толщины
+	VT,  /// визуальный и измерительный контроль
+	RT,  /// радиографический контроль
+	DRT, /// цифровой радиографический контроль
+	UT,  /// ультразвуковой контроль
+	PT,  /// капиллярный контроль
+	LT,  /// течеискание
+	MT,  /// магнитопорошковый контроль
+	ECT, /// Eddy Current Testing - вихретоковый контроль
+	DT,  /// Delamination - расслоение
+	UTM  /// Ultrasonic Thickness Measurement - ультразвуковое измерение толщины
 }; */
 
 class Laboratory
@@ -185,16 +202,18 @@ class Laboratory
 public:
 	explicit Laboratory(ApplicationData &appData);
 
+	void LoadDB();
 	void SaveDB();
 
 	LaboratoryInfo labInfo;
-	std::vector<Employee> employeesList;	 /// список сотрудников
-	std::vector<Inspector> inspectorsList;	 /// список сотрудников надзора
-	std::vector<Master> mastersList;		 /// производители СМР
-	std::vector<Welder> weldersList;		 /// сварщики
-	std::vector<Report> reportsList;		 /// список отчётов
-	std::vector<ControlMap> controlMapsList; /// тех. карты
-	std::vector<Equipment> equpmentsList;	 /// список оборудования
+	std::vector<Employee> employeesList;				   /// список сотрудников
+	std::vector<Inspector> inspectorsList;				   /// список сотрудников надзора
+	std::vector<Master> mastersList;					   /// производители СМР
+	std::vector<Welder> weldersList;					   /// сварщики
+	std::vector<Report> reportsList;					   /// список отчётов
+	std::vector<ControlMap> controlMapsList;			   /// тех. карты
+	std::vector<Equipment> equpmentsList;				   /// список оборудования
+	std::vector<NormativeDocument> normativeDocumentsList; /// нормативные документы
 
 private:
 	std::unique_ptr<DatabaseManager> dbManager;

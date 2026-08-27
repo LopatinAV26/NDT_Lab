@@ -49,8 +49,6 @@ namespace NDT
 	/// @return Количество участков
 	std::vector<std::string> CalculateNumString(int diam, int range = 300);
 
-	float GetPerimeter(int diam);
-
 	/// @brief Максимально допустимая плотность снимка, в зависимости от яркости негатоскопа
 	/// @param negBright паспортная яркость негатоскопа
 	/// @return Плотность снимка в е.о.п.

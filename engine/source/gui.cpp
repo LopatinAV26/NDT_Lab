@@ -121,6 +121,31 @@ void Gui::IterateImGui()
 	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 
+	if (quitRequested)
+	{
+		quitRequested = false; // само состояние открытости попапа дальше держит ImGui, повторно OpenPopup звать не нужно
+		ImGui::OpenPopup("Выход из приложения");
+	}
+
+	if (ImGui::BeginPopupModal("Выход из приложения", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		ImGui::TextUnformatted("Завершить работу?");
+		ImGui::Separator();
+
+		if (ImGui::Button("Да", ImVec2(120, 0)))
+		{
+			quitConfirmed = true;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Нет", ImVec2(120, 0)))
+			ImGui::CloseCurrentPopup();
+
+		ImGui::SetItemDefaultFocus();
+		ImGui::EndPopup();
+	}
+
 	//---------------------------------
 	if (buttonsWindowOpen)
 		ButtonsWindow();

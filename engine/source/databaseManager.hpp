@@ -10,6 +10,7 @@ struct Master;
 struct Welder;
 struct Equipment;
 struct ControlMap;
+struct NormativeDocument;
 class Laboratory;
 
 class DatabaseManager
@@ -43,6 +44,9 @@ public:
     void SaveControlMaps(const std::vector<ControlMap> &controlMaps);
     std::vector<ControlMap> LoadControlMaps();
 
+    void SaveNormativeDocuments(const std::vector<NormativeDocument> &normativeDocuments);
+    std::vector<NormativeDocument> LoadNormativeDocuments();
+
 private:
     /// @brief Создать таблицу laboratory_info, если её ещё нет, и дозаполнить отсутствующие
     /// колонки в уже существующей таблице (ALTER TABLE ADD COLUMN). Таблица хранит одну запись -
@@ -69,6 +73,9 @@ private:
 
     /// @brief Аналогично EnsureEmployeesTable, но для таблицы control_maps
     void EnsureControlMapsTable();
+
+    /// @brief Аналогично EnsureEmployeesTable, но для таблицы normative_documents
+    void EnsureNormativeDocumentsTable();
 
     sqlite3 *db = nullptr;
 };

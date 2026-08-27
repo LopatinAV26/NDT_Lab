@@ -96,7 +96,7 @@ SDL_AppResult Core::Iterate()
 	imWindow->RenderImGui();
 	SDL_RenderPresent(appData.renderer);
 
-	return SDL_APP_CONTINUE;
+	return imWindow->ShouldQuit() ? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
 }
 
 SDL_AppResult Core::ProcessEvent(const SDL_Event *event)
@@ -106,7 +106,8 @@ SDL_AppResult Core::ProcessEvent(const SDL_Event *event)
 	switch (event->type)
 	{
 	case SDL_EVENT_QUIT:
-		return SDL_APP_SUCCESS;
+		imWindow->RequestQuit();
+		break;
 
 	case SDL_EVENT_WINDOW_MINIMIZED:
 		appData.isWindowMinimized = true;

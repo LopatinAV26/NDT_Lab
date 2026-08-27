@@ -90,7 +90,7 @@ namespace NDT
 
 	std::vector<std::string> CalculateNumString(int diam, int range)
 	{
-		float perimeter = GetPerimeter(diam);
+		float perimeter = diam * 3.14159265358979323846f;
 		constexpr float eps = 2.0f; ///< необходимо подобрать экспериментально чтобы не было лишнего или недостающего участка
 		int result = static_cast<int>(std::ceil((perimeter - eps) / range));
 		std::vector<std::string> rangesStringList;
@@ -110,10 +110,6 @@ namespace NDT
 		return rangesStringList;
 	}
 
-	float GetPerimeter(int diam)
-	{
-		return diam * 3.14159265358979323846f;
-	}
 	std::chrono::year_month_day GetTerm(const std::chrono::year_month_day &date1, const std::chrono::year_month_day &date2)
 	{
 		using namespace std::chrono;

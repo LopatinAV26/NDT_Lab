@@ -28,6 +28,7 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
     EnsureWeldersTable();
     EnsureEquipmentTable();
     EnsureControlMapsTable();
+    EnsureNormativeDocumentsTable();
 }
 
 DatabaseManager::~DatabaseManager()
@@ -107,6 +108,19 @@ namespace
         {"diameter", "TEXT"},
         {"thickness", "TEXT"},
         {"description", "TEXT"},
+        {"file_name", "TEXT"},
+        {"file_data", "BLOB"},
+    };
+
+    const std::vector<std::pair<std::string, std::string>> normativeDocumentColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"code", "TEXT"},
+        {"name", "TEXT"},
+        {"method", "TEXT"},
+        {"status", "TEXT"},
+        {"year", "TEXT"},
         {"file_name", "TEXT"},
         {"file_data", "BLOB"},
     };
@@ -398,6 +412,36 @@ void DatabaseManager::EnsureControlMapsTable()
     for (size_t i = 1; i < controlMapColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
     {
         std::string alterSql = "ALTER TABLE control_maps ADD COLUMN " + controlMapColumns[i].first + " " + controlMapColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
+}
+
+void DatabaseManager::EnsureNormativeDocumentsTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS normative_documents (";
+    for (size_t i = 0; i < normativeDocumentColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += normativeDocumentColumns[i].first + " " + normativeDocumentColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureNormativeDocumentsTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < normativeDocumentColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE normative_documents ADD COLUMN " + normativeDocumentColumns[i].first + " " + normativeDocumentColumns[i].second + ";";
         sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
     }
 }
@@ -1214,6 +1258,127 @@ std::vector<ControlMap> DatabaseManager::LoadControlMaps()
     sqlite3_finalize(stmt);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Control maps loaded.");
     return controlMaps;
+}
+
+void DatabaseManager::SaveNormativeDocuments(const std::vector<NormativeDocument> &normativeDocuments)
+{
+    if (!db)
+        return;
+
+    EnsureNormativeDocumentsTable();
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    std::string columnNames, placeholders, updateSet;
+
+    for (size_t i = 0; i < normativeDocumentColumns.size(); ++i)
+    {
+        const std::string &name = normativeDocumentColumns[i].first;
+
+        if (i > 0)
+        {
+            columnNames += ", ";
+            placeholders += ", ";
+        }
+        columnNames += name;
+        placeholders += "?";
+
+        if (name != "id") // первичный ключ не обновляем при конфликте, только вставляем один раз
+        {
+            if (!updateSet.empty())
+                updateSet += ", ";
+            updateSet += name + " = excluded." + name;
+        }
+    }
+
+    std::string insertSql = "INSERT INTO normative_documents (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveNormativeDocuments: prepare не удался: %s", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return;
+    }
+
+    for (const NormativeDocument &doc : normativeDocuments)
+    {
+        sqlite3_bind_text(stmt, 1, doc.id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, 2, doc.updatedAt.time_since_epoch().count());
+
+        if (doc.deletedAt.has_value())
+            sqlite3_bind_int64(stmt, 3, doc.deletedAt->time_since_epoch().count());
+        else
+            sqlite3_bind_null(stmt, 3);
+
+        sqlite3_bind_text(stmt, 4, doc.code.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 5, doc.name.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 6, doc.method.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 7, doc.status.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 8, doc.year.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 9, doc.fileName.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(stmt, 10, doc.fileData.data(), static_cast<int>(doc.fileData.size()), SQLITE_TRANSIENT);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveNormativeDocuments: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+        sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Normative documents saved.");
+}
+
+std::vector<NormativeDocument> DatabaseManager::LoadNormativeDocuments()
+{
+    std::vector<NormativeDocument> normativeDocuments;
+
+    if (!db)
+        return normativeDocuments;
+
+    std::string columnNames;
+    for (size_t i = 0; i < normativeDocumentColumns.size(); ++i)
+    {
+        if (i > 0)
+            columnNames += ", ";
+        columnNames += normativeDocumentColumns[i].first;
+    }
+
+    std::string selectSql = "SELECT " + columnNames + " FROM normative_documents;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, selectSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadNormativeDocuments: prepare не удался: %s", sqlite3_errmsg(db));
+        return normativeDocuments;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        NormativeDocument doc;
+
+        doc.id = GetColumnText(stmt, 0);
+        doc.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
+
+        if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            doc.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
+
+        doc.code = GetColumnText(stmt, 3);
+        doc.name = GetColumnText(stmt, 4);
+        doc.method = GetColumnText(stmt, 5);
+        doc.status = GetColumnText(stmt, 6);
+        doc.year = GetColumnText(stmt, 7);
+        doc.fileName = GetColumnText(stmt, 8);
+        doc.fileData = GetColumnBlob(stmt, 9);
+
+        normativeDocuments.push_back(std::move(doc));
+    }
+
+    sqlite3_finalize(stmt);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Normative documents loaded.");
+    return normativeDocuments;
 }
 
 void DatabaseManager::SaveLaboratoryInfo(const Laboratory &lab)

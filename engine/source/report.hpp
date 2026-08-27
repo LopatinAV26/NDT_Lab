@@ -8,20 +8,6 @@
 
 #include "utilities.hpp"
 
-struct DefRT
-{
-    int nameIndex = 0;
-    int endIndex = 0;
-    float length = 0.f; ///< протяжённость, для скоплений и цепочек
-    float width = 0.f;
-    float height = 0.f;
-    int coord = 0;
-    std::string record;
-    std::string coordStr;
-    static inline const std::array<std::string, 20> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2", "Fd", "Mw"};
-    static inline const std::array<std::string, 2> end{"≤", ">"};
-};
-
 enum class DefectRT : uint8_t
 {
     Aa,     /// единичная сферическая и удлиннённая пора
@@ -44,6 +30,25 @@ enum class DefectRT : uint8_t
     Fc1,    /// наружный подрез
     Fd,     /// смещение кромок
     Mw      /// металлическое включение
+};
+
+struct DefRT
+{
+    std::string id = NDT::GenerateUuidV7();
+    std::chrono::sys_seconds updatedAt =
+        std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+    std::optional<std::chrono::sys_seconds> deletedAt;
+
+    int nameIndex = 0;
+    int endIndex = 0;
+    float length = 0.f; ///< протяжённость, для скоплений и цепочек
+    float width = 0.f;
+    float height = 0.f;
+    int coord = 0;
+    std::string record;
+    std::string coordStr;
+    static inline const std::array<std::string, 20> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2", "Fd", "Mw"};
+    static inline const std::array<std::string, 2> end{"≤", ">"};
 };
 
 struct DefUC
@@ -77,6 +82,7 @@ public:
     /// @param name
     /// @return
     std::string GetMethodTitle(Method value) const;
+    std::string GetDefectRTName(DefectRT value) const;
 
     std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
     std::chrono::sys_seconds updatedAt =
@@ -151,6 +157,7 @@ public:
 
     static inline const std::string diameterTitle{"Диаметр, толщина стенки свариваемых элементов, мм"};
     int diameter = 1220;
+    int perimeter = 0;
     float thicknes1 = 12.f;
     float thicknes2 = 14.f;
 
@@ -208,6 +215,5 @@ public:
     float minWidthOfWeld = 0.f;
     float edgeDisplacement = 0.f;
 
-    DefectRT defectRtValue;
     std::vector<DefRT> defRGCList; ///< Список дефектов
 };
