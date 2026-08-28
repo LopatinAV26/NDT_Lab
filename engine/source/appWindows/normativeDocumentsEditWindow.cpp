@@ -81,11 +81,12 @@ void NormativeDocumentsEditWindow::Show(NormativeDocument &normativeDocument, bo
 
             if (!pendingFilePath.empty())
             {
-                std::ifstream file(pendingFilePath, std::ios::binary);
+                std::filesystem::path filePath = NDT::PathFromUtf8(pendingFilePath);
+                std::ifstream file(filePath, std::ios::binary);
                 if (file)
                 {
                     normativeDocument.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-                    normativeDocument.fileName = std::filesystem::path(pendingFilePath).filename().string();
+                    normativeDocument.fileName = NDT::PathToUtf8(filePath.filename());
                     changed = true;
                 }
 

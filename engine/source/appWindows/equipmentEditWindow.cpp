@@ -150,11 +150,12 @@ void EquipmentEditWindow::Show(Equipment &equipment, bool &isOpen)
 
             if (!pendingFilePath.empty())
             {
-                std::ifstream file(pendingFilePath, std::ios::binary);
+                std::filesystem::path filePath = NDT::PathFromUtf8(pendingFilePath);
+                std::ifstream file(filePath, std::ios::binary);
                 if (file)
                 {
                     equipment.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-                    equipment.fileName = std::filesystem::path(pendingFilePath).filename().string();
+                    equipment.fileName = NDT::PathToUtf8(filePath.filename());
                     changed = true;
                 }
 

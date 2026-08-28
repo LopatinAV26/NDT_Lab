@@ -8,18 +8,18 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
 {
     // sqlite3_open_v2 ожидает путь в UTF-8; path::string() на Windows конвертирует
     // в текущую ANSI-кодировку системы и портит некириллические/нелатинские символы пути
-    const std::u8string pathUtf8 = pathToDb.u8string();
+    const std::string pathUtf8 = NDT::PathToUtf8(pathToDb);
 
-    if (sqlite3_open_v2(reinterpret_cast<const char *>(pathUtf8.c_str()), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK)
+    if (sqlite3_open_v2(pathUtf8.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK)
     {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open database '%s': %s",
-                     pathToDb.string().c_str(), sqlite3_errmsg(db));
+                     pathUtf8.c_str(), sqlite3_errmsg(db));
         sqlite3_close(db);
         db = nullptr;
         return;
     }
 
-    SDL_Log("Database '%s' opened successfully.", pathToDb.string().c_str());
+    SDL_Log("Database '%s' opened successfully.", pathUtf8.c_str());
 
     EnsureLaboratoryInfoTable();
     EnsureEmployeesTable();

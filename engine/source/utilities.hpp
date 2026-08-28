@@ -8,6 +8,7 @@
 #include <random>
 #include <cstdint>
 #include <ctime>
+#include <filesystem>
 #include "imgui.h"
 
 namespace NDT
@@ -62,6 +63,15 @@ namespace NDT
 	/// ассоциированным приложением ОС (через ImGui::GetPlatformIO().Platform_OpenInShellFn -
 	/// кросс-платформенно: ShellExecuteW на Windows, system("open ...")/xdg-open на macOS/Linux)
 	void OpenFileFromBytes(const std::string &fileName, const std::vector<std::uint8_t> &fileData);
+
+	/// @brief Построить std::filesystem::path из UTF-8 строки в обход текущей кодовой страницы ОС
+	/// (обычный конструктор path(std::string)/path::string() на Windows трактует байты через ANSI-
+	/// кодовую страницу процесса - кириллица в имени файла ломается, если она не совпадает с CP1251,
+	/// как это уже чинили для пути к БД в DatabaseManager)
+	std::filesystem::path PathFromUtf8(const std::string &utf8);
+
+	/// @brief Получить путь в виде UTF-8 std::string в обход текущей кодовой страницы ОС
+	std::string PathToUtf8(const std::filesystem::path &path);
 
 	/// @brief Привести UTF-8 строку к нижнему регистру (ASCII + кириллица) - для поиска без учёта регистра
 	std::string ToLowerUtf8(const std::string &s);

@@ -72,11 +72,12 @@ void ControlMapsEditWindow::Show(ControlMap &controlMap, bool &isOpen)
 
             if (!pendingFilePath.empty())
             {
-                std::ifstream file(pendingFilePath, std::ios::binary);
+                std::filesystem::path filePath = NDT::PathFromUtf8(pendingFilePath);
+                std::ifstream file(filePath, std::ios::binary);
                 if (file)
                 {
                     controlMap.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-                    controlMap.fileName = std::filesystem::path(pendingFilePath).filename().string();
+                    controlMap.fileName = NDT::PathToUtf8(filePath.filename());
                     changed = true;
                 }
 

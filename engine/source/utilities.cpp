@@ -205,15 +205,27 @@ namespace NDT
 						   b & 0xFFFFFFFFFFFFULL);
 	}
 
+	std::filesystem::path PathFromUtf8(const std::string &utf8)
+	{
+		const std::u8string utf8AsChar8(reinterpret_cast<const char8_t *>(utf8.data()), utf8.size());
+		return std::filesystem::path(utf8AsChar8);
+	}
+
+	std::string PathToUtf8(const std::filesystem::path &path)
+	{
+		const std::u8string pathUtf8 = path.u8string();
+		return std::string(reinterpret_cast<const char *>(pathUtf8.data()), pathUtf8.size());
+	}
+
 	void OpenFileFromBytes(const std::string &fileName, const std::vector<std::uint8_t> &fileData)
 	{
-		std::filesystem::path tempPath = std::filesystem::temp_directory_path() / fileName;
+		std::filesystem::path tempPath = std::filesystem::temp_directory_path() / PathFromUtf8(fileName);
 
 		std::ofstream tempFile(tempPath, std::ios::binary | std::ios::trunc);
 		tempFile.write(reinterpret_cast<const char *>(fileData.data()), static_cast<std::streamsize>(fileData.size()));
 		tempFile.close();
 
-		ImGui::GetPlatformIO().Platform_OpenInShellFn(ImGui::GetCurrentContext(), tempPath.string().c_str());
+		ImGui::GetPlatformIO().Platform_OpenInShellFn(ImGui::GetCurrentContext(), PathToUtf8(tempPath).c_str());
 	}
 
 	std::string ToLowerUtf8(const std::string &s)
