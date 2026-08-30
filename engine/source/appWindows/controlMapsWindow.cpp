@@ -1,22 +1,27 @@
 #include "controlMapsWindow.hpp"
 
+#include <array>
+#include <utility>
 #include <cfloat>
+#include <format>
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
 #include "utilities.hpp"
+#include "methodsNdt.hpp"
 
 void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
 {
     static int tableRows = 0;     ///< количество строк в таблице
     static int editingIndex = -1; ///< текущий индекс техкарты, которая создаётся/редактируется
 
-    if (ImGui::BeginTable("Технологические карты", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
+    if (ImGui::BeginTable("Технологические карты", 7, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
     {
         ImGui::TableSetupColumn("Шифр");
         ImGui::TableSetupColumn("Метод\nконтроля");
         ImGui::TableSetupColumn("Диаметр");
         ImGui::TableSetupColumn("Толщина\nстенки");
+        ImGui::TableSetupColumn("Категория\nтрубопровода");
         ImGui::TableSetupColumn("Описание");
         ImGui::TableSetupColumn("Файл");
         ImGui::TableSetupScrollFreeze(1, 1);
@@ -72,13 +77,55 @@ void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
             NDT::TextWithTooltipIfTruncated(controlMapsList.at(row).code);
 
             ImGui::TableNextColumn();
-            NDT::TextWithTooltipIfTruncated(controlMapsList.at(row).method);
+            {
+                static constexpr std::array<std::pair<Method, bool ControlMap::*>, 8> methodOptions{{
+                    {Method::VT, &ControlMap::forVT},
+                    {Method::UT, &ControlMap::forUT},
+                    {Method::RT, &ControlMap::forRT},
+                    {Method::DRT, &ControlMap::forDRT},
+                    {Method::PT, &ControlMap::forPT},
+                    {Method::MT, &ControlMap::forMT},
+                    {Method::LT, &ControlMap::forLT},
+                    {Method::DT, &ControlMap::forDT},
+                }};
+
+                const ControlMap &controlMap = controlMapsList.at(row);
+                for (const auto &[method, member] : methodOptions)
+                    if (controlMap.*member)
+                    {
+                        NDT::TextWithTooltipIfTruncated(GetMethodAbbreviation(method));
+                        break;
+                    }
+            }
 
             ImGui::TableNextColumn();
-            NDT::TextWithTooltipIfTruncated(controlMapsList.at(row).diameter);
+            NDT::TextWithTooltipIfTruncated(std::format("{:d}", controlMapsList.at(row).diameter));
 
             ImGui::TableNextColumn();
-            NDT::TextWithTooltipIfTruncated(controlMapsList.at(row).thickness);
+            NDT::TextWithTooltipIfTruncated(std::format("{:.1f}", controlMapsList.at(row).thickness));
+
+            ImGui::TableNextColumn();
+            {
+                static constexpr std::array<std::pair<bool ControlMap::*, const char *>, 5> categoryOptions{{
+                    {&ControlMap::categoryB, "В"},
+                    {&ControlMap::categoryI, "I"},
+                    {&ControlMap::categoryII, "II"},
+                    {&ControlMap::categoryIII, "III"},
+                    {&ControlMap::categoryIV, "IV"},
+                }};
+
+                const ControlMap &controlMap = controlMapsList.at(row);
+                std::string categories;
+                for (const auto &[member, label] : categoryOptions)
+                {
+                    if (!(controlMap.*member))
+                        continue;
+                    if (!categories.empty())
+                        categories += ", ";
+                    categories += label;
+                }
+                NDT::TextWithTooltipIfTruncated(categories);
+            }
 
             ImGui::TableNextColumn();
             NDT::TextWithTooltipIfTruncated(controlMapsList.at(row).description);

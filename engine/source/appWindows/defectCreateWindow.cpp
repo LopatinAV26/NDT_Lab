@@ -17,7 +17,7 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
         {
             ImGui::TableSetupColumn("Координата");
             ImGui::TableSetupColumn("Обозначение");
-            ImGui::TableSetupColumn("Протяжённость,\nдля Ac и Ab");
+            ImGui::TableSetupColumn("Протяжённость");
             ImGui::TableSetupColumn("Длина");
             ImGui::TableSetupColumn("Ширина");
             ImGui::TableSetupColumn("Превышение\nплотности");
@@ -27,7 +27,7 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
             tableRows = static_cast<int>(report.defRGCList.size());
             for (int row = 0; row < tableRows; ++row)
             {
-                DefRT &def = report.defRGCList.at(row);
+                DefectRt &def = report.defRGCList.at(row);
                 ImGui::TableNextRow();
                 ImGui::PushID(row);
 
@@ -43,13 +43,14 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
 
                 ImGui::TableSetColumnIndex(1); //////////////////////////////////////////////////////////////////////
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                if (ImGui::BeginCombo("##Обозначение#", def.name[def.nameIndex].c_str()))
+                if (ImGui::BeginCombo("##Обозначение#", report.GetDefectRTName(def.symbol).c_str()))
                 {
-                    for (int i = 0; i < std::ssize(def.name); ++i)
+                    for (int i = 0; i < static_cast<int>(DefectRtSymbol::Count); ++i)
                     {
-                        const bool isSelected = (def.nameIndex == i);
-                        if (ImGui::Selectable(def.name[i].c_str(), isSelected))
-                            def.nameIndex = i;
+                        auto symbol = static_cast<DefectRtSymbol>(i);
+                        const bool isSelected = (def.symbol == symbol);
+                        if (ImGui::Selectable(report.GetDefectRTName(symbol).c_str(), isSelected))
+                            def.symbol = symbol;
 
                         if (isSelected)
                             ImGui::SetItemDefaultFocus();
@@ -57,14 +58,14 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
                     ImGui::EndCombo();
                 }
 
-                bool length = (def.name[def.nameIndex] == "Ac" || def.name[def.nameIndex] == "Ab") ? false : true;
-                ImGui::BeginDisabled(length);
+                //bool length = (def.symbol == DefectRtSymbol::Ac || def.symbol == DefectRtSymbol::Ab) ? false : true;
+               // ImGui::BeginDisabled(length);
                 ImGui::TableSetColumnIndex(2); /////////////////////////////////////////////////////////////////
                 ImGui::SetNextItemWidth(-FLT_MIN);
                 ImGui::InputFloat("##Протяжённость#", &def.length, 0.1f, 1.0f, "%.1f");
                 if (def.length < 0.0f)
                     def.length = 0.0f;
-                ImGui::EndDisabled();
+               //ImGui::EndDisabled();
 
                 ImGui::TableSetColumnIndex(3); //////////////////////////////////////////////////////////
                 ImGui::SetNextItemWidth(-FLT_MIN);
@@ -80,21 +81,17 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
 
                 ImGui::TableSetColumnIndex(5); //////////////////////////////////////////////////////
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                if (ImGui::BeginCombo("##Окончание#", def.end[def.endIndex].c_str()))
+                if (ImGui::BeginCombo("##Окончание#", def.endGreaterThan ? ">" : "≤"))
                 {
-                    for (int i = 0; i < std::ssize(def.end); ++i)
-                    {
-                        const bool isSelected = (def.endIndex == i);
-                        if (ImGui::Selectable(def.end[i].c_str(), isSelected))
-                            def.endIndex = i;
+                    if (ImGui::Selectable("≤", !def.endGreaterThan))
+                        def.endGreaterThan = false;
+                    if (ImGui::Selectable(">", def.endGreaterThan))
+                        def.endGreaterThan = true;
 
-                        if (isSelected)
-                            ImGui::SetItemDefaultFocus();
-                    }
                     ImGui::EndCombo();
                 }
 
-                ConstructDefectRGCString(def); /////переделать формирование строки
+                ConstructDefectRT(report, def);
 
                 ImGui::TableSetColumnIndex(6); //////////////////////////////
                 if (tableRows > 0)
@@ -119,28 +116,51 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
     ImGui::End();
 }
 
-void DefectCreateWindow::ConstructDefectRGCString(DefRT &input)
+void DefectCreateWindow::ConstructDefectRT(const Report &report, DefectRt &input)
 {
     // Ас 25.0 – 2.0 × 1.0 ≤	пример записи дефекта
     // A   B   C  D  E  F  G
-    std::string A = input.name.at(input.nameIndex);
+    std::string A = report.GetDefectRTName(input.symbol);
     std::string B = std::format("{:.1f}", input.length);
     std::string C = "-";
     std::string D = std::format("{:.1f}", input.width);
     std::string E = "×";
     std::string F = std::format("{:.1f}", input.height);
-    std::string G = input.end.at(input.endIndex);
+    std::string G = input.endGreaterThan ? ">" : "≤";
 
-    if (A == "Ac" || A == "Ab")
+    input.resultLength = 0.f;
+
+    switch (input.symbol)
+    {
+    case DefectRtSymbol::Ac:
+    case DefectRtSymbol::Ab:
         input.record = A + B + C + D + E + F + G;
-    else if (A == "E" || A == "Mw")
+        input.resultLength = input.length;
+        break;
+    case DefectRtSymbol::E:
+    case DefectRtSymbol::Mw:
         input.record = A + B;
-    else if (A == "Fa" || A == "Fb" || A == "Fe")
+        input.resultLength = input.length;
+        break;
+    case DefectRtSymbol::Fa:
+    case DefectRtSymbol::Fb:
         input.record = A + B + G;
-    else if (A == "Fc1" || A == "Fd" || A == "∆1" || A == "∆2")
+        input.resultLength = input.length;
+        break;
+    case DefectRtSymbol::Fe:
+        input.record = A + B + G;
+        break;
+    case DefectRtSymbol::Fc1:
+    case DefectRtSymbol::Fd:
+    case DefectRtSymbol::delta1:
+    case DefectRtSymbol::delta2:
         input.record = A;
-    else
+        break;
+    default:
         input.record = A + D + E + F + G;
+        input.resultLength = input.width;
+        break;
+    }
 
     input.coordStr = std::format("({:d}) ", input.coord);
 }

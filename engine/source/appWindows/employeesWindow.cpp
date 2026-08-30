@@ -47,7 +47,7 @@ void EmployeesWindow::Show(std::vector<Employee> &emplList)
             ImGui::PushID(row);
 
             const Employee &employeeRow = emplList.at(row);
-            const std::string experienceStr = NDT::GetEmployeeExperience(employeeRow.employeementDate); /// стаж не хранится в БД, считается от даты трудоустройства
+            const std::string experienceStr = NDT::GetExperience(employeeRow.employeementDate); /// стаж не хранится в БД, считается от даты трудоустройства
             const std::string *cellTexts[] = {
                 &employeeRow.name, &employeeRow.organization, &employeeRow.department, &employeeRow.position,
                 &employeeRow.employeementDate, &experienceStr, &employeeRow.personalCode, &employeeRow.level,

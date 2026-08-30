@@ -104,10 +104,22 @@ struct ControlMap /// Технологическая карта контроля
 	std::optional<std::chrono::sys_seconds> deletedAt;
 
 	std::string code; /// шифр техкарты
-	std::string method;
-	std::string diameter;
-	std::string thickness;
+	int diameter = 0;
+	float thickness = 0.f;
 	std::string description;
+	bool forVT = false;
+	bool forUT = false;
+	bool forRT = false;
+	bool forDRT = false;
+	bool forPT = false;
+	bool forMT = false;
+	bool forLT = false;
+	bool forDT = false;
+	bool categoryB = false;
+	bool categoryI = false;
+	bool categoryII = false;
+	bool categoryIII = false;
+	bool categoryIV = false;
 
 	std::string fileName;				/// исходное имя прикреплённого файла (сохраняет расширение)
 	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (PDF/скан/Word)
@@ -124,7 +136,15 @@ struct NormativeDocument
 	std::string name;	/// название документа
 	std::string method; /// метод контроля
 	std::string status; /// статус (действующий, отменён, заменён)
-	std::string year;	/// год введения
+	int year;	/// год введения
+	bool forVT = false;
+	bool forUT = false;
+	bool forRT = false;
+	bool forDRT = false;
+	bool forPT = false;
+	bool forMT = false;
+	bool forLT = false;
+	bool forECT = false;
 
 	std::string fileName;
 	std::vector<std::uint8_t> fileData;
@@ -182,20 +202,6 @@ struct LaboratoryInfo
 	std::string numberAttestation;
 	std::string attestationEndDate;
 };
-
-/* enum class MethodNDT : uint8_t
-{
-	VT,  /// визуальный и измерительный контроль
-	RT,  /// радиографический контроль
-	DRT, /// цифровой радиографический контроль
-	UT,  /// ультразвуковой контроль
-	PT,  /// капиллярный контроль
-	LT,  /// течеискание
-	MT,  /// магнитопорошковый контроль
-	ECT, /// Eddy Current Testing - вихретоковый контроль
-	DT,  /// Delamination - расслоение
-	UTM  /// Ultrasonic Thickness Measurement - ультразвуковое измерение толщины
-}; */
 
 class Laboratory
 {

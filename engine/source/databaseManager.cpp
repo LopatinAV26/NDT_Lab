@@ -6,10 +6,8 @@
 
 DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
 {
-    // sqlite3_open_v2 ожидает путь в UTF-8; path::string() на Windows конвертирует
-    // в текущую ANSI-кодировку системы и портит некириллические/нелатинские символы пути
     const std::string pathUtf8 = NDT::PathToUtf8(pathToDb);
-
+    
     if (sqlite3_open_v2(pathUtf8.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK)
     {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open database '%s': %s",
@@ -104,10 +102,22 @@ namespace
         {"updated_at", "INTEGER"},
         {"deleted_at", "INTEGER"},
         {"code", "TEXT"},
-        {"method", "TEXT"},
-        {"diameter", "TEXT"},
-        {"thickness", "TEXT"},
+        {"diameter", "INTEGER"},
+        {"thickness", "REAL"},
         {"description", "TEXT"},
+        {"for_vt", "INTEGER"},
+        {"for_ut", "INTEGER"},
+        {"for_rt", "INTEGER"},
+        {"for_drt", "INTEGER"},
+        {"for_pt", "INTEGER"},
+        {"for_mt", "INTEGER"},
+        {"for_lt", "INTEGER"},
+        {"for_dt", "INTEGER"},
+        {"category_b", "INTEGER"},
+        {"category_i", "INTEGER"},
+        {"category_ii", "INTEGER"},
+        {"category_iii", "INTEGER"},
+        {"category_iv", "INTEGER"},
         {"file_name", "TEXT"},
         {"file_data", "BLOB"},
     };
@@ -120,7 +130,15 @@ namespace
         {"name", "TEXT"},
         {"method", "TEXT"},
         {"status", "TEXT"},
-        {"year", "TEXT"},
+        {"year", "INTEGER"},
+        {"for_vt", "INTEGER"},
+        {"for_ut", "INTEGER"},
+        {"for_rt", "INTEGER"},
+        {"for_drt", "INTEGER"},
+        {"for_pt", "INTEGER"},
+        {"for_mt", "INTEGER"},
+        {"for_lt", "INTEGER"},
+        {"for_ect", "INTEGER"},
         {"file_name", "TEXT"},
         {"file_data", "BLOB"},
     };
@@ -1191,12 +1209,24 @@ void DatabaseManager::SaveControlMaps(const std::vector<ControlMap> &controlMaps
             sqlite3_bind_null(stmt, 3);
 
         sqlite3_bind_text(stmt, 4, cm.code.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 5, cm.method.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 6, cm.diameter.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 7, cm.thickness.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 8, cm.description.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 9, cm.fileName.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_blob(stmt, 10, cm.fileData.data(), static_cast<int>(cm.fileData.size()), SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 5, cm.diameter);
+        sqlite3_bind_double(stmt, 6, cm.thickness);
+        sqlite3_bind_text(stmt, 7, cm.description.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 8, cm.forVT ? 1 : 0);
+        sqlite3_bind_int(stmt, 9, cm.forUT ? 1 : 0);
+        sqlite3_bind_int(stmt, 10, cm.forRT ? 1 : 0);
+        sqlite3_bind_int(stmt, 11, cm.forDRT ? 1 : 0);
+        sqlite3_bind_int(stmt, 12, cm.forPT ? 1 : 0);
+        sqlite3_bind_int(stmt, 13, cm.forMT ? 1 : 0);
+        sqlite3_bind_int(stmt, 14, cm.forLT ? 1 : 0);
+        sqlite3_bind_int(stmt, 15, cm.forDT ? 1 : 0);
+        sqlite3_bind_int(stmt, 16, cm.categoryB ? 1 : 0);
+        sqlite3_bind_int(stmt, 17, cm.categoryI ? 1 : 0);
+        sqlite3_bind_int(stmt, 18, cm.categoryII ? 1 : 0);
+        sqlite3_bind_int(stmt, 19, cm.categoryIII ? 1 : 0);
+        sqlite3_bind_int(stmt, 20, cm.categoryIV ? 1 : 0);
+        sqlite3_bind_text(stmt, 21, cm.fileName.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(stmt, 22, cm.fileData.data(), static_cast<int>(cm.fileData.size()), SQLITE_TRANSIENT);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveControlMaps: вставка/обновление не удались: %s", sqlite3_errmsg(db));
@@ -1245,12 +1275,24 @@ std::vector<ControlMap> DatabaseManager::LoadControlMaps()
             cm.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
 
         cm.code = GetColumnText(stmt, 3);
-        cm.method = GetColumnText(stmt, 4);
-        cm.diameter = GetColumnText(stmt, 5);
-        cm.thickness = GetColumnText(stmt, 6);
-        cm.description = GetColumnText(stmt, 7);
-        cm.fileName = GetColumnText(stmt, 8);
-        cm.fileData = GetColumnBlob(stmt, 9);
+        cm.diameter = sqlite3_column_int(stmt, 4);
+        cm.thickness = static_cast<float>(sqlite3_column_double(stmt, 5));
+        cm.description = GetColumnText(stmt, 6);
+        cm.forVT = sqlite3_column_int(stmt, 7) != 0;
+        cm.forUT = sqlite3_column_int(stmt, 8) != 0;
+        cm.forRT = sqlite3_column_int(stmt, 9) != 0;
+        cm.forDRT = sqlite3_column_int(stmt, 10) != 0;
+        cm.forPT = sqlite3_column_int(stmt, 11) != 0;
+        cm.forMT = sqlite3_column_int(stmt, 12) != 0;
+        cm.forLT = sqlite3_column_int(stmt, 13) != 0;
+        cm.forDT = sqlite3_column_int(stmt, 14) != 0;
+        cm.categoryB = sqlite3_column_int(stmt, 15) != 0;
+        cm.categoryI = sqlite3_column_int(stmt, 16) != 0;
+        cm.categoryII = sqlite3_column_int(stmt, 17) != 0;
+        cm.categoryIII = sqlite3_column_int(stmt, 18) != 0;
+        cm.categoryIV = sqlite3_column_int(stmt, 19) != 0;
+        cm.fileName = GetColumnText(stmt, 20);
+        cm.fileData = GetColumnBlob(stmt, 21);
 
         controlMaps.push_back(std::move(cm));
     }
@@ -1315,9 +1357,17 @@ void DatabaseManager::SaveNormativeDocuments(const std::vector<NormativeDocument
         sqlite3_bind_text(stmt, 5, doc.name.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 6, doc.method.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 7, doc.status.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 8, doc.year.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 9, doc.fileName.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_blob(stmt, 10, doc.fileData.data(), static_cast<int>(doc.fileData.size()), SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 8, doc.year);
+        sqlite3_bind_int(stmt, 9, doc.forVT ? 1 : 0);
+        sqlite3_bind_int(stmt, 10, doc.forUT ? 1 : 0);
+        sqlite3_bind_int(stmt, 11, doc.forRT ? 1 : 0);
+        sqlite3_bind_int(stmt, 12, doc.forDRT ? 1 : 0);
+        sqlite3_bind_int(stmt, 13, doc.forPT ? 1 : 0);
+        sqlite3_bind_int(stmt, 14, doc.forMT ? 1 : 0);
+        sqlite3_bind_int(stmt, 15, doc.forLT ? 1 : 0);
+        sqlite3_bind_int(stmt, 16, doc.forECT ? 1 : 0);
+        sqlite3_bind_text(stmt, 17, doc.fileName.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(stmt, 18, doc.fileData.data(), static_cast<int>(doc.fileData.size()), SQLITE_TRANSIENT);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveNormativeDocuments: вставка/обновление не удались: %s", sqlite3_errmsg(db));
@@ -1369,9 +1419,17 @@ std::vector<NormativeDocument> DatabaseManager::LoadNormativeDocuments()
         doc.name = GetColumnText(stmt, 4);
         doc.method = GetColumnText(stmt, 5);
         doc.status = GetColumnText(stmt, 6);
-        doc.year = GetColumnText(stmt, 7);
-        doc.fileName = GetColumnText(stmt, 8);
-        doc.fileData = GetColumnBlob(stmt, 9);
+        doc.year = sqlite3_column_int(stmt, 7);
+        doc.forVT = sqlite3_column_int(stmt, 8) != 0;
+        doc.forUT = sqlite3_column_int(stmt, 9) != 0;
+        doc.forRT = sqlite3_column_int(stmt, 10) != 0;
+        doc.forDRT = sqlite3_column_int(stmt, 11) != 0;
+        doc.forPT = sqlite3_column_int(stmt, 12) != 0;
+        doc.forMT = sqlite3_column_int(stmt, 13) != 0;
+        doc.forLT = sqlite3_column_int(stmt, 14) != 0;
+        doc.forECT = sqlite3_column_int(stmt, 15) != 0;
+        doc.fileName = GetColumnText(stmt, 16);
+        doc.fileData = GetColumnBlob(stmt, 17);
 
         normativeDocuments.push_back(std::move(doc));
     }

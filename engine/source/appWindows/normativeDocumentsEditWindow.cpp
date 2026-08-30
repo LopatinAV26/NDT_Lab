@@ -1,11 +1,14 @@
 #include "normativeDocumentsEditWindow.hpp"
 
+#include <array>
+#include <utility>
 #include <fstream>
 #include <filesystem>
 
 #include "laboratory.hpp"
 #include "utilities.hpp"
 #include "imgui_stdlib.h"
+#include "methodsNdt.hpp"
 
 void SDLCALL NormativeDocumentsEditWindow::OnFileSelected(void *userdata, const char *const *filelist, int /*filter*/)
 {
@@ -36,8 +39,43 @@ void NormativeDocumentsEditWindow::Show(NormativeDocument &normativeDocument, bo
         changed |= ImGui::InputTextMultiline("##name#", &normativeDocument.name);
 
         ImGui::TextDisabled("Метод контроля");
-        ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::InputText("##method#", &normativeDocument.method);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::VT).c_str(), &normativeDocument.forVT);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::UT).c_str(), &normativeDocument.forUT);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::RT).c_str(), &normativeDocument.forRT);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::DRT).c_str(), &normativeDocument.forDRT);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::PT).c_str(), &normativeDocument.forPT);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::MT).c_str(), &normativeDocument.forMT);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::LT).c_str(), &normativeDocument.forLT);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::ECT).c_str(), &normativeDocument.forECT);
+
+        std::array<std::pair<bool, std::string>, 8> methodFlags = {{
+            {normativeDocument.forVT, GetMethodAbbreviation(Method::VT)},
+            {normativeDocument.forUT, GetMethodAbbreviation(Method::UT)},
+            {normativeDocument.forRT, GetMethodAbbreviation(Method::RT)},
+            {normativeDocument.forDRT, GetMethodAbbreviation(Method::DRT)},
+            {normativeDocument.forPT, GetMethodAbbreviation(Method::PT)},
+            {normativeDocument.forMT, GetMethodAbbreviation(Method::MT)},
+            {normativeDocument.forLT, GetMethodAbbreviation(Method::LT)},
+            {normativeDocument.forECT, GetMethodAbbreviation(Method::ECT)},
+        }};
+
+        normativeDocument.method.clear();
+        for (const auto &[isSet, label] : methodFlags)
+        {
+            if (!isSet)
+                continue;
+
+            if (!normativeDocument.method.empty())
+                normativeDocument.method += ", ";
+            normativeDocument.method += label;
+        }
 
         ImGui::TextDisabled("Статус");
         static constexpr std::array<const char *, 3> statuses{"действующий", "отменён", "заменён"};
@@ -54,7 +92,7 @@ void NormativeDocumentsEditWindow::Show(NormativeDocument &normativeDocument, bo
 
         ImGui::TextDisabled("Год введения");
         ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::InputText("##year#", &normativeDocument.year);
+        changed |= ImGui::InputInt("##year#", &normativeDocument.year);
 
         ImGui::TextDisabled("Файл документа");
         if (normativeDocument.fileName.empty())

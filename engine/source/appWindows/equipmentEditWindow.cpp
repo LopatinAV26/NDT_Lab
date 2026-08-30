@@ -10,6 +10,7 @@
 #include "utilities.hpp"
 #include "imgui_stdlib.h"
 #include "ImGuiDatePicker.hpp"
+#include "methodsNdt.hpp"
 
 void SDLCALL EquipmentEditWindow::OnFileSelected(void *userdata, const char *const *filelist, int /*filter*/)
 {
@@ -36,23 +37,32 @@ void EquipmentEditWindow::Show(Equipment &equipment, bool &isOpen)
         changed |= ImGui::InputText("##name#", &equipment.name);
 
         ImGui::TextDisabled("Метод контроля");
-        changed |= ImGui::Checkbox("ВИК", &equipment.forVT);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::VT).c_str(), &equipment.forVT);
         ImGui::SameLine();
-        changed |= ImGui::Checkbox("УК", &equipment.forUT);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::UT).c_str(), &equipment.forUT);
         ImGui::SameLine();
-        changed |= ImGui::Checkbox("РК", &equipment.forRT);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::RT).c_str(), &equipment.forRT);
         ImGui::SameLine();
-        changed |= ImGui::Checkbox("ЦРК", &equipment.forDRT);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::DRT).c_str(), &equipment.forDRT);
         ImGui::SameLine();
-        changed |= ImGui::Checkbox("ПВК", &equipment.forPT);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::PT).c_str(), &equipment.forPT);
         ImGui::SameLine();
-        changed |= ImGui::Checkbox("МПК", &equipment.forMT);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::MT).c_str(), &equipment.forMT);
         ImGui::SameLine();
-        changed |= ImGui::Checkbox("ПВТ", &equipment.forLT);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::LT).c_str(), &equipment.forLT);
         ImGui::SameLine();
-        changed |= ImGui::Checkbox("ВК", &equipment.forECT);
+        changed |= ImGui::Checkbox(GetMethodAbbreviation(Method::ECT).c_str(), &equipment.forECT);
 
-        std::array<std::pair<bool, std::string>, 8> methodFlags = {{{equipment.forVT, "ВИК"}, {equipment.forUT, "УК"}, {equipment.forRT, "РК"}, {equipment.forDRT, "ЦРК"}, {equipment.forPT, "ПВК"}, {equipment.forMT, "МПК"}, {equipment.forLT, "ПВТ"}, {equipment.forECT, "ВК"}}};
+        std::array<std::pair<bool, std::string>, 8> methodFlags = {{
+            {equipment.forVT, GetMethodAbbreviation(Method::VT)},
+            {equipment.forUT, GetMethodAbbreviation(Method::UT)},
+            {equipment.forRT, GetMethodAbbreviation(Method::RT)},
+            {equipment.forDRT, GetMethodAbbreviation(Method::DRT)},
+            {equipment.forPT, GetMethodAbbreviation(Method::PT)},
+            {equipment.forMT, GetMethodAbbreviation(Method::MT)},
+            {equipment.forLT, GetMethodAbbreviation(Method::LT)},
+            {equipment.forECT, GetMethodAbbreviation(Method::ECT)},
+        }};
 
         equipment.method.clear();
         for (const auto &[isSet, label] : methodFlags)

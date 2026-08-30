@@ -94,19 +94,13 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
 		//ImGui::TextUnformatted("Выберите метод контроля");
 		//ImGui::Separator();
 
-		static constexpr std::array<std::pair<const char *, Method>, 8> methods{{
-			{"ВИК", Method::VT},
-			{"РК", Method::RT},
-			{"ЦРК", Method::DRT},
-			{"УК", Method::UT},
-			{"ПВК", Method::PT},
-			{"ПВТ", Method::LT},
-			{"МК", Method::MT},
-			{"Расслоение", Method::DT},
-		}};
+		static constexpr std::array<Method, 8> methods{
+			Method::VT, Method::RT, Method::DRT, Method::UT,
+			Method::PT, Method::LT, Method::MT, Method::DT,
+		};
 
-		for (const auto &[label, value] : methods)
-			if (ImGui::RadioButton(label, selectedMethod == value))
+		for (Method value : methods)
+			if (ImGui::RadioButton(GetMethodAbbreviation(value).c_str(), selectedMethod == value))
 				selectedMethod = value;
 
 		ImGui::Separator();
@@ -117,7 +111,7 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
 			repList.back().nameLab = lab.labInfo.laboratoryName;
 			repList.back().numberAttestation = lab.labInfo.numberAttestation;
 			repList.back().methodValue = selectedMethod;
-			repList.back().method = repList.back().GetMethodTitle(selectedMethod);
+			repList.back().methodHeader = repList.back().GetMethodReportTitle(selectedMethod);
 			reportCreateWindowIsOpen = true;
 			editingIndex = tableRows - 1;
 

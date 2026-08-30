@@ -9,11 +9,11 @@ Report::Report()
     reportDate = controlDate;
     pipeCategory = pipeCategoryList.at(0);
     methodValue = Method::VT;
-    method = GetMethodTitle(methodValue);
+    methodHeader = GetMethodReportTitle(methodValue);
     perimeter = static_cast<int>(std::lround(diameter * 3.141592f));
 }
 
-std::string Report::GetMethodTitle(Method value) const
+std::string Report::GetMethodReportTitle(Method value) const
 {
     std::string result;
     switch (value)
@@ -48,74 +48,86 @@ std::string Report::GetMethodTitle(Method value) const
     return result;
 }
 
-std::string Report::GetDefectRTName(DefectRT value) const
+std::string Report::GetDefectRTName(DefectRtSymbol value) const
 {
     std::string result;
     switch (value)
     {
-    case DefectRT::Aa:
+    case DefectRtSymbol::Aa:
         result = "Aa";
         break;
-    case DefectRT::Ak:
+    case DefectRtSymbol::Ak:
         result = "Ak";
         break;
-    case DefectRT::Ba:
+    case DefectRtSymbol::Ba:
         result = "Ba";
         break;
-    case DefectRT::Ac:
+    case DefectRtSymbol::Ac:
         result = "Ac";
         break;
-    case DefectRT::Bc:
+    case DefectRtSymbol::Bc:
         result = "Bc";
         break;
-    case DefectRT::Ab:
+    case DefectRtSymbol::Ab:
         result = "Ab";
         break;
-    case DefectRT::Bb:
+    case DefectRtSymbol::Bb:
         result = "Bb";
         break;
-    case DefectRT::Da:
+    case DefectRtSymbol::Da:
         result = "Da";
         break;
-    case DefectRT::Dc:
+    case DefectRtSymbol::Dc:
         result = "Dc";
         break;
-    case DefectRT::Bd:
+    case DefectRtSymbol::Bd:
         result = "Bd";
         break;
-    case DefectRT::Fc2:
+    case DefectRtSymbol::Fc2:
         result = "Fc2";
         break;
-    case DefectRT::E:
+    case DefectRtSymbol::E:
         result = "E";
         break;
-    case DefectRT::Fa:
+    case DefectRtSymbol::Fa:
         result = "Fa";
         break;
-    case DefectRT::Fb:
+    case DefectRtSymbol::Fb:
         result = "Fb";
         break;
-    case DefectRT::Fe:
+    case DefectRtSymbol::Fe:
         result = "Fe";
         break;
-    case DefectRT::delta1:
+    case DefectRtSymbol::delta1:
         result = "∆1";
         break;
-    case DefectRT::delta2:
+    case DefectRtSymbol::delta2:
         result = "∆2";
         break;
-    case DefectRT::Fc1:
+    case DefectRtSymbol::Fc1:
         result = "Fc1";
         break;
-    case DefectRT::Fd:
+    case DefectRtSymbol::Fd:
         result = "Fd";
         break;
-    case DefectRT::Mw:
+    case DefectRtSymbol::Mw:
         result = "Mw";
         break;
-    default:
+    case DefectRtSymbol::Count: // служебный маркер, не является значением дефекта
         result = "";
         break;
     }
     return result;
+}
+
+DefectRtSymbol Report::ParseDefectRtSymbol(const std::string &name) const
+{
+    for (int i = 0; i < static_cast<int>(DefectRtSymbol::Count); ++i)
+    {
+        auto value = static_cast<DefectRtSymbol>(i);
+        if (GetDefectRTName(value) == name)
+            return value;
+    }
+
+    return DefectRtSymbol::Aa;
 }

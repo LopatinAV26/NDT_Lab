@@ -1,11 +1,14 @@
 #include "controlMapsEditWindow.hpp"
 
+#include <array>
+#include <utility>
 #include <fstream>
 #include <filesystem>
 
 #include "laboratory.hpp"
 #include "utilities.hpp"
 #include "imgui_stdlib.h"
+#include "methodsNdt.hpp"
 
 void SDLCALL ControlMapsEditWindow::OnFileSelected(void *userdata, const char *const *filelist, int /*filter*/)
 {
@@ -32,16 +35,51 @@ void ControlMapsEditWindow::Show(ControlMap &controlMap, bool &isOpen)
         changed |= ImGui::InputText("##code#", &controlMap.code);
 
         ImGui::TextDisabled("Метод контроля");
-        ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::InputText("##method#", &controlMap.method);
+        static constexpr std::array<std::pair<Method, bool ControlMap::*>, 8> methodOptions{{
+            {Method::VT, &ControlMap::forVT},
+            {Method::UT, &ControlMap::forUT},
+            {Method::RT, &ControlMap::forRT},
+            {Method::DRT, &ControlMap::forDRT},
+            {Method::PT, &ControlMap::forPT},
+            {Method::MT, &ControlMap::forMT},
+            {Method::LT, &ControlMap::forLT},
+            {Method::DT, &ControlMap::forDT},
+        }};
+
+        bool ControlMap::*selectedMethod = nullptr;
+        for (size_t i = 0; i < methodOptions.size(); ++i)
+        {
+            const auto &[method, member] = methodOptions[i];
+            if (ImGui::RadioButton(GetMethodAbbreviation(method).c_str(), controlMap.*member))
+                selectedMethod = member;
+            if (i + 1 < methodOptions.size())
+                ImGui::SameLine();
+        }
+        if (selectedMethod)
+        {
+            for (const auto &[method, member] : methodOptions)
+                controlMap.*member = (member == selectedMethod);
+            changed = true;
+        }
 
         ImGui::TextDisabled("Диаметр");
         ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::InputText("##diameter#", &controlMap.diameter);
+        changed |= ImGui::InputInt("##diameter#", &controlMap.diameter);
 
         ImGui::TextDisabled("Толщина стенки");
         ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::InputText("##thickness#", &controlMap.thickness);
+        changed |= ImGui::InputFloat("##thickness#", &controlMap.thickness, 0.0f, 0.0f, "%.1f");
+
+        ImGui::TextDisabled("Категория трубопровода");
+        changed |= ImGui::Checkbox("В", &controlMap.categoryB);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox("I", &controlMap.categoryI);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox("II", &controlMap.categoryII);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox("III", &controlMap.categoryIII);
+        ImGui::SameLine();
+        changed |= ImGui::Checkbox("IV", &controlMap.categoryIV);
 
         ImGui::TextDisabled("Описание");
         ImGui::SetNextItemWidth(-FLT_MIN);

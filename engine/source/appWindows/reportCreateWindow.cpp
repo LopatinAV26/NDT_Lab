@@ -12,7 +12,7 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    const std::string windowTitle = "Заключение " + NDT::ToLowerUtf8(report.method);
+    const std::string windowTitle = "Заключение " + NDT::ToLowerUtf8(report.methodHeader);
 
     if (ImGui::Begin(windowTitle.c_str(), &isOpen, window_flags))
     {
@@ -100,29 +100,22 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::SetNextItemWidth(-FLT_MIN);
             changed |= ImGui::InputText("##Организация заказчика#", &report.customerOrganization);
 
-
-
-
-
-
-
-
-
-
-
-
             if (ImGui::DragInt("##Диаметр#", &report.diameter, 1.f, 10, 1500, "Диаметр %d мм"))
             {
-                if(report.diameter < 10) report.diameter = 10;
-                if(report.diameter > 1500) report.diameter = 1500;
+                if (report.diameter < 10)
+                    report.diameter = 10;
+                if (report.diameter > 1500)
+                    report.diameter = 1500;
                 report.perimeter = static_cast<int>(std::lround(report.diameter * 3.141592f));
                 changed = true;
             }
 
             if (ImGui::DragInt("##Длина шва#", &report.perimeter, 1.f, 31, 4712, "Длина шва %d мм"))
             {
-                if(report.perimeter < 31) report.perimeter = 31;
-                if(report.perimeter > 4712) report.perimeter = 4712;
+                if (report.perimeter < 31)
+                    report.perimeter = 31;
+                if (report.perimeter > 4712)
+                    report.perimeter = 4712;
                 report.diameter = static_cast<int>(std::lround(report.perimeter / 3.141592f));
                 changed = true;
             }
@@ -131,7 +124,8 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::SetNextItemWidth(-FLT_MIN);
             if (ImGui::BeginCombo("##Контроль произвёл#", report.controllerName.c_str())) ////////////////////////////////////////
             {
-                for (const auto &employee : lab.employeesList)
+                std::vector<Employee> empList = MethodFilter(lab.employeesList, report.methodValue, report.controlDate);
+                for (const auto &employee : empList)
                 {
                     if (employee.deletedAt.has_value())
                         continue;
@@ -155,7 +149,8 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::SetNextItemWidth(-FLT_MIN);
             if (ImGui::BeginCombo("##Заключение выдал#", report.protocolCreateName.c_str())) ////////////////////////////////////////
             {
-                for (const auto &employee : lab.employeesList)
+                std::vector<Employee> empList = MethodFilter(lab.employeesList, report.methodValue, report.reportDate);
+                for (const auto &employee : empList)
                 {
                     if (employee.deletedAt.has_value())
                         continue;
@@ -179,6 +174,7 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::SetNextItemWidth(-FLT_MIN);
             if (ImGui::BeginCombo("##Надзор#", report.inspectorName.c_str())) ////////////////////////////////////////
             {
+                std::vector<Inspector> inspList = MethodFilter(lab.inspectorsList, report.methodValue, report.controlDate);
                 const bool noneSelected = report.inspectorName.empty();
                 if (ImGui::Selectable("—", noneSelected))
                 {
@@ -191,7 +187,7 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
                 if (noneSelected)
                     ImGui::SetItemDefaultFocus();
 
-                for (const auto &inspector : lab.inspectorsList)
+                for (const auto &inspector : inspList)
                 {
                     if (inspector.deletedAt.has_value())
                         continue;
@@ -261,4 +257,78 @@ void ReportCreateWindow::Show(Report &report, bool &isOpen, Laboratory &lab)
 
     if (defectWindowIsOpen)
         defectCreateWindow.Show(report, defectWindowIsOpen);
+}
+
+std::vector<Employee> ReportCreateWindow::MethodFilter(const std::vector<Employee> &lists, const Method method, const std::string &reportDate)
+{
+    const std::chrono::year_month_day reportYmd = NDT::ParseIsoDate(reportDate);
+
+    std::vector<Employee> filteredVector;
+    for (const Employee &employee : lists)
+    {
+        bool hasValidCertificate = false;
+        switch (method)
+        {
+        case Method::VT:
+            hasValidCertificate = employee.hasVT && NDT::ParseIsoDate(employee.certificateEndDateVT) > reportYmd;
+            break;
+        case Method::UT:
+            hasValidCertificate = employee.hasUT && NDT::ParseIsoDate(employee.certificateEndDateUT) > reportYmd;
+            break;
+        case Method::RT:
+            hasValidCertificate = employee.hasRT && NDT::ParseIsoDate(employee.certificateEndDateRT) > reportYmd;
+            break;
+        case Method::PT:
+            hasValidCertificate = employee.hasPT && NDT::ParseIsoDate(employee.certificateEndDatePT) > reportYmd;
+            break;
+        case Method::MT:
+            hasValidCertificate = employee.hasMT && NDT::ParseIsoDate(employee.certificateEndDateMT) > reportYmd;
+            break;
+        case Method::LT:
+            hasValidCertificate = employee.hasLT && NDT::ParseIsoDate(employee.certificateEndDateLT) > reportYmd;
+            break;
+        }
+
+        if (hasValidCertificate)
+            filteredVector.push_back(employee);
+    }
+
+    return filteredVector;
+}
+
+std::vector<Inspector> ReportCreateWindow::MethodFilter(const std::vector<Inspector> &lists, const Method method, const std::string &reportDate)
+{
+    const std::chrono::year_month_day reportYmd = NDT::ParseIsoDate(reportDate);
+
+    std::vector<Inspector> filteredVector;
+    for (const Inspector &inspector : lists)
+    {
+        bool hasValidCertificate = false;
+        switch (method)
+        {
+        case Method::VT:
+            hasValidCertificate = inspector.hasVT && NDT::ParseIsoDate(inspector.certificateEndDateVT) > reportYmd;
+            break;
+        case Method::UT:
+            hasValidCertificate = inspector.hasUT && NDT::ParseIsoDate(inspector.certificateEndDateUT) > reportYmd;
+            break;
+        case Method::RT:
+            hasValidCertificate = inspector.hasRT && NDT::ParseIsoDate(inspector.certificateEndDateRT) > reportYmd;
+            break;
+        case Method::PT:
+            hasValidCertificate = inspector.hasPT && NDT::ParseIsoDate(inspector.certificateEndDatePT) > reportYmd;
+            break;
+        case Method::MT:
+            hasValidCertificate = inspector.hasMT && NDT::ParseIsoDate(inspector.certificateEndDateMT) > reportYmd;
+            break;
+        case Method::LT:
+            hasValidCertificate = inspector.hasLT && NDT::ParseIsoDate(inspector.certificateEndDateLT) > reportYmd;
+            break;
+        }
+
+        if (hasValidCertificate)
+            filteredVector.push_back(inspector);
+    }
+
+    return filteredVector;
 }

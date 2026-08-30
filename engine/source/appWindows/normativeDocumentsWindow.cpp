@@ -1,6 +1,7 @@
 #include "normativeDocumentsWindow.hpp"
 
 #include <cfloat>
+#include <format>
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
@@ -81,7 +82,7 @@ void NormativeDocumentsWindow::Show(std::vector<NormativeDocument> &normativeDoc
             NDT::TextWithTooltipIfTruncated(normativeDocumentsList.at(row).status);
 
             ImGui::TableNextColumn();
-            NDT::TextWithTooltipIfTruncated(normativeDocumentsList.at(row).year);
+            NDT::TextWithTooltipIfTruncated(std::format("{:d}", normativeDocumentsList.at(row).year));
 
             ImGui::TableNextColumn();
             {

@@ -28,10 +28,10 @@ namespace
 	}
 
 	/// @brief Разобрать год/месяц/день из строки ISO 8601 (YYYY-MM-DD, фиксированная ширина);
-	/// при слишком короткой/пустой строке оставляет значения по умолчанию (1900-01-01)
+	/// при слишком короткой/пустой строке оставляет значения по умолчанию (2000-01-01)
 	void ParseIsoDateParts(const std::string &date, int &year, int &month, int &day)
 	{
-		year = 1900;
+		year = 2000;
 		month = 1;
 		day = 1;
 
@@ -64,10 +64,10 @@ namespace NDT
 		return std::format("{:%Y-%m-%d}", today);
 	}
 
-	tm ParseIsoDateTm(const std::string &date)
+	tm ParseIsoDateTm(const std::string &isoDate)
 	{
 		int year, month, day;
-		ParseIsoDateParts(date, year, month, day);
+		ParseIsoDateParts(isoDate, year, month, day);
 
 		tm result{};
 		result.tm_isdst = -1;
@@ -77,9 +77,9 @@ namespace NDT
 		return result;
 	}
 
-	std::string FormatIsoDateTm(const tm &date)
+	std::string FormatIsoDateTm(const tm &dateTm)
 	{
-		return std::format("{:04d}-{:02d}-{:02d}", date.tm_year + 1900, date.tm_mon + 1, date.tm_mday);
+		return std::format("{:04d}-{:02d}-{:02d}", dateTm.tm_year + 1900, dateTm.tm_mon + 1, dateTm.tm_mday);
 	}
 
 	std::string FormatDateForDisplay(const std::string &isoDate)
@@ -169,9 +169,9 @@ namespace NDT
 		return result;
 	}
 
-	std::string GetEmployeeExperience(const std::string &employeementDateIso)
+	std::string GetExperience(const std::string &isoDate)
 	{
-		return FormatTerm(GetTerm(ParseIsoDate(employeementDateIso)));
+		return FormatTerm(GetTerm(ParseIsoDate(isoDate)));
 	}
 
 	float GetMetalDensity(int negBright)
@@ -289,7 +289,7 @@ namespace NDT
 
 		/// RenderTextEllipsis сама рисует "..." при обрезке - ровно то же поведение, что у заголовков таблиц ImGui
 		ImGui::RenderTextEllipsis(ImGui::GetWindowDrawList(), pos, ImVec2(pos.x + available, pos.y + lineHeight),
-								   pos.x + available, text.c_str(), text.c_str() + text.size(), &textSize);
+								  pos.x + available, text.c_str(), text.c_str() + text.size(), &textSize);
 		ImGui::Dummy(ImVec2(available, lineHeight)); /// RenderTextEllipsis не создаёт item сама - вручную продвигаем курсор макета
 
 		if (textSize.x > available && ImGui::IsItemHovered())

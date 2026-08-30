@@ -7,8 +7,9 @@
 #include <chrono>
 
 #include "utilities.hpp"
+#include "methodsNdt.hpp"
 
-enum class DefectRT : uint8_t
+enum class DefectRtSymbol : uint8_t
 {
     Aa,     /// единичная сферическая и удлиннённая пора
     Ak,     /// канальная пора
@@ -29,26 +30,28 @@ enum class DefectRT : uint8_t
     delta2, /// западание между валиками
     Fc1,    /// наружный подрез
     Fd,     /// смещение кромок
-    Mw      /// металлическое включение
+    Mw,     /// металлическое включение
+
+    Count /// служебный маркер количества элементов enum
 };
 
-struct DefRT
+struct DefectRt
 {
     std::string id = NDT::GenerateUuidV7();
     std::chrono::sys_seconds updatedAt =
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
     std::optional<std::chrono::sys_seconds> deletedAt;
+    std::string reportId; ///< внешний ключ на Report::id - какому заключению принадлежит дефект
 
-    int nameIndex = 0;
-    int endIndex = 0;
-    float length = 0.f; ///< протяжённость, для скоплений и цепочек
+    DefectRtSymbol symbol = DefectRtSymbol::Aa;
+    bool endGreaterThan = false; ///< false = "≤", true = ">"
+    float length = 0.f;          ///< протяжённость
     float width = 0.f;
     float height = 0.f;
+    float resultLength = 0.f; /// <
     int coord = 0;
     std::string record;
     std::string coordStr;
-    static inline const std::array<std::string, 20> name{"Aa", "Ak", "Ba", "Ac", "Bc", "Ab", "Bb", "Da", "Dc", "Bd", "Fc2", "E", "Fa", "Fb", "Fe", "Fc1", "∆1", "∆2", "Fd", "Mw"};
-    static inline const std::array<std::string, 2> end{"≤", ">"};
 };
 
 struct DefUC
@@ -59,20 +62,6 @@ struct DefUC
     static inline const std::array<std::string, 5> defNameUC{"SH", "LS", "LB", "TD", "CC"};
 };
 
-enum class Method : uint8_t
-{
-    VT,  /// визуальный и измерительный контроль
-    RT,  /// радиографический контроль
-    DRT, /// цифровой радиографический контроль
-    UT,  /// ультразвуковой контроль
-    PT,  /// капиллярный контроль
-    LT,  /// течеискание
-    MT,  /// магнитопорошковый контроль
-    ECT, /// Eddy Current Testing - вихретоковый контроль
-    DT,  /// Delamination - расслоение
-    UTM  /// Ultrasonic Thickness Measurement - ультразвуковое измерение толщины
-};
-
 class Report
 {
 public:
@@ -81,16 +70,17 @@ public:
     /// @brief Получить заголовок отчёта
     /// @param name
     /// @return
-    std::string GetMethodTitle(Method value) const;
-    std::string GetDefectRTName(DefectRT value) const;
+    std::string GetMethodReportTitle(Method value) const;
+    std::string GetDefectRTName(DefectRtSymbol value) const;
+
+    /// @brief Обратное преобразование к GetDefectRTName - для разбора значения при загрузке из БД
+    /// (хранить нужно именно строковый код, а не число enum - см. GetDefectRTName)
+    DefectRtSymbol ParseDefectRtSymbol(const std::string &name) const;
 
     std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
     std::chrono::sys_seconds updatedAt =
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
     std::optional<std::chrono::sys_seconds> deletedAt;                              // nullopt = не удалена; иначе - момент "мягкого" удаления
-
-    Method methodValue;
-    std::string method;
 
     std::string controlDate; ///< дата НК
     std::string reportDate;  ///< дата выдачи заключения
@@ -119,8 +109,11 @@ public:
     std::string customerOrganizationTitle{"Организация заказчика"};
     std::string customerOrganization;
 
+    Method methodValue;
+    std::string methodHeader;
+
     std::string controllerNameTitle{"Контроль произвёл"};
-    std::string controllerName;
+    std::string controllerName; ///< дефектоскопист, который произвёл контроль
     std::string controllerOrganization;
     std::string controllerCertNumber;
 
@@ -215,5 +208,5 @@ public:
     float minWidthOfWeld = 0.f;
     float edgeDisplacement = 0.f;
 
-    std::vector<DefRT> defRGCList; ///< Список дефектов
+    std::vector<DefectRt> defRGCList; ///< Список дефектов
 };
