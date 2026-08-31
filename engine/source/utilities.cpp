@@ -1,6 +1,8 @@
 #include "utilities.hpp"
 
 #include <charconv>
+#include <format>
+#include <random>
 #include <cmath>
 #include <fstream>
 #include <filesystem>

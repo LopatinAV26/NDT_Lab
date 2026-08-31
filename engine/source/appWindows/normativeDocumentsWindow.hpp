@@ -1,7 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "normativeDocumentsEditWindow.hpp"
+#include <string>
+#include <SDL3/SDL.h>
+#include "imgui.h"
 
 struct NormativeDocument;
 
@@ -11,6 +13,11 @@ public:
     void Show(std::vector<NormativeDocument> &normativeDocumentsList);
 
 private:
-    bool normativeDocumentEditWindowIsOpen = false;
-    NormativeDocumentsEditWindow normativeDocumentEditWindow;
+    void Edit(NormativeDocument &normativeDocument, bool &isOpen);
+    static void SDLCALL OnFileSelected(void *userdata, const char *const *filelist, int filter);
+
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
+    std::string pendingFilePath;
+    bool fileDialogResultReady = false;
+    bool editWindow = false;
 };

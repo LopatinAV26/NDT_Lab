@@ -1,5 +1,7 @@
 #include "laboratory.hpp"
 
+#include <format>
+
 #include "applicationData.hpp"
 
 Laboratory::Laboratory(ApplicationData &appData)

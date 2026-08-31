@@ -5,6 +5,7 @@
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
 #include "utilities.hpp"
+#include "ImGuiDatePicker.hpp"
 
 void MastersWindow::Show(std::vector<Master> &mastersList)
 {
@@ -51,7 +52,7 @@ void MastersWindow::Show(std::vector<Master> &mastersList)
             {
                 if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                 {
-                    masterEditWindowIsOpen = true;
+                    editWindow = true;
                     editingIndex = row;
                 }
             }
@@ -60,7 +61,7 @@ void MastersWindow::Show(std::vector<Master> &mastersList)
             {
                 if (ImGui::MenuItem("Редактировать"))
                 {
-                    masterEditWindowIsOpen = true;
+                    editWindow = true;
                     editingIndex = row;
                 }
                 if (ImGui::MenuItem("Удалить"))
@@ -101,10 +102,57 @@ void MastersWindow::Show(std::vector<Master> &mastersList)
     {
         tableRows++;
         mastersList.resize(tableRows);
-        masterEditWindowIsOpen = true;
+        editWindow = true;
         editingIndex = tableRows - 1;
     }
-    if (masterEditWindowIsOpen && editingIndex >= 0 &&
+    if (editWindow && editingIndex >= 0 &&
         editingIndex < static_cast<int>(mastersList.size()))
-        masterEditWindow.Show(mastersList.at(editingIndex), masterEditWindowIsOpen);
+        Edit(mastersList.at(editingIndex), editWindow);
+}
+
+void MastersWindow::Edit(Master &master, bool &isOpen)
+{
+    ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->Pos);
+    ImGui::SetNextWindowSize(viewport->Size);
+
+    if (ImGui::Begin("Производитель СМР", &isOpen, window_flags))
+    {
+        bool changed = false;
+
+        ImGui::TextDisabled("Ф.И.О.");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##name#", &master.name);
+
+        ImGui::TextDisabled("Организация");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##organization#", &master.organization);
+
+        ImGui::TextDisabled("Подразделение");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##department#", &master.department);
+
+        ImGui::TextDisabled("Должность");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##position#", &master.position);
+
+        ImGui::TextDisabled("Номер удостоверения/разрешения");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##certificateNumber#", &master.certificateNumber);
+
+        ImGui::TextDisabled("Срок действия удостоверения");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(master.certificateEndDate);
+            if (ImGui::DatePicker("##certificateEndDate#", date))
+            {
+                master.certificateEndDate = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+
+        if (changed)
+            master.updatedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+    }
+    ImGui::End();
 }

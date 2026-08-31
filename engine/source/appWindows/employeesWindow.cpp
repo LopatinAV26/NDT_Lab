@@ -1,21 +1,18 @@
 #include "employeesWindow.hpp"
 
 #include <cfloat>
-#include <algorithm>
-#include <format>
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
 #include "utilities.hpp"
+#include "ImGuiDatePicker.hpp"
 
 void EmployeesWindow::Show(std::vector<Employee> &emplList)
 {
-    static int tableRows = 0;            ///< количество строк в таблице отчётов
-    static int editingIndex = -1;        ///< текущий индекс отчёта, который создаётся/редактируется
-    static std::vector<int> indexesList; ///< Список индексов для печати в pdf
-    static std::vector<bool> selected;
+    static int tableRows = 0;     ///< количество строк в таблице
+    static int editingIndex = -1; ///< текущий индекс сотрудника, который создаётся/редактируется
 
-    if (ImGui::BeginTable("Сотрудники", 16, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
+    if (ImGui::BeginTable("Сотрудники", 16, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg, ImVec2(0, ImGui::GetContentRegionAvail().y - 50)))
     {
         ImGui::TableSetupColumn("Имя");
         ImGui::TableSetupColumn("Организация");
@@ -37,178 +34,269 @@ void EmployeesWindow::Show(std::vector<Employee> &emplList)
         ImGui::TableHeadersRow();
 
         tableRows = static_cast<int>(emplList.size());
-        selected.resize(tableRows);
+
+        static std::vector<int> visibleIndices;
+        visibleIndices.clear();
         for (int row = 0; row < tableRows; ++row)
         {
-            if (emplList.at(row).deletedAt.has_value()) /// если стоит временная метка, не отображаем в UI, т.к. запись помечена как удалённая
+            if (emplList.at(row).deletedAt.has_value())
                 continue;
 
-            ImGui::TableNextRow();
-            ImGui::PushID(row);
-
-            const Employee &employeeRow = emplList.at(row);
-            const std::string experienceStr = NDT::GetExperience(employeeRow.employeementDate); /// стаж не хранится в БД, считается от даты трудоустройства
-            const std::string *cellTexts[] = {
-                &employeeRow.name, &employeeRow.organization, &employeeRow.department, &employeeRow.position,
-                &employeeRow.employeementDate, &experienceStr, &employeeRow.personalCode, &employeeRow.level,
-                &employeeRow.certificateNumber, &employeeRow.certificateDate, &employeeRow.certificateEndDateVT, &employeeRow.certificateEndDateUT,
-                &employeeRow.certificateEndDateRT, &employeeRow.certificateEndDatePT, &employeeRow.certificateEndDateMT,
-                &employeeRow.certificateEndDateLT};
-
-            // первый проход - только измеряем нужную высоту строки, ничего не рисуем
-            float rowHeight = 0.0f;
-            for (int col = 0; col < IM_ARRAYSIZE(cellTexts); ++col)
-            {
-                ImGui::TableSetColumnIndex(col);
-                float colWidth = ImGui::GetContentRegionAvail().x;
-                rowHeight = std::max(rowHeight, ImGui::CalcTextSize(cellTexts[col]->c_str(), nullptr, false, colWidth).y);
-            }
-
-            ImGui::TableSetColumnIndex(0);                                                                 // возвращаемся к первому столбцу для настоящей отрисовки
-            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg)); /// подсвечиваем закреплённый столбец как шапку таблицы
-            if (ImGui::Selectable("###", selected.at(row), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick, ImVec2(0, rowHeight)))
-            {
-                if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-                {
-                    employeeEditWindowIsOpen = true;
-                    editingIndex = row;
-                }
-                else
-                {
-                    selected.at(row) = !selected.at(row);
-                    if (selected.at(row))
-                        indexesList.push_back(row);
-                    else
-                        std::erase(indexesList, row);
-                }
-            }
-            ImGui::SameLine();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", emplList.at(row).name).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", emplList.at(row).organization).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", emplList.at(row).department).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", emplList.at(row).position).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).employeementDate).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(experienceStr.c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", emplList.at(row).personalCode).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", emplList.at(row).level).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(std::format("{:s}", emplList.at(row).certificateNumber).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).certificateDate).c_str());
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-
-            if (emplList.at(row).hasVT)
-                ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).certificateEndDateVT).c_str());
-            else
-                ImGui::Text("метод отсутствует");
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-
-            if (emplList.at(row).hasUT)
-                ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).certificateEndDateUT).c_str());
-            else
-                ImGui::Text("метод отсутствует");
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-
-            if (emplList.at(row).hasRT)
-                ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).certificateEndDateRT).c_str());
-            else
-                ImGui::Text("метод отсутствует");
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            if (emplList.at(row).hasPT)
-                ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).certificateEndDatePT).c_str());
-            else
-                ImGui::Text("метод отсутствует");
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            if (emplList.at(row).hasMT)
-                ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).certificateEndDateMT).c_str());
-            else
-                ImGui::Text("метод отсутствует");
-            ImGui::PopTextWrapPos();
-
-            ImGui::TableNextColumn();
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-            if (emplList.at(row).hasLT)
-                ImGui::TextUnformatted(NDT::FormatDateForDisplay(emplList.at(row).certificateEndDateLT).c_str());
-            else
-                ImGui::Text("метод отсутствует");
-            ImGui::PopTextWrapPos();
-
-            ImGui::PopID();
+            visibleIndices.push_back(row);
         }
+
+        ImGuiListClipper clipper;
+        clipper.Begin(static_cast<int>(visibleIndices.size()));
+        while (clipper.Step())
+            for (int visRow = clipper.DisplayStart; visRow < clipper.DisplayEnd; ++visRow)
+            {
+                int row = visibleIndices[visRow];
+
+                ImGui::TableNextRow();
+                ImGui::PushID(row);
+
+                const Employee &employeeRow = emplList.at(row);
+                const std::string experienceStr = NDT::GetExperience(employeeRow.employeementDate);
+
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+                if (ImGui::Selectable("###", false, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowOverlap))
+                {
+                    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    {
+                        editWindow = true;
+                        editingIndex = row;
+                    }
+                }
+
+                if (ImGui::BeginPopupContextItem()) /// правый клик по строке - контекстное меню
+                {
+                    if (ImGui::MenuItem("Редактировать"))
+                    {
+                        editWindow = true;
+                        editingIndex = row;
+                    }
+                    if (ImGui::MenuItem("Удалить"))
+                        emplList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                    ImGui::EndPopup();
+                }
+
+                ImGui::SameLine();
+                NDT::TextWithTooltipIfTruncated(employeeRow.name);
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.organization);
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.department);
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.position);
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(NDT::FormatDateForDisplay(employeeRow.employeementDate));
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(experienceStr);
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.personalCode);
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.level);
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.certificateNumber);
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(NDT::FormatDateForDisplay(employeeRow.certificateDate));
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.hasVT ? NDT::FormatDateForDisplay(employeeRow.certificateEndDateVT) : "метод отсутствует");
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.hasUT ? NDT::FormatDateForDisplay(employeeRow.certificateEndDateUT) : "метод отсутствует");
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.hasRT ? NDT::FormatDateForDisplay(employeeRow.certificateEndDateRT) : "метод отсутствует");
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.hasPT ? NDT::FormatDateForDisplay(employeeRow.certificateEndDatePT) : "метод отсутствует");
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.hasMT ? NDT::FormatDateForDisplay(employeeRow.certificateEndDateMT) : "метод отсутствует");
+
+                ImGui::TableNextColumn();
+                NDT::TextWithTooltipIfTruncated(employeeRow.hasLT ? NDT::FormatDateForDisplay(employeeRow.certificateEndDateLT) : "метод отсутствует");
+
+                ImGui::PopID();
+            }
         ImGui::EndTable();
     }
-    if (ImGui::Button("+")) //////////////////////////////////////////
+    if (ImGui::Button("Добавить")) //////////////////////////////////////////
     {
         tableRows++;
         emplList.resize(tableRows);
-        employeeEditWindowIsOpen = true;
+        editWindow = true;
         editingIndex = tableRows - 1;
     }
-    ImGui::SameLine();
-    ImGui::BeginDisabled(indexesList.empty());
-    if (ImGui::Button("Удалить выбранные")) ////////////////////////////////////////
-    {
-        auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 
-        for (int idx : indexesList)
-            emplList.at(idx).deletedAt = now; /// помечаем время удаления
-
-        indexesList.clear();
-        std::ranges::fill(selected, false); // индексы после удаления сдвинулись, старые флаги уже не соответствуют строкам
-    }
-    ImGui::EndDisabled();
-
-    if (employeeEditWindowIsOpen && editingIndex >= 0 &&
+    if (editWindow && editingIndex >= 0 &&
         editingIndex < static_cast<int>(emplList.size()))
-        emplEditWindow.Show(emplList.at(editingIndex), employeeEditWindowIsOpen);
+        Edit(emplList.at(editingIndex), editWindow);
+}
+
+void EmployeesWindow::Edit(Employee &empl, bool &isOpen)
+{
+    ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->Pos);
+    ImGui::SetNextWindowSize(viewport->Size);
+
+    if (ImGui::Begin("Сотрудник", &isOpen, window_flags))
+    {
+        bool changed = false;
+
+        // ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(1.0f, 1.0f, 0.0f, 0.15f));
+
+        ImGui::TextDisabled("Ф.И.О.");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##name#", &empl.name);
+
+        ImGui::TextDisabled("Организация");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##organization#", &empl.organization);
+
+        ImGui::TextDisabled("Подразделение");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##department#", &empl.department);
+
+        ImGui::TextDisabled("Должность");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##position#", &empl.position);
+
+        ImGui::TextDisabled("Дата трудоустройства");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.employeementDate);
+            if (ImGui::DatePicker("##employeementDate#", date))
+            {
+                empl.employeementDate = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+
+        ImGui::TextDisabled("Личный код");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##personalCode#", &empl.personalCode);
+
+        ImGui::TextDisabled("Разряд");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##level#", &empl.level);
+
+        ImGui::TextDisabled("Номер удостоверения/разрешения");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        changed |= ImGui::InputText("##certificateNumber#", &empl.certificateNumber);
+
+        ImGui::TextDisabled("Дата выдачи удостоверения");
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.certificateDate);
+            if (ImGui::DatePicker("##certificateDate#", date))
+            {
+                empl.certificateDate = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+
+        ImGui::SeparatorText("Методы НК");
+        changed |= ImGui::Checkbox("ВИК", &empl.hasVT);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!empl.hasVT);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateVT);
+            if (ImGui::DatePicker("##ВИК#", date))
+            {
+                empl.certificateEndDateVT = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+        ImGui::EndDisabled();
+
+        changed |= ImGui::Checkbox("УК", &empl.hasUT);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!empl.hasUT);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateUT);
+            if (ImGui::DatePicker("##УК#", date))
+            {
+                empl.certificateEndDateUT = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+        ImGui::EndDisabled();
+
+        changed |= ImGui::Checkbox("РК", &empl.hasRT);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!empl.hasRT);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateRT);
+            if (ImGui::DatePicker("##РК#", date))
+            {
+                empl.certificateEndDateRT = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+        ImGui::EndDisabled();
+
+        changed |= ImGui::Checkbox("ПВК", &empl.hasPT);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!empl.hasPT);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDatePT);
+            if (ImGui::DatePicker("##ПВК#", date))
+            {
+                empl.certificateEndDatePT = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+        ImGui::EndDisabled();
+
+        changed |= ImGui::Checkbox("МК", &empl.hasMT);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!empl.hasMT);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateMT);
+            if (ImGui::DatePicker("##МК#", date))
+            {
+                empl.certificateEndDateMT = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+        ImGui::EndDisabled();
+
+        changed |= ImGui::Checkbox("ПВТ", &empl.hasLT);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!empl.hasLT);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        {
+            tm date = NDT::ParseIsoDateTm(empl.certificateEndDateLT);
+            if (ImGui::DatePicker("##ПВТ#", date))
+            {
+                empl.certificateEndDateLT = NDT::FormatIsoDateTm(date);
+                changed = true;
+            }
+        }
+        ImGui::EndDisabled();
+
+        // ImGui::PopStyleColor();
+
+        if (changed)
+            empl.updatedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+    }
+    ImGui::End();
 }

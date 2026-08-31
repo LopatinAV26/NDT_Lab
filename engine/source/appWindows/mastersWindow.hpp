@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "mastersEditWindow.hpp"
+#include "imgui.h"
 
 struct Master;
 
@@ -11,6 +11,8 @@ public:
     void Show(std::vector<Master> &mastersList);
 
 private:
-    bool masterEditWindowIsOpen = false;
-    MastersEditWindow masterEditWindow;
+    void Edit(Master &master, bool &isOpen);
+
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
+    bool editWindow = false;
 };

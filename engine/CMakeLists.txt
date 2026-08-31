@@ -12,7 +12,7 @@ if(WIN32)
 endif()
 
 # Файлы в source/appWindows/ (settingsWindow, protocolWindow, nomogramWindow,
-# reportCreateWindow, defectCreateWindow) инклюдят соседние заголовки из
+# reportWindow, defectCreateWindow) инклюдят соседние заголовки из
 # source/ (applicationData.hpp, resourceManager.hpp, laboratory.hpp,
 # reportBuilder.hpp) без префикса пути - добавляем source/ в include path,
 # чтобы такие "#include "applicationData.hpp"" резолвились и из подкаталога.

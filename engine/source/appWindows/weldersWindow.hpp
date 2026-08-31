@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "weldersEditWindow.hpp"
+#include "imgui.h"
 
 struct Welder;
 
@@ -11,6 +11,8 @@ public:
     void Show(std::vector<Welder> &weldersList);
 
 private:
-    bool welderEditWindowIsOpen = false;
-    WeldersEditWindow welderEditWindow;
+    void Edit(Welder &welder, bool &isOpen);
+
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
+    bool editWindow = false;
 };

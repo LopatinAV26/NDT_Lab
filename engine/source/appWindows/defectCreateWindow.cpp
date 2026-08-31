@@ -1,6 +1,7 @@
 #include "defectCreateWindow.hpp"
 
 #include <cfloat>
+#include <format>
 #include "laboratory.hpp"
 
 void DefectCreateWindow::Show(Report &report, bool &isOpen)

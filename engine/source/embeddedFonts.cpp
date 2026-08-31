@@ -1,4 +1,7 @@
 #include "embeddedFonts.hpp"
+
+#include <array>
+
 #include "ShareTechMonoRegular.cpp"
 #include "NotoSansRegular.cpp"
 #include "NotoSansBold.cpp"

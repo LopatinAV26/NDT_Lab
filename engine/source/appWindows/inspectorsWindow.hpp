@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "inspectorsEditWindow.hpp"
+#include "imgui.h"
 
 struct Inspector;
 
@@ -11,6 +11,8 @@ public:
     void Show(std::vector<Inspector> &inspectorsList);
 
 private:
-    bool inspectorEditWindowIsOpen = false;
-    InspectorsEditWindow inspectorEditWindow;
+    void Edit(Inspector &inspector, bool &isOpen);
+
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
+    bool editWindow = false;
 };
