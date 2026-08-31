@@ -12,6 +12,15 @@
 #include "utilities.hpp"
 #include "methodsNdt.hpp"
 
+/// категории трубопровода и соответствующие им флаги техкарты - и для таблицы, и для формы редактирования
+static constexpr std::array<std::pair<Category, bool ControlMap::*>, 5> categoryOptions{{
+    {Category::H, &ControlMap::categoryB},
+    {Category::I, &ControlMap::categoryI},
+    {Category::II, &ControlMap::categoryII},
+    {Category::III, &ControlMap::categoryIII},
+    {Category::IV, &ControlMap::categoryIV},
+}};
+
 void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
 {
     static int tableRows = 0;     ///< количество строк в таблице
@@ -108,23 +117,15 @@ void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
 
                 ImGui::TableNextColumn();
                 {
-                    static constexpr std::array<std::pair<bool ControlMap::*, const char *>, 5> categoryOptions{{
-                        {&ControlMap::categoryB, "В"},
-                        {&ControlMap::categoryI, "I"},
-                        {&ControlMap::categoryII, "II"},
-                        {&ControlMap::categoryIII, "III"},
-                        {&ControlMap::categoryIV, "IV"},
-                    }};
-
                     const ControlMap &controlMap = controlMapsList.at(row);
                     std::string categories;
-                    for (const auto &[member, label] : categoryOptions)
+                    for (const auto &[category, member] : categoryOptions)
                     {
                         if (!(controlMap.*member))
                             continue;
                         if (!categories.empty())
                             categories += ", ";
-                        categories += label;
+                        categories += GetCategoryAbbreviation(category);
                     }
                     NDT::TextWithTooltipIfTruncated(categories);
                 }
@@ -201,22 +202,20 @@ void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen)
 
         ImGui::TextDisabled("Диаметр");
         ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::InputInt("##diameter#", &controlMap.diameter);
+        changed |= ImGui::DragInt("##diameter#", &controlMap.diameter, 1, 10, 1500, "Наружный диаметр трубы %d, мм");
 
         ImGui::TextDisabled("Толщина стенки");
         ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::InputFloat("##thickness#", &controlMap.thickness, 0.0f, 0.0f, "%.1f");
+        changed |= ImGui::DragFloat("##thickness#", &controlMap.thickness, 0.1f, 1.0f, 50.0f, "Номинальная толщина стенки %.1f, мм");
 
         ImGui::TextDisabled("Категория трубопровода");
-        changed |= ImGui::Checkbox("В", &controlMap.categoryB);
-        ImGui::SameLine();
-        changed |= ImGui::Checkbox("I", &controlMap.categoryI);
-        ImGui::SameLine();
-        changed |= ImGui::Checkbox("II", &controlMap.categoryII);
-        ImGui::SameLine();
-        changed |= ImGui::Checkbox("III", &controlMap.categoryIII);
-        ImGui::SameLine();
-        changed |= ImGui::Checkbox("IV", &controlMap.categoryIV);
+        for (size_t i = 0; i < categoryOptions.size(); ++i)
+        {
+            const auto &[category, member] = categoryOptions[i];
+            changed |= ImGui::Checkbox(GetCategoryAbbreviation(category).c_str(), &(controlMap.*member));
+            if (i + 1 < categoryOptions.size())
+                ImGui::SameLine();
+        }
 
         ImGui::TextDisabled("Описание");
         ImGui::SetNextItemWidth(-FLT_MIN);
@@ -266,7 +265,7 @@ void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen)
     ImGui::End();
 }
 
-void SDLCALL ControlMapsWindow::OnFileSelected(void *userdata, const char *const *filelist, int  /*filter*/)
+void SDLCALL ControlMapsWindow::OnFileSelected(void *userdata, const char *const *filelist, int /*filter*/)
 {
     auto *self = static_cast<ControlMapsWindow *>(userdata);
 

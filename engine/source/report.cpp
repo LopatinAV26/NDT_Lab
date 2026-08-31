@@ -7,7 +7,6 @@ Report::Report()
 {
     controlDate = NDT::GetCurrentIsoDate();
     reportDate = controlDate;
-    pipeCategory = pipeCategoryList.at(0);
     methodValue = Method::VT;
     methodHeader = GetMethodReportTitle(methodValue);
     perimeter = static_cast<int>(std::lround(diameter * 3.141592f));

@@ -212,12 +212,16 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
 
             ImGui::TextDisabled("Категория трубопровода");
             ImGui::SetNextItemWidth(-FLT_MIN);
-            if (ImGui::BeginCombo("##Категория трубопровода#", report.pipeCategory.c_str()))
+            if (ImGui::BeginCombo("##Категория трубопровода#", GetCategoryAbbreviation(report.pipeCategory).c_str()))
             {
-                for (const auto &category : report.pipeCategoryList)
+                static constexpr std::array<Category, 5> categories{
+                    Category::H, Category::I, Category::II, Category::III, Category::IV,
+                };
+
+                for (Category category : categories)
                 {
                     const bool isSelected = (report.pipeCategory == category);
-                    if (ImGui::Selectable(category.c_str(), isSelected))
+                    if (ImGui::Selectable(GetCategoryAbbreviation(category).c_str(), isSelected))
                     {
                         report.pipeCategory = category;
                         changed = true;
@@ -396,7 +400,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
         defectCreateWindow.Show(report, defectWindowIsOpen);
 }
 
-std::vector<Employee> ReportWindow::MethodFilter(const std::vector<Employee> &lists, const Method method, const std::string &reportDate)
+std::vector<Employee> ReportWindow::MethodFilter(const std::vector<Employee> &lists, Method method, const std::string &reportDate)
 {
     const std::chrono::year_month_day reportYmd = NDT::ParseIsoDate(reportDate);
 
@@ -433,7 +437,7 @@ std::vector<Employee> ReportWindow::MethodFilter(const std::vector<Employee> &li
     return filteredVector;
 }
 
-std::vector<Inspector> ReportWindow::MethodFilter(const std::vector<Inspector> &lists, const Method method, const std::string &reportDate)
+std::vector<Inspector> ReportWindow::MethodFilter(const std::vector<Inspector> &lists, Method method, const std::string &reportDate)
 {
     const std::chrono::year_month_day reportYmd = NDT::ParseIsoDate(reportDate);
 
@@ -468,4 +472,9 @@ std::vector<Inspector> ReportWindow::MethodFilter(const std::vector<Inspector> &
     }
 
     return filteredVector;
+}
+
+std::vector<ControlMap> ReportWindow::MethodFilter(const std::vector<ControlMap> &lists, Method method, int diameter, float thickness, Category cat)
+{
+    return std::vector<ControlMap>();
 }

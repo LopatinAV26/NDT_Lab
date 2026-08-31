@@ -38,3 +38,28 @@ std::string GetMethodAbbreviation(Method value)
     }
     return result;
 }
+
+std::string GetCategoryAbbreviation(Category value)
+{
+    std::string result;
+
+    switch (value)
+    {
+    case Category::H:
+        result = "В";
+        break;
+    case Category::I:
+        result = "I";
+        break;
+    case Category::II:
+        result = "II";
+        break;
+    case Category::III:
+        result = "III";
+        break;
+    case Category::IV:
+        result = "IV";
+        break;
+    }
+    return result;
+}

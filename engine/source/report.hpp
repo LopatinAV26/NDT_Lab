@@ -99,9 +99,8 @@ public:
     std::string objectNameTitle{"Наименование объекта"};
     std::string objectName;
 
-    std::array<std::string, 5> pipeCategoryList = {"В", "I", "II", "III", "IV"};
     std::string pipeCategoryTitle{"Категория трубопровода"};
-    std::string pipeCategory;
+    Category pipeCategory = Category::H;
 
     std::string contractorOrganizationTitle{"Подрядная организация"};
     std::string contractorOrganization;

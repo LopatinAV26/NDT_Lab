@@ -10,6 +10,7 @@
 class Laboratory;
 struct Employee;
 struct Inspector;
+struct ControlMap;
 
 class ReportWindow
 {
@@ -24,9 +25,9 @@ private:
 	/// @param method метод, по которому нужно фильтровать сотрудников
 	/// @param reportDate дата в формате ISO (YYYY-MM-DD), на которую нужно проверить действителен ли допуск
 	/// @return отфильтрованный список сотрудников
-	std::vector<Employee> MethodFilter(const std::vector<Employee> &lists, const Method method, const std::string &reportDate);
-	std::vector<Inspector> MethodFilter(const std::vector<Inspector> &lists, const Method method, const std::string &reportDate);
-	
+	std::vector<Employee> MethodFilter(const std::vector<Employee> &lists, Method method, const std::string &reportDate);
+	std::vector<Inspector> MethodFilter(const std::vector<Inspector> &lists, Method method, const std::string &reportDate);
+	std::vector<ControlMap> MethodFilter(const std::vector<ControlMap> &lists, Method method, int diameter, float thickness, Category cat);
 
 	ReportBuilder builder;
 	DefectCreateWindow defectCreateWindow;
