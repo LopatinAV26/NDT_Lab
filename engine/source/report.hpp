@@ -132,14 +132,15 @@ public:
     std::string masterCertNumber;
 
     static inline const std::string technologicalControlMapTitle{"Контроль выполнен в соответствии с операционной технологической картой"};
-    int technologicalControlMapIndex = 0;
-    std::vector<std::string> technologicalControlMap = {"ТК-ТНДВ-ВИК", "ТК-ТНДВ-ПВК", "ТК-ТНДВ-УК"};
+    std::string technologicalControlMap{}; ///< шифр выбранной техкарты (ControlMap::code)
 
     static inline const std::string normativeDocsTitle{"Оценка качества по"};
-    std::string normativeDocs{"РД-25.160.10-КТН-0016-23 с Изм.1"};
+    std::string normativeDocs{};                ///< шифры выбранных нормативных документов через запятую
+    std::vector<std::string> normativeDocsIds{}; ///< id выбранных документов - из них строится normativeDocs и восстанавливаются галочки
 
     static inline const std::string equipmentTitle{"Оборудование и материалы в соответствии с операционной технологической картой"};
-    std::string equipment{};
+    std::string equipment{};                  ///< готовая строка для заключения: "Наименование №зав.номер" через запятую
+    std::vector<std::string> equipmentIds{};  ///< id выбранного оборудования - из них строится equipment и восстанавливаются галочки
 
     static inline const std::string weldTypeTitle{"Тип сварного соединения, способ сварки"};
     int weldTypeIndex = 0;

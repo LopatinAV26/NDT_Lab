@@ -51,7 +51,7 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(5, {{0, reportData.methodHeader, 8, PoDoFo::PdfHorizontalAlignment::Center, PoDoFo::PdfVerticalAlignment::Center, FontStyle::Bold}});
 		pdfManager.TableNewRow();
-		pdfManager.TableCreateRow(4, {{0, reportData.technologicalControlMapTitle + " " + reportData.technologicalControlMap.at(reportData.technologicalControlMapIndex)}});
+		pdfManager.TableCreateRow(4, {{0, reportData.technologicalControlMapTitle + " " + reportData.technologicalControlMap}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(4, {{0, reportData.normativeDocsTitle + " " + reportData.normativeDocs}});
 		pdfManager.TableNewRow();
