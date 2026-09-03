@@ -256,11 +256,10 @@ namespace ImGui
         bool hiddenLabel = label.substr(0, 2) == "##";
         std::string myLabel = (hiddenLabel) ? label.substr(2) : label;
 
-        if (!hiddenLabel)
-        {
-            Text("%s", label.c_str());
-            SameLine((itemSpacing == 0.0f) ? 0.0f : GetCursorPos().x + itemSpacing);
-        }
+        // Подпись рисуется после виджета - как у штатных контролов ImGui (InputText, BeginCombo и т.д.).
+        // Раньше она шла перед полем с фиксированным отступом itemSpacing, и длинная подпись
+        // оказывалась под комбобоксом; параметр itemSpacing оставлен ради совместимости сигнатуры.
+        (void)itemSpacing;
 
         if (clampToBorder)
             SetNextItemWidth(GetContentRegionAvail().x);
@@ -407,6 +406,12 @@ namespace ImGui
             }
 
             EndCombo();
+        }
+
+        if (!hiddenLabel)
+        {
+            SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
+            TextUnformatted(label.c_str());
         }
 
         return res;
