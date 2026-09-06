@@ -11,6 +11,18 @@ if(WIN32)
     target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/resources/app.rc")
 endif()
 
+# Помощники отладчика Visual Studio. Подключаются именно к exe, а не к статической
+# библиотеке imgui: .natvis попадает в PDB на этапе линковки, у статической библиотеки
+# этого этапа нет. imgui.natvis - читаемое отображение ImVector, ImGuiStorage и прочих
+# типов ImGui в окне watch; imgui.natstepfilter - F11 не проваливается внутрь тривиальных
+# функций ImGui (файл в проекте подхватывается начиная с VS 2022 17.6).
+if(MSVC)
+    target_sources(${PROJECT_NAME} PRIVATE
+        "${CMAKE_SOURCE_DIR}/external/imgui/imgui.natvis"
+        "${CMAKE_SOURCE_DIR}/external/imgui/imgui.natstepfilter"
+    )
+endif()
+
 # Файлы в source/appWindows/ (settingsWindow, protocolWindow, nomogramWindow,
 # reportWindow, defectCreateWindow) инклюдят соседние заголовки из
 # source/ (applicationData.hpp, resourceManager.hpp, laboratory.hpp,

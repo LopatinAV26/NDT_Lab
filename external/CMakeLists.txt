@@ -41,6 +41,10 @@ target_compile_options(stb_image PRIVATE
 )
 
 # imgui --------------------------------------------------------------------------------------
+# FreeType из vcpkg (ставится как зависимость podofo) - растеризатор шрифтов вместо stb_truetype:
+# настоящий хинтинг и более чистая кириллица на мелких размерах
+find_package(Freetype REQUIRED)
+
 add_library(imgui STATIC)
 target_sources(imgui PRIVATE
     imgui/imgui.cpp
@@ -48,13 +52,20 @@ target_sources(imgui PRIVATE
     imgui/imgui_tables.cpp
     imgui/imgui_widgets.cpp
     imgui/imgui_stdlib.cpp
+    # путь misc/freetype/ сохранён как в апстриме: imgui_draw.cpp инклюдит
+    # "misc/freetype/imgui_freetype.h" под IMGUI_ENABLE_FREETYPE
+    imgui/misc/freetype/imgui_freetype.cpp
     imgui/imgui_impl_sdl3.cpp
     imgui/imgui_impl_sdlrenderer3.cpp
 )
 
 target_include_directories(imgui SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/imgui")
 
-target_link_libraries(imgui PUBLIC SDL3::SDL3-static)
+# PUBLIC, а не через правку imconfig.h: определение переживает обновление ImGui,
+# вендорные файлы остаются нетронутыми
+target_compile_definitions(imgui PUBLIC IMGUI_ENABLE_FREETYPE)
+
+target_link_libraries(imgui PUBLIC SDL3::SDL3-static Freetype::Freetype)
 
 target_compile_options(imgui PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W0>
