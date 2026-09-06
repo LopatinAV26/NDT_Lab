@@ -13,12 +13,8 @@
 
 class ApplicationData;
 
-struct Employee ///< Сотрудник ЛНК
+struct Employee : NDT::DbRecord ///< Сотрудник ЛНК
 {
-	std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
-	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
-	std::optional<std::chrono::sys_seconds> deletedAt;								// nullopt = не удалена; иначе - момент "мягкого" удаления
 	std::string name;
 	std::string organization;
 	std::string department;
@@ -42,12 +38,8 @@ struct Employee ///< Сотрудник ЛНК
 	std::string certificateEndDateLT;
 };
 
-struct Inspector ///< Сотрудник надзора
+struct Inspector : NDT::DbRecord ///< Сотрудник надзора
 {
-	std::string id = NDT::GenerateUuidV7();
-	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-	std::optional<std::chrono::sys_seconds> deletedAt;
 	std::string name;
 	std::string organization;
 	std::string certificateNumber;
@@ -66,12 +58,8 @@ struct Inspector ///< Сотрудник надзора
 	std::string certificateEndDateLT;
 };
 
-struct Master ///< Производитель СМР
+struct Master : NDT::DbRecord ///< Производитель СМР
 {
-	std::string id = NDT::GenerateUuidV7();
-	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-	std::optional<std::chrono::sys_seconds> deletedAt;
 	std::string name;
 	std::string organization;
 	std::string department;
@@ -80,12 +68,8 @@ struct Master ///< Производитель СМР
 	std::string certificateEndDate;
 };
 
-struct Welder ///< Сварщик
+struct Welder : NDT::DbRecord ///< Сварщик
 {
-	std::string id = NDT::GenerateUuidV7();
-	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-	std::optional<std::chrono::sys_seconds> deletedAt;
 	std::string name;
 	std::string organization;
 	std::string department;
@@ -95,12 +79,8 @@ struct Welder ///< Сварщик
 	std::string certificateEndDate;
 };
 
-struct ControlMap /// Технологическая карта контроля
+struct ControlMap : NDT::DbRecord /// Технологическая карта контроля
 {
-	std::string id = NDT::GenerateUuidV7();
-	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-	std::optional<std::chrono::sys_seconds> deletedAt;
 
 	std::string code; /// шифр техкарты
 	int diameter = 0;
@@ -124,12 +104,8 @@ struct ControlMap /// Технологическая карта контроля
 	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (PDF/скан/Word)
 };
 
-struct NormativeDocument
+struct NormativeDocument : NDT::DbRecord
 {
-	std::string id = NDT::GenerateUuidV7();
-	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-	std::optional<std::chrono::sys_seconds> deletedAt;
 
 	std::string code;	/// шифр
 	std::string name;	/// название документа
@@ -149,12 +125,8 @@ struct NormativeDocument
 	std::vector<std::uint8_t> fileData;
 };
 
-struct Equipment /// оборудование лаборатории по "СДАНК-01-2020"
+struct Equipment : NDT::DbRecord /// оборудование лаборатории по "СДАНК-01-2020"
 {
-	std::string id = NDT::GenerateUuidV7();
-	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-	std::optional<std::chrono::sys_seconds> deletedAt;
 
 	std::string name;									 /// Наименование оборудования
 	std::string method;									 /// Метод контроля, для которого используется оборудование
@@ -190,13 +162,8 @@ struct Equipment /// оборудование лаборатории по "СД�
 	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (паспорт/формуляр и т.п.)
 };
 
-struct LaboratoryInfo
+struct LaboratoryInfo : NDT::DbRecord
 {
-	std::string id = NDT::GenerateUuidV7();
-	std::chrono::sys_seconds updatedAt =
-		std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-	std::optional<std::chrono::sys_seconds> deletedAt;
-
 	std::string laboratoryName;
 	std::string numberAttestation;
 	std::string attestationEndDate;

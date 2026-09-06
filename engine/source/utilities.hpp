@@ -7,6 +7,7 @@
 #include <ctime>
 #include <filesystem>
 #include <algorithm>
+#include <optional>
 #include <type_traits>
 #include "imgui.h"
 
@@ -57,6 +58,18 @@ namespace NDT
 
 	/// @brief Сгенерировать UUID v7 (первые 48 бит - unix-время в мс, остальное - случайность)
 	std::string GenerateUuidV7();
+
+	/// @brief Общая часть всех сохраняемых в БД записей: идентификатор, отметка последнего
+	/// изменения и момент мягкого удаления.
+	/// Наследование здесь - переиспользование данных, а не полиморфизм: виртуальных функций нет,
+	/// хранить и удалять записи через указатель на базу никто не будет
+	struct DbRecord
+	{
+		std::string id = GenerateUuidV7(); ///< UUID v7, генерируется на клиенте при создании записи
+		std::chrono::sys_seconds updatedAt =
+			std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); ///< когда запись последний раз менялась
+		std::optional<std::chrono::sys_seconds> deletedAt;							   ///< nullopt = не удалена; иначе - момент "мягкого" удаления
+	};
 
 	/// @brief Сбросить fileData во временный файл с именем fileName и открыть его
 	/// ассоциированным приложением ОС (через ImGui::GetPlatformIO().Platform_OpenInShellFn -

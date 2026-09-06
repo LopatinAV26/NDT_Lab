@@ -35,12 +35,8 @@ enum class DefectRtSymbol : uint8_t
     Count /// служебный маркер количества элементов enum
 };
 
-struct DefectRt
+struct DefectRt : NDT::DbRecord
 {
-    std::string id = NDT::GenerateUuidV7();
-    std::chrono::sys_seconds updatedAt =
-        std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-    std::optional<std::chrono::sys_seconds> deletedAt;
     std::string reportId; ///< внешний ключ на Report::id - какому заключению принадлежит дефект
 
     DefectRtSymbol symbol = DefectRtSymbol::Aa;
@@ -62,7 +58,7 @@ struct DefUC
     static inline const std::array<std::string, 5> defNameUC{"SH", "LS", "LB", "TD", "CC"};
 };
 
-class Report
+class Report : public NDT::DbRecord
 {
 public:
     Report();
@@ -82,11 +78,6 @@ public:
     /// @brief а из всех пар швов берётся минимальная
     /// @return nullopt, если хотя бы у одной секции продольных швов нет (бесшовная, фланец)
     std::optional<int> GetMinSeamDistance() const;
-
-    std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
-    std::chrono::sys_seconds updatedAt =
-        std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
-    std::optional<std::chrono::sys_seconds> deletedAt;                              // nullopt = не удалена; иначе - момент "мягкого" удаления
 
     std::string controlDate; ///< дата НК
     std::string reportDate;  ///< дата выдачи заключения
