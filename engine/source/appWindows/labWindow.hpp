@@ -1,6 +1,5 @@
 #pragma once
 
-#include "laboratory.hpp"
 #include "appWindows/nomogramWindow.hpp"
 #include "appWindows/reportWindow.hpp"
 #include "appWindows/employeesWindow.hpp"
@@ -13,19 +12,19 @@
 
 class ApplicationData;
 class ResourceManager;
+class Laboratory;
 
 class LabWindow
 {
 public:
-    LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager);
-    ~LabWindow();
-    
+    LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager, Laboratory &laboratory);
+
     void Show(bool &isOpen);
 
     void ShowMain();
 
 private:
-    Laboratory lab;
+    Laboratory &lab; ///< владеет Core - окно только отображает и правит
     NomogramWindow nomogramWindow;
     ReportWindow reportWindow;
     EmployeesWindow emplWindow;

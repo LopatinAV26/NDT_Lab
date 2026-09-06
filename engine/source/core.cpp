@@ -1,5 +1,6 @@
 #include "core.hpp"
 #include "appIcon.hpp"
+#include "laboratory.hpp"
 
 SDL_AppResult Core::Init()
 {
@@ -67,7 +68,11 @@ SDL_AppResult Core::Init()
 	}
 
 	resManager = std::make_unique<ResourceManager>();
-	imWindow = std::make_unique<Gui>(appData, *resManager);
+
+	/// база не читается при старте - LoadDB вызывается по кнопке "Вход в ЛНК"
+	lab = std::make_unique<Laboratory>(appData);
+
+	imWindow = std::make_unique<Gui>(appData, *resManager, *lab);
 	imWindow->InitImGui();
 	
 	return SDL_APP_CONTINUE;
@@ -136,7 +141,14 @@ SDL_AppResult Core::ProcessEvent(const SDL_Event *event)
 
 Core::~Core()
 {
-	imWindow.reset();
+	imWindow.reset(); /// окна держат ссылку на лабораторию - сначала разрушаем их, потом пишем в базу
+
+	if (lab)
+	{
+		lab->SaveDB(); /// если в ЛНК не заходили, вызов ничего не делает
+		lab.reset();
+	}
+
 	SDL_DestroyRenderer(appData.renderer);
 	SDL_DestroyWindow(appData.window);
 	SDL_Quit();

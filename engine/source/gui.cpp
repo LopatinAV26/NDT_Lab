@@ -6,11 +6,12 @@
 #include "applicationData.hpp"
 #include "resourceManager.hpp"
 
-Gui::Gui(ApplicationData &coreAppData, ResourceManager &resourceManager)
+Gui::Gui(ApplicationData &coreAppData, ResourceManager &resourceManager, Laboratory &laboratory)
 	: appData{coreAppData},
 	  resManager{resourceManager},
+	  lab{laboratory},
 	  settingsWindow{appData},
-	  labWindow{appData, resManager}
+	  labWindow{appData, resManager, lab}
 {
 }
 
@@ -321,7 +322,10 @@ void Gui::ButtonsWindow()
 			settingsWindowOpen = true;
 
 		if (ImGui::Button("Вход в ЛНК"))
+		{
+			lab.LoadDB(); /// база читается при входе в ЛНК, а не при старте приложения
 			labWindowIsOpen = true;
+		}
 	}
 	ImGui::End();
 }

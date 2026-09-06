@@ -18,6 +18,9 @@ Laboratory::~Laboratory() = default;
 
 void Laboratory::LoadDB()
 {
+	if (isLoaded)
+		return;
+
 	dbManager->LoadLaboratoryInfo(*this);
 	employeesList = dbManager->LoadEmployees();
 	inspectorsList = dbManager->LoadInspectors();
@@ -26,10 +29,15 @@ void Laboratory::LoadDB()
 	equpmentsList = dbManager->LoadEquipment();
 	controlMapsList = dbManager->LoadControlMaps();
 	normativeDocumentsList = dbManager->LoadNormativeDocuments();
+
+	isLoaded = true;
 }
 
 void Laboratory::SaveDB()
 {
+	if (!isLoaded)
+		return;
+
 	dbManager->SaveLaboratoryInfo(*this);
 	dbManager->SaveEmployees(employeesList);
 	dbManager->SaveInspectors(inspectorsList);

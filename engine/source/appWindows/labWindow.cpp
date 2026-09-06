@@ -7,17 +7,12 @@
 #include "applicationData.hpp"
 #include "resourceManager.hpp"
 #include "utilities.hpp"
+#include "laboratory.hpp"
 
-LabWindow::LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager)
-    : lab{coreAppData},
+LabWindow::LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager, Laboratory &laboratory)
+    : lab{laboratory},
       nomogramWindow{coreAppData, resourceManager}
 {
-    lab.LoadDB();
-}
-
-LabWindow::~LabWindow()
-{
-    lab.SaveDB();
 }
 
 void LabWindow::Show(bool &isOpen)

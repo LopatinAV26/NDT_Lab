@@ -8,11 +8,12 @@
 
 class ApplicationData;
 class ResourceManager;
+class Laboratory;
 
 class Gui
 {
 public:
-	explicit Gui(ApplicationData &coreAppData, ResourceManager &resourceManager);
+	Gui(ApplicationData &coreAppData, ResourceManager &resourceManager, Laboratory &laboratory);
 	~Gui();
 
 	void InitImGui();
@@ -39,6 +40,7 @@ private:
 
 	ApplicationData &appData;
 	ResourceManager &resManager;
+	Laboratory &lab; ///< владеет Core; здесь только ссылка - по кнопке "Вход в ЛНК" читаем базу
 
 	SettingsWindow settingsWindow;
 	LabWindow labWindow;

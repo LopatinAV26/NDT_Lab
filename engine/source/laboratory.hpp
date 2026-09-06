@@ -175,8 +175,15 @@ public:
 	explicit Laboratory(ApplicationData &appData);
 	~Laboratory(); ///< определён в .cpp - unique_ptr требует полный тип DatabaseManager именно там
 
+	/// @brief Прочитать справочники из базы. Вызывается при входе в ЛНК; повторные вызовы
+	/// игнорируются, чтобы не затереть несохранённые правки содержимым базы
 	void LoadDB();
+
+	/// @brief Записать справочники в базу. Ничего не делает, если LoadDB ни разу не вызывался -
+	/// иначе пустая модель создала бы в базе запись LaboratoryInfo с новым id
 	void SaveDB();
+
+	bool IsLoaded() const { return isLoaded; }
 
 	LaboratoryInfo labInfo;
 	std::vector<Employee> employeesList;				   /// список сотрудников
@@ -190,4 +197,5 @@ public:
 
 private:
 	std::unique_ptr<DatabaseManager> dbManager;
+	bool isLoaded = false; ///< справочники прочитаны из базы
 };

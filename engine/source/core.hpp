@@ -7,6 +7,8 @@
 #include "applicationData.hpp"
 #include "gui.hpp"
 
+class Laboratory;
+
 class Core
 {
 public:
@@ -24,5 +26,6 @@ public:
 private:
 	ApplicationData appData;
 	std::unique_ptr<ResourceManager>resManager;
+	std::unique_ptr<Laboratory> lab; ///< модель данных живёт здесь, а не в окне - окна получают её по ссылке
 	std::unique_ptr<Gui> imWindow;
 };
