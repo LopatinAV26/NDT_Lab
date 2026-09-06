@@ -114,23 +114,29 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 		pdfManager.cursorRowY -= 3.0 * num;
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(3.0 * num, {{rowCells.at(0).w, reportData.weldNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
-											  {rowCells.at(1).w, std::format("{:s}, {:s}", reportData.weldType.at(reportData.weldTypeIndex), reportData.weldingMethod.at(reportData.weldingMethodIndex)), 8, PoDoFo::PdfHorizontalAlignment::Center},
+											  {rowCells.at(1).w, std::format("{:s}\n{:s}", GetWeldJointTypeStr(reportData.weldType), GetWeldingMethodsStr(reportData.weldingMethods)), 8, PoDoFo::PdfHorizontalAlignment::Center},
 											  {rowCells.at(2).w, std::format("{:d}×{:.1f}×{:.1f}", reportData.diameter, reportData.thicknes1, reportData.thicknes2), 8, PoDoFo::PdfHorizontalAlignment::Center},
-											  {rowCells.at(3).w, std::format("{:s}/{:s}", reportData.weldersMark1, reportData.weldersMark2), 8, PoDoFo::PdfHorizontalAlignment::Center}});
+											  {rowCells.at(3).w, reportData.weldersMark, 8, PoDoFo::PdfHorizontalAlignment::Center}});
 
 		pdfManager.cursorRowY -= 3.0 * num;
 		double height = {(3.0 * num) / 4.0};
 		pdfManager.TableNewRow(rowCells.at(4).x);
-		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, "двухшовная", 6, PoDoFo::PdfHorizontalAlignment::Center},
-										   {rowCells.at(4).w / 2, "одношовная", 6, PoDoFo::PdfHorizontalAlignment::Center}});
+		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, GetSectionTypeStr(reportData.sectionType1), 6, PoDoFo::PdfHorizontalAlignment::Center},
+										   {rowCells.at(4).w / 2, GetSectionTypeStr(reportData.sectionType2), 6, PoDoFo::PdfHorizontalAlignment::Center}});
+		/// координату печатаем только для существующего шва - у бесшовной секции и фланца ставится прочерк
+		const int seamCount1 = GetSeamCount(reportData.sectionType1);
+		const int seamCount2 = GetSeamCount(reportData.sectionType2);
+		const std::optional<int> minSeamDistance = reportData.GetMinSeamDistance();
+		const std::string noSeam{"-"};
+
 		pdfManager.TableNewRow(rowCells.at(4).x);
-		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, "коорд", 8, PoDoFo::PdfHorizontalAlignment::Center},
-										   {rowCells.at(4).w / 2, "коорд", 8, PoDoFo::PdfHorizontalAlignment::Center}});
+		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, seamCount1 > 0 ? std::format("{:d}", reportData.coordSec1Weld1) : noSeam, 8, PoDoFo::PdfHorizontalAlignment::Center},
+										   {rowCells.at(4).w / 2, seamCount2 > 0 ? std::format("{:d}", reportData.coordSec2Weld1) : noSeam, 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow(rowCells.at(4).x);
-		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, "коорд", 8, PoDoFo::PdfHorizontalAlignment::Center},
-										   {rowCells.at(4).w / 2, "коорд", 8, PoDoFo::PdfHorizontalAlignment::Center}});
+		pdfManager.TableCreateRow(height, {{rowCells.at(4).w / 2, seamCount1 > 1 ? std::format("{:d}", reportData.coordSec1Weld2) : noSeam, 8, PoDoFo::PdfHorizontalAlignment::Center},
+										   {rowCells.at(4).w / 2, seamCount2 > 1 ? std::format("{:d}", reportData.coordSec2Weld2) : noSeam, 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow(rowCells.at(4).x);
-		pdfManager.TableCreateRow(height, {{rowCells.at(4).w, "минимум", 8, PoDoFo::PdfHorizontalAlignment::Center}});
+		pdfManager.TableCreateRow(height, {{rowCells.at(4).w, minSeamDistance.has_value() ? std::format("{:d}", minSeamDistance.value()) : noSeam, 8, PoDoFo::PdfHorizontalAlignment::Center}});
 
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(4, {{.width = 0, .text = reportData.extentOfUnacceptableDefectsTitle + ": " + std::format("{:.1f}", reportData.extentOfUnacceptableDefects), .isRectVisible = false}});
@@ -142,25 +148,25 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.controllerNameTitle, 8},
 											   {40, reportData.controllerName, 8, PoDoFo::PdfHorizontalAlignment::Center},
-											   {100, reportData.controllerOrganization + ", " + reportData.controllerCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
+											   {100, reportData.controllerOrganization + " " + reportData.controllerCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
 											   {0, NDT::FormatDateForDisplay(reportData.controlDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.protocolCreateNameTitle, 8},
 											   {40, reportData.protocolCreateName, 8, PoDoFo::PdfHorizontalAlignment::Center},
-											   {100, reportData.protocolCreateOrganization + ", " + reportData.protocolCreateCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
+											   {100, reportData.protocolCreateOrganization + " " + reportData.protocolCreateCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
 											   {0, NDT::FormatDateForDisplay(reportData.reportDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.inspectorNameTitle, 7},
 											   {40, reportData.inspectorName, 8, PoDoFo::PdfHorizontalAlignment::Center},
-											   {100, reportData.inspectorOrganization + ", " + reportData.inspectorCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
+											   {100, reportData.inspectorOrganization + " " + reportData.inspectorCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
 											   {0, NDT::FormatDateForDisplay(reportData.reportDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(signHeight, {{90, reportData.masterNameTitle, 7},
 											   {40, reportData.masterName, 8, PoDoFo::PdfHorizontalAlignment::Center},
-											   {100, reportData.masterOrganization + ", " + reportData.masterCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
+											   {100, reportData.masterOrganization + " " + reportData.masterCertNumber, 8, PoDoFo::PdfHorizontalAlignment::Center},
 											   {30}, /// подпись
 											   {0, NDT::FormatDateForDisplay(reportData.reportDate), 8, PoDoFo::PdfHorizontalAlignment::Center}});
 

@@ -13,7 +13,7 @@
 #include "methodsNdt.hpp"
 
 /// категории трубопровода и соответствующие им флаги техкарты - и для таблицы, и для формы редактирования
-static constexpr std::array<std::pair<Category, bool ControlMap::*>, 5> categoryOptions{{
+static constexpr std::array<std::pair<Category, bool ControlMap::*>, static_cast<size_t>(Category::Count)> categoryOptions{{
     {Category::H, &ControlMap::categoryB},
     {Category::I, &ControlMap::categoryI},
     {Category::II, &ControlMap::categoryII},
@@ -113,7 +113,7 @@ void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
                 NDT::TextWithTooltipIfTruncated(std::format("{:d}", controlMapsList.at(row).diameter));
 
                 ImGui::TableNextColumn();
-                NDT::TextWithTooltipIfTruncated(std::format("{:.1f}", controlMapsList.at(row).thickness));
+                NDT::TextWithTooltipIfTruncated(std::format("{:.1f}", controlMapsList.at(row).nominalWallThickness));
 
                 ImGui::TableNextColumn();
                 {
@@ -206,7 +206,7 @@ void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen)
 
         ImGui::TextDisabled("Толщина стенки");
         ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::DragFloat("##thickness#", &controlMap.thickness, 0.1f, 1.0f, 50.0f, "Номинальная толщина стенки %.1f, мм");
+        changed |= ImGui::DragFloat("##nominalWallThickness#", &controlMap.nominalWallThickness, 0.1f, 1.0f, 50.0f, "Номинальная толщина стенки %.1f, мм");
 
         ImGui::TextDisabled("Категория трубопровода");
         for (size_t i = 0; i < categoryOptions.size(); ++i)

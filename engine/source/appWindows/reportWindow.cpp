@@ -2,7 +2,6 @@
 
 #include <array>
 #include <algorithm>
-#include <cfloat>
 #include <cmath>
 #include <format>
 #include "imgui.h"
@@ -220,30 +219,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
 
         changed |= ImGui::InputText("Наименование объекта", &report.objectName);
 
-        if (ImGui::BeginCombo("Категория трубопровода", GetCategoryStr(report.pipeCategory).c_str()))
-        {
-            static constexpr std::array<Category, 5> categories{
-                Category::H,
-                Category::I,
-                Category::II,
-                Category::III,
-                Category::IV,
-            };
-
-            for (Category category : categories)
-            {
-                const bool isSelected = (report.pipeCategory == category);
-                if (ImGui::Selectable(GetCategoryStr(category).c_str(), isSelected))
-                {
-                    report.pipeCategory = category;
-                    changed = true;
-                }
-
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
+        changed |= NDT::EnumCombo("Категория трубопровода", report.pipeCategory, GetCategoryStr);
 
         ImGui::SeparatorText("Организации");
 
@@ -253,6 +229,14 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
 
         ImGui::SeparatorText("Параметры сварного соединения");
 
+        changed |= NDT::EnumCombo("Тип соединения", report.weldType, GetWeldJointTypeStr);
+
+        /// стык варят комбинацией способов - корень одним, заполнение другим, поэтому чекбоксы,
+        /// а в превью сразу собранная строка: обозначения короткие, счётчик здесь ничего не даёт
+        const std::string weldingMethodsPreview = GetWeldingMethodsStr(report.weldingMethods);
+        changed |= NDT::EnumCheckboxCombo("Способ сварки", weldingMethodsPreview.c_str(),
+                                          report.weldingMethods, GetWeldingMethodStr, GetWeldingMethodName);
+
         if (ImGui::DragInt("Диаметр", &report.diameter, 1.f, 10, 1500, "%d мм"))
         {
             if (report.diameter < 10)
@@ -260,6 +244,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             if (report.diameter > 1500)
                 report.diameter = 1500;
             report.perimeter = static_cast<int>(std::lround(report.diameter * 3.141592f));
+            report.technologicalControlMap = "";
             changed = true;
         }
 
@@ -270,8 +255,109 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             if (report.perimeter > 4712)
                 report.perimeter = 4712;
             report.diameter = static_cast<int>(std::lround(report.perimeter / 3.141592f));
+            report.technologicalControlMap = "";
             changed = true;
         }
+
+        /// толщины свариваемых элементов могут различаться - по наименьшей из них подбирается техкарта
+        if (ImGui::DragFloat("Толщина 1", &report.thicknes1, 0.1f, 1.0f, 50.0f, "%.1f мм"))
+        {
+            report.thicknes1 = std::clamp(report.thicknes1, 1.0f, 50.0f);
+            report.technologicalControlMap = "";
+            changed = true;
+        }
+
+        if (ImGui::DragFloat("Толщина 2", &report.thicknes2, 0.1f, 1.0f, 50.0f, "%.1f мм"))
+        {
+            report.thicknes2 = std::clamp(report.thicknes2, 1.0f, 50.0f);
+            report.technologicalControlMap = "";
+            changed = true;
+        }
+
+        ImGui::InputText("Номер детали 1", &report.sectionNumber1);
+        ImGui::InputText("Номер детали 2", &report.sectionNumber2);
+
+        
+
+        /// стык может варить бригада - отмечаем всех, кто на нём работал;
+        /// в превью шифры через пробел, в бланк каждый уходит с новой строки
+        std::vector<Welder> welderList = MethodFilter(lab.weldersList, report.controlDate);
+        const std::string weldersPreview = GetWeldersMarkString(welderList, report.weldersIds, " ");
+        if (ImGui::BeginCombo("Шифр клейма", weldersPreview.c_str()))
+        {
+            for (const auto &welder : welderList)
+            {
+                if (welder.deletedAt.has_value())
+                    continue;
+
+                ImGui::PushID(welder.id.c_str());
+
+                bool isSelected = std::ranges::find(report.weldersIds, welder.id) != report.weldersIds.end();
+                if (ImGui::Checkbox(welder.personalCode.c_str(), &isSelected))
+                {
+                    if (isSelected)
+                        report.weldersIds.push_back(welder.id);
+                    else
+                        std::erase(report.weldersIds, welder.id);
+
+                    report.weldersMark = GetWeldersMarkString(welderList, report.weldersIds, "\n");
+                    changed = true;
+                }
+
+                /// в списке только шифр клейма - фамилию показываем подсказкой
+                if (!welder.name.empty())
+                    ImGui::SetItemTooltip("%s", welder.name.c_str());
+
+                ImGui::PopID();
+            }
+            ImGui::EndCombo();
+        }
+
+        /// количество доступных полей координат задаёт тип секции: у бесшовной и фланца
+        /// продольных швов нет, у одношовной и перехода один, у двухшовной два.
+        /// При смене типа лишние координаты обнуляем - иначе в бланк уйдёт значение от прежнего типа
+        const int seamCount1 = GetSeamCount(report.sectionType1);
+        if (NDT::EnumCombo("Тип секции 1", report.sectionType1, GetSectionTypeStr))
+        {
+            if (GetSeamCount(report.sectionType1) < 2)
+                report.coordSec1Weld2 = 0;
+            if (GetSeamCount(report.sectionType1) < 1)
+                report.coordSec1Weld1 = 0;
+            changed = true;
+        }
+
+        ImGui::BeginDisabled(seamCount1 < 1);
+        changed |= ImGui::DragInt("Секция 1, шов 1", &report.coordSec1Weld1, 1.f, 0, report.perimeter, "%d мм");
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled(seamCount1 < 2);
+        changed |= ImGui::DragInt("Секция 1, шов 2", &report.coordSec1Weld2, 1.f, 0, report.perimeter, "%d мм");
+        ImGui::EndDisabled();
+
+        const int seamCount2 = GetSeamCount(report.sectionType2);
+        if (NDT::EnumCombo("Тип секции 2", report.sectionType2, GetSectionTypeStr))
+        {
+            if (GetSeamCount(report.sectionType2) < 2)
+                report.coordSec2Weld2 = 0;
+            if (GetSeamCount(report.sectionType2) < 1)
+                report.coordSec2Weld1 = 0;
+            changed = true;
+        }
+
+        ImGui::BeginDisabled(seamCount2 < 1);
+        changed |= ImGui::DragInt("Секция 2, шов 1", &report.coordSec2Weld1, 1.f, 0, report.perimeter, "%d мм");
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled(seamCount2 < 2);
+        changed |= ImGui::DragInt("Секция 2, шов 2", &report.coordSec2Weld2, 1.f, 0, report.perimeter, "%d мм");
+        ImGui::EndDisabled();
+
+        /// величина вычисляемая, руками не правится - поэтому LabelText, а не поле ввода
+        const std::optional<int> minSeamDistance = report.GetMinSeamDistance();
+        if (minSeamDistance.has_value())
+            ImGui::LabelText("Расстояние между швами", "%d мм", minSeamDistance.value());
+        else
+            ImGui::LabelText("Расстояние между швами", "-");
 
         ImGui::SeparatorText("Нормативные документы");
 
@@ -317,8 +403,8 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
         if (ImGui::BeginCombo("Техкарта", report.technologicalControlMap.c_str()))
         {
             /// у свариваемых элементов толщины могут различаться - подбираем техкарту по наименьшей
-            const float thickness = std::min(report.thicknes1, report.thicknes2);
-            std::vector<ControlMap> mapList = MethodFilter(lab.controlMapsList, report.methodValue, report.diameter, thickness, report.pipeCategory);
+            const float nominalWallThickness = std::min(report.thicknes1, report.thicknes2);
+            std::vector<ControlMap> mapList = MethodFilter(lab.controlMapsList, report.methodValue, report.diameter, nominalWallThickness, report.pipeCategory);
             for (const auto &controlMap : mapList)
             {
                 if (controlMap.deletedAt.has_value())
@@ -474,6 +560,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
 
         if (ImGui::BeginCombo("Мастер", report.masterName.c_str())) ////////////////////////////////////////
         {
+            std::vector<Master> masterList = MethodFilter(lab.mastersList, report.controlDate);
             const bool noneSelected = report.masterName.empty();
             if (ImGui::Selectable("—", noneSelected))
             {
@@ -486,7 +573,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             if (noneSelected)
                 ImGui::SetItemDefaultFocus();
 
-            for (const auto &master : lab.mastersList)
+            for (const auto &master : masterList)
             {
                 if (master.deletedAt.has_value())
                     continue;
@@ -570,9 +657,9 @@ std::vector<Employee> ReportWindow::MethodFilter(const std::vector<Employee> &li
     return filteredVector;
 }
 
-std::vector<Inspector> ReportWindow::MethodFilter(const std::vector<Inspector> &lists, Method method, const std::string &reportDate)
+std::vector<Inspector> ReportWindow::MethodFilter(const std::vector<Inspector> &lists, Method method, const std::string &controlDate)
 {
-    const std::chrono::year_month_day reportYmd = NDT::ParseIsoDate(reportDate);
+    const std::chrono::year_month_day controlYmd = NDT::ParseIsoDate(controlDate);
 
     std::vector<Inspector> filteredVector;
     for (const Inspector &inspector : lists)
@@ -581,22 +668,22 @@ std::vector<Inspector> ReportWindow::MethodFilter(const std::vector<Inspector> &
         switch (method)
         {
         case Method::VT:
-            hasValidCertificate = inspector.hasVT && NDT::ParseIsoDate(inspector.certificateEndDateVT) > reportYmd;
+            hasValidCertificate = inspector.hasVT && NDT::ParseIsoDate(inspector.certificateEndDateVT) > controlYmd;
             break;
         case Method::UT:
-            hasValidCertificate = inspector.hasUT && NDT::ParseIsoDate(inspector.certificateEndDateUT) > reportYmd;
+            hasValidCertificate = inspector.hasUT && NDT::ParseIsoDate(inspector.certificateEndDateUT) > controlYmd;
             break;
         case Method::RT:
-            hasValidCertificate = inspector.hasRT && NDT::ParseIsoDate(inspector.certificateEndDateRT) > reportYmd;
+            hasValidCertificate = inspector.hasRT && NDT::ParseIsoDate(inspector.certificateEndDateRT) > controlYmd;
             break;
         case Method::PT:
-            hasValidCertificate = inspector.hasPT && NDT::ParseIsoDate(inspector.certificateEndDatePT) > reportYmd;
+            hasValidCertificate = inspector.hasPT && NDT::ParseIsoDate(inspector.certificateEndDatePT) > controlYmd;
             break;
         case Method::MT:
-            hasValidCertificate = inspector.hasMT && NDT::ParseIsoDate(inspector.certificateEndDateMT) > reportYmd;
+            hasValidCertificate = inspector.hasMT && NDT::ParseIsoDate(inspector.certificateEndDateMT) > controlYmd;
             break;
         case Method::LT:
-            hasValidCertificate = inspector.hasLT && NDT::ParseIsoDate(inspector.certificateEndDateLT) > reportYmd;
+            hasValidCertificate = inspector.hasLT && NDT::ParseIsoDate(inspector.certificateEndDateLT) > controlYmd;
             break;
         }
 
@@ -607,9 +694,9 @@ std::vector<Inspector> ReportWindow::MethodFilter(const std::vector<Inspector> &
     return filteredVector;
 }
 
-std::vector<Equipment> ReportWindow::MethodFilter(const std::vector<Equipment> &lists, Method method, const std::string &reportDate)
+std::vector<Equipment> ReportWindow::MethodFilter(const std::vector<Equipment> &lists, Method method, const std::string &controlDate)
 {
-    const std::chrono::year_month_day reportYmd = NDT::ParseIsoDate(reportDate);
+    const std::chrono::year_month_day controlYmd = NDT::ParseIsoDate(controlDate);
 
     std::vector<Equipment> filteredVector;
     for (const Equipment &equipment : lists)
@@ -643,7 +730,7 @@ std::vector<Equipment> ReportWindow::MethodFilter(const std::vector<Equipment> &
             break;
         }
 
-        const bool calibrationValid = !equipment.isCalibrated || NDT::ParseIsoDate(equipment.certificateEndDate) > reportYmd;
+        const bool calibrationValid = !equipment.isCalibrated || NDT::ParseIsoDate(equipment.certificateEndDate) > controlYmd;
 
         if (forMethod && calibrationValid && equipment.isOperational)
             filteredVector.push_back(equipment);
@@ -652,7 +739,7 @@ std::vector<Equipment> ReportWindow::MethodFilter(const std::vector<Equipment> &
     return filteredVector;
 }
 
-std::vector<ControlMap> ReportWindow::MethodFilter(const std::vector<ControlMap> &lists, Method method, int diameter, float thickness, Category category)
+std::vector<ControlMap> ReportWindow::MethodFilter(const std::vector<ControlMap> &lists, Method method, int diameter, float nominalWallThickness, Category category)
 {
     std::vector<ControlMap> filteredVector;
     for (const ControlMap &controlMap : lists)
@@ -708,7 +795,7 @@ std::vector<ControlMap> ReportWindow::MethodFilter(const std::vector<ControlMap>
 
         /// диаметр и толщина заданы в техкарте одним значением, поэтому сравниваем на совпадение;
         /// толщину - с допуском, т.к. в форме она вводится с одним знаком после запятой
-        const bool sizeMatches = controlMap.diameter == diameter && std::fabs(controlMap.thickness - thickness) < 0.05f;
+        const bool sizeMatches = controlMap.diameter == diameter && std::fabs(controlMap.nominalWallThickness - nominalWallThickness) < 0.05f;
 
         if (forMethod && forCategory && sizeMatches)
             filteredVector.push_back(controlMap);
@@ -765,6 +852,35 @@ std::vector<NormativeDocument> ReportWindow::MethodFilter(const std::vector<Norm
     return filteredVector;
 }
 
+std::vector<Master> ReportWindow::MethodFilter(const std::vector<Master> &lists, const std::string &controlDate)
+{
+    const std::chrono::year_month_day controlYmd = NDT::ParseIsoDate(controlDate);
+
+    std::vector<Master> filteredVector;
+    for (const Master &master : lists)
+    {
+        /// незаполненный срок разбирается в 2000-01-01 и сравнение не проходит - отдельная проверка не нужна
+        if (!master.certificateNumber.empty() && NDT::ParseIsoDate(master.certificateEndDate) > controlYmd)
+            filteredVector.push_back(master);
+    }
+
+    return filteredVector;
+}
+
+std::vector<Welder> ReportWindow::MethodFilter(const std::vector<Welder> &lists, const std::string &controlDate)
+{
+    const std::chrono::year_month_day controlYmd = NDT::ParseIsoDate(controlDate);
+
+    std::vector<Welder> filteredVector;
+    for (const Welder &welder : lists)
+    {
+        if (!welder.certificateNumber.empty() && NDT::ParseIsoDate(welder.certificateEndDate) > controlYmd)
+            filteredVector.push_back(welder);
+    }
+
+    return filteredVector;
+}
+
 std::string ReportWindow::GetEquipmentString(const std::vector<Equipment> &list, const std::vector<std::string> &selectedIds)
 {
     std::string result;
@@ -776,6 +892,22 @@ std::string ReportWindow::GetEquipmentString(const std::vector<Equipment> &list,
         if (!result.empty())
             result += ", ";
         result += equipment.name + " зав.№" + equipment.serialNumber;
+    }
+
+    return result;
+}
+
+std::string ReportWindow::GetWeldersMarkString(const std::vector<Welder> &list, const std::vector<std::string> &selectedIds, const std::string &separator)
+{
+    std::string result;
+    for (const Welder &welder : list)
+    {
+        if (std::ranges::find(selectedIds, welder.id) == selectedIds.end())
+            continue;
+
+        if (!result.empty())
+            result += separator;
+        result += welder.personalCode;
     }
 
     return result;

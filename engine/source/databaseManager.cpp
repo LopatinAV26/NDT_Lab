@@ -1210,7 +1210,7 @@ void DatabaseManager::SaveControlMaps(const std::vector<ControlMap> &controlMaps
 
         sqlite3_bind_text(stmt, 4, cm.code.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int(stmt, 5, cm.diameter);
-        sqlite3_bind_double(stmt, 6, cm.thickness);
+        sqlite3_bind_double(stmt, 6, cm.nominalWallThickness);
         sqlite3_bind_text(stmt, 7, cm.description.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int(stmt, 8, cm.forVT ? 1 : 0);
         sqlite3_bind_int(stmt, 9, cm.forUT ? 1 : 0);
@@ -1276,7 +1276,7 @@ std::vector<ControlMap> DatabaseManager::LoadControlMaps()
 
         cm.code = GetColumnText(stmt, 3);
         cm.diameter = sqlite3_column_int(stmt, 4);
-        cm.thickness = static_cast<float>(sqlite3_column_double(stmt, 5));
+        cm.nominalWallThickness = static_cast<float>(sqlite3_column_double(stmt, 5));
         cm.description = GetColumnText(stmt, 6);
         cm.forVT = sqlite3_column_int(stmt, 7) != 0;
         cm.forUT = sqlite3_column_int(stmt, 8) != 0;

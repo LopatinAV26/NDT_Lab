@@ -1,6 +1,7 @@
 #include "report.hpp"
 
 #include <cmath>
+#include <algorithm>
 #include "laboratory.hpp"
 
 Report::Report()
@@ -10,7 +11,37 @@ Report::Report()
     methodValue = Method::VT;
     methodHeader = GetMethodReportTitle(methodValue);
     pipeCategory = Category::H;
+    weldType = WeldJointType::Butt;
+    sectionType1 = SectionType::SingleSeam;
+    sectionType2 = SectionType::SingleSeam;
+    weldingMethods = {WeldingMethod::RD};
     perimeter = static_cast<int>(std::lround(diameter * 3.141592f));
+}
+
+std::optional<int> Report::GetMinSeamDistance() const
+{
+    const int seamCount1 = GetSeamCount(sectionType1);
+    const int seamCount2 = GetSeamCount(sectionType2);
+
+    if (seamCount1 == 0 || seamCount2 == 0 || perimeter <= 0)
+        return std::nullopt;
+
+    const std::array<int, 2> coords1{coordSec1Weld1, coordSec1Weld2};
+    const std::array<int, 2> coords2{coordSec2Weld1, coordSec2Weld2};
+
+    int result = perimeter;
+    for (int i = 0; i < seamCount1; ++i)
+    {
+        for (int j = 0; j < seamCount2; ++j)
+        {
+            /// швы лежат на окружности стыка: расстояние по одной дуге равно разнице координат,
+            /// по встречной - остатку периметра; берём короткую
+            const int delta = std::abs(coords1.at(static_cast<size_t>(i)) - coords2.at(static_cast<size_t>(j)));
+            result = std::min(result, std::min(delta, perimeter - delta));
+        }
+    }
+
+    return result;
 }
 
 std::string Report::GetMethodReportTitle(Method value) const

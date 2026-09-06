@@ -104,7 +104,7 @@ struct ControlMap /// Технологическая карта контроля
 
 	std::string code; /// шифр техкарты
 	int diameter = 0;
-	float thickness = 0.f;
+	float nominalWallThickness = 0.f; /// номинальная толщина стенки, мм
 	std::string description;
 	bool forVT = false;
 	bool forUT = false;

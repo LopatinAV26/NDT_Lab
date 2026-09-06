@@ -77,6 +77,12 @@ public:
     /// (хранить нужно именно строковый код, а не число enum - см. GetDefectRTName)
     DefectRtSymbol ParseDefectRtSymbol(const std::string &name) const;
 
+    /// @brief Наименьшее расстояние между продольными швами двух свариваемых секций, мм.
+    /// @brief Швы лежат на окружности стыка, поэтому расстояние меряется по короткой дуге,
+    /// @brief а из всех пар швов берётся минимальная
+    /// @return nullopt, если хотя бы у одной секции продольных швов нет (бесшовная, фланец)
+    std::optional<int> GetMinSeamDistance() const;
+
     std::string id = NDT::GenerateUuidV7(); // UUID v7, генерируется на клиенте при создании записи
     std::chrono::sys_seconds updatedAt =
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()); // когда запись последний раз менялась
@@ -143,10 +149,8 @@ public:
     std::vector<std::string> equipmentIds{}; ///< id выбранного оборудования - из них строится equipment и восстанавливаются галочки
 
     static inline const std::string weldTypeTitle{"Тип сварного соединения, способ сварки"};
-    int weldTypeIndex = 0;
-    static inline const std::array<std::string, 4> weldType{"Стыковое", "Стыковое кольцевое", "Угловое", "Нахлёсточное"};
-    int weldingMethodIndex = 0;
-    std::vector<std::string> weldingMethod{"ручная дуговая", "автоматическая"};
+    WeldJointType weldType; ///< обозначение для бланка - GetWeldJointTypeStr
+    std::vector<WeldingMethod> weldingMethods{}; ///< способов может быть несколько: корень и заполнение варят по-разному
 
     static inline const std::string diameterTitle{"Диаметр, толщина стенки свариваемых элементов, мм"};
     int diameter = 1220;
@@ -155,12 +159,33 @@ public:
     float thicknes2 = 14.f;
 
     static inline const std::string weldersMarkTitle{"Шифр клейма сварщика/бригады сварщиков"};
-    std::string weldersMark1{"0763"};
-    std::string weldersMark2{""};
+    std::string weldersMark{};             ///< шифры клейм для бланка, каждый с новой строки
+    std::vector<std::string> weldersIds{}; ///< id выбранных сварщиков - из них строится weldersMark и восстанавливаются галочки
 
     static inline const std::string sectionTypeTitle{"Тип секций (одношовная или двухшовная). Координаты продольных швов, наименьшее расстояние между продольными швами, мм"};
-    static inline const std::array<std::string, 3> sectionType1{"Одношовная", "Двухшовная", "Бесшовная"};
-    static inline const std::array<std::string, 3> sectionType2{"Одношовная", "Двухшовная", "Бесшовная"};
+    SectionType sectionType1; ///< тип секции слева от стыка, обозначение для бланка - GetSectionTypeStr
+    SectionType sectionType2; ///< тип секции справа от стыка
+
+    std::string sectionNumber1;
+    std::string sectionNumber2;
+    int coordSec1Weld1 = 0;
+    int coordSec1Weld2 = 0;
+    int coordSec2Weld1 = 0;
+    int coordSec2Weld2 = 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
     static inline const std::string filmNumberTitle{"Номер снимка, координаты мерного пояса, мм"};
     static inline const std::string sensitivityTitle{"Чувствительность"};
@@ -189,12 +214,7 @@ public:
     int controlResultIndex = 0;
     static inline const std::array<std::string, 4> controlResult{"годен", "ремонт", "вырезать", "повторный контроль"};
 
-    std::string sectionNumber1;
-    std::string sectionNumber2;
-    int coordSec1Weld1 = 0;
-    int coordSec1Weld2 = 0;
-    int coordSec2Weld1 = 0;
-    int coordSec2Weld2 = 0;
+    
 
     int brightness = 0;
     int temperature = 0;
