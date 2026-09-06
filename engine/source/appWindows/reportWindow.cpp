@@ -220,7 +220,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
 
         changed |= ImGui::InputText("Наименование объекта", &report.objectName);
 
-        if (ImGui::BeginCombo("Категория трубопровода", GetCategoryAbbreviation(report.pipeCategory).c_str()))
+        if (ImGui::BeginCombo("Категория трубопровода", GetCategoryStr(report.pipeCategory).c_str()))
         {
             static constexpr std::array<Category, 5> categories{
                 Category::H,
@@ -233,7 +233,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             for (Category category : categories)
             {
                 const bool isSelected = (report.pipeCategory == category);
-                if (ImGui::Selectable(GetCategoryAbbreviation(category).c_str(), isSelected))
+                if (ImGui::Selectable(GetCategoryStr(category).c_str(), isSelected))
                 {
                     report.pipeCategory = category;
                     changed = true;

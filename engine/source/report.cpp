@@ -9,6 +9,7 @@ Report::Report()
     reportDate = controlDate;
     methodValue = Method::VT;
     methodHeader = GetMethodReportTitle(methodValue);
+    pipeCategory = Category::H;
     perimeter = static_cast<int>(std::lround(diameter * 3.141592f));
 }
 

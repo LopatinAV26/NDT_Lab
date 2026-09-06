@@ -125,7 +125,7 @@ void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
                             continue;
                         if (!categories.empty())
                             categories += ", ";
-                        categories += GetCategoryAbbreviation(category);
+                        categories += GetCategoryStr(category);
                     }
                     NDT::TextWithTooltipIfTruncated(categories);
                 }
@@ -212,7 +212,7 @@ void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen)
         for (size_t i = 0; i < categoryOptions.size(); ++i)
         {
             const auto &[category, member] = categoryOptions[i];
-            changed |= ImGui::Checkbox(GetCategoryAbbreviation(category).c_str(), &(controlMap.*member));
+            changed |= ImGui::Checkbox(GetCategoryStr(category).c_str(), &(controlMap.*member));
             if (i + 1 < categoryOptions.size())
                 ImGui::SameLine();
         }

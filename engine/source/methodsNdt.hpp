@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 
+/// @brief метод НК
 enum class Method : uint8_t
 {
     VT,   /// визуальный и измерительный контроль
@@ -18,6 +19,7 @@ enum class Method : uint8_t
     Count ///< количество элементов
 };
 
+/// @brief категория трубопровода
 enum class Category : uint8_t
 {
     H, /// высшая
@@ -27,5 +29,16 @@ enum class Category : uint8_t
     IV
 };
 
+/// @brief тип сварного соединения
+enum class WeldJointType : uint8_t
+{
+    Butt,   /// стыковое
+    Corner, /// угловое
+    Tjoint, /// тавровое
+    Lap,    /// нахлёсточное
+    Count
+};
+
 std::string GetMethodAbbreviation(Method value);
-std::string GetCategoryAbbreviation(Category value);
+std::string GetCategoryStr(Category value);
+std::string GetWeldJointTypeStr(WeldJointType value);

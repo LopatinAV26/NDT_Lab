@@ -39,7 +39,7 @@ std::string GetMethodAbbreviation(Method value)
     return result;
 }
 
-std::string GetCategoryAbbreviation(Category value)
+std::string GetCategoryStr(Category value)
 {
     std::string result;
 
@@ -59,6 +59,28 @@ std::string GetCategoryAbbreviation(Category value)
         break;
     case Category::IV:
         result = "IV";
+        break;
+    }
+    return result;
+}
+
+std::string GetWeldJointTypeStr(WeldJointType value)
+{
+    std::string result;
+
+    switch (value)
+    {
+    case WeldJointType::Butt:
+        result = "Стыковое";
+        break;
+    case WeldJointType::Corner:
+        result = "Угловое";
+        break;
+    case WeldJointType::Tjoint:
+        result = "Тавровое";
+        break;
+    case WeldJointType::Lap:
+        result = "Нахлёсточное";
         break;
     }
     return result;

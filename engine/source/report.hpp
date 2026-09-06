@@ -100,7 +100,7 @@ public:
     std::string objectName;
 
     std::string pipeCategoryTitle{"Категория трубопровода"};
-    Category pipeCategory = Category::H;
+    Category pipeCategory;
 
     std::string contractorOrganizationTitle{"Подрядная организация"};
     std::string contractorOrganization;
@@ -109,7 +109,7 @@ public:
     std::string customerOrganization;
 
     Method methodValue;
-    std::string methodHeader;
+    std::string methodHeader; ///< заголовок формируется при выборе метода
 
     std::string controllerNameTitle{"Контроль произвёл"};
     std::string controllerName; ///< дефектоскопист, который произвёл контроль
@@ -135,16 +135,16 @@ public:
     std::string technologicalControlMap{}; ///< шифр выбранной техкарты (ControlMap::code)
 
     static inline const std::string normativeDocsTitle{"Оценка качества по"};
-    std::string normativeDocs{};                ///< шифры выбранных нормативных документов через запятую
+    std::string normativeDocs{};                 ///< шифры выбранных нормативных документов через запятую
     std::vector<std::string> normativeDocsIds{}; ///< id выбранных документов - из них строится normativeDocs и восстанавливаются галочки
 
     static inline const std::string equipmentTitle{"Оборудование и материалы в соответствии с операционной технологической картой"};
-    std::string equipment{};                  ///< готовая строка для заключения: "Наименование №зав.номер" через запятую
-    std::vector<std::string> equipmentIds{};  ///< id выбранного оборудования - из них строится equipment и восстанавливаются галочки
+    std::string equipment{};                 ///< готовая строка для заключения: "Наименование №зав.номер" через запятую
+    std::vector<std::string> equipmentIds{}; ///< id выбранного оборудования - из них строится equipment и восстанавливаются галочки
 
     static inline const std::string weldTypeTitle{"Тип сварного соединения, способ сварки"};
     int weldTypeIndex = 0;
-    static inline const std::vector<std::string> weldType{"Стыковое", "Стыковое кольцевое", "Угловое"};
+    static inline const std::array<std::string, 4> weldType{"Стыковое", "Стыковое кольцевое", "Угловое", "Нахлёсточное"};
     int weldingMethodIndex = 0;
     std::vector<std::string> weldingMethod{"ручная дуговая", "автоматическая"};
 
