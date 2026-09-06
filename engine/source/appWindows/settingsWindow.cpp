@@ -117,6 +117,9 @@ void SettingsWindow::SetFont()
 		"NotoSans Bold Italic",
 		"ShareTechMonoRegular" };
 
+	/// список имён идёт параллельно AppFont - если перечисление пополнится, а массив нет, шрифт не выберется
+	static_assert(IM_ARRAYSIZE(fontNames) == static_cast<int>(AppFont::Count));
+
 	int currentFontIndex = static_cast<int>(appData.font);
 	if (ImGui::Combo("##Font#", &currentFontIndex, fontNames, IM_ARRAYSIZE(fontNames)))
 	{

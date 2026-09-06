@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <ctime>
 #include <filesystem>
+#include <algorithm>
+#include <type_traits>
 #include "imgui.h"
 
 namespace NDT
@@ -75,4 +77,76 @@ namespace NDT
 	/// @brief Рисует однострочный текст ячейки таблицы; если он не влезает по ширине столбца - при наведении
 	/// показывает тултип с полным содержимым (по аналогии с тем, как ImGui сам подсказывает обрезанные заголовки таблицы)
 	void TextWithTooltipIfTruncated(const std::string &text);
+
+	/// @brief Комбобокс со значениями перечисления, одиночный выбор
+	/// @param value текущее значение, меняется при выборе
+	/// @param getName функция получения строки по значению (GetCategoryStr, GetWeldJointTypeStr...)
+	/// @return true, если значение изменилось
+	template <typename E, typename GetName>
+	bool EnumCombo(const char *label, E &value, GetName getName)
+	{
+		static_assert(std::is_enum_v<E>, "EnumCombo работает только с перечислениями, оканчивающимися маркером Count");
+
+		bool changed = false;
+		if (ImGui::BeginCombo(label, getName(value).c_str()))
+		{
+			for (int i = 0; i < static_cast<int>(E::Count); ++i)
+			{
+				const auto item = static_cast<E>(i);
+
+				const bool isSelected = (value == item);
+				if (ImGui::Selectable(getName(item).c_str(), isSelected))
+				{
+					value = item;
+					changed = true;
+				}
+
+				if (isSelected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		return changed;
+	}
+
+	/// @brief Комбобокс с чекбоксами, множественный выбор
+	/// @param preview строка в свёрнутом комбобоксе - собирается вызывающим (GetWeldingMethodsStr)
+	/// @param values отмеченные значения, хранятся по порядку перечисления
+	/// @param getName функция получения строки по значению
+	/// @param getTooltip расшифровка значения, показывается при наведении
+	/// @return true, если набор изменился
+	template <typename E, typename GetName, typename GetTooltip>
+	bool EnumCheckboxCombo(const char *label, const char *preview, std::vector<E> &values, GetName getName, GetTooltip getTooltip)
+	{
+		static_assert(std::is_enum_v<E>, "EnumCheckboxCombo работает только с перечислениями, оканчивающимися маркером Count");
+
+		bool changed = false;
+		if (ImGui::BeginCombo(label, preview))
+		{
+			for (int i = 0; i < static_cast<int>(E::Count); ++i)
+			{
+				const auto item = static_cast<E>(i);
+
+				ImGui::PushID(i);
+
+				bool isSelected = std::ranges::find(values, item) != values.end();
+				if (ImGui::Checkbox(getName(item).c_str(), &isSelected))
+				{
+					if (isSelected)
+						/// вставляем по порядку перечисления - собранная строка не должна зависеть от порядка кликов
+						values.insert(std::ranges::upper_bound(values, item), item);
+					else
+						std::erase(values, item);
+
+					changed = true;
+				}
+
+				ImGui::SetItemTooltip("%s", getTooltip(item).c_str());
+
+				ImGui::PopID();
+			}
+			ImGui::EndCombo();
+		}
+		return changed;
+	}
 }

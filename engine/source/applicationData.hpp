@@ -19,7 +19,8 @@ enum class AppFont
 	NotoSansBold,
 	NotoSansItalic,
 	NotoSansBoldItalic,
-	ShareTechMonoRegular
+	ShareTechMonoRegular,
+	Count ///< количество элементов
 };
 
 enum class Vsync
