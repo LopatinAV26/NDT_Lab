@@ -8,10 +8,10 @@
 #include <cstdint>
 
 #include "utilities.hpp"
-#include "databaseManager.hpp"
 #include "report.hpp"
 
 class ApplicationData;
+class DatabaseManager;
 
 struct Employee : NDT::DbRecord ///< Сотрудник ЛНК
 {
@@ -173,6 +173,7 @@ class Laboratory
 {
 public:
 	explicit Laboratory(ApplicationData &appData);
+	~Laboratory(); ///< определён в .cpp - unique_ptr требует полный тип DatabaseManager именно там
 
 	void LoadDB();
 	void SaveDB();

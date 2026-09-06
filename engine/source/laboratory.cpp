@@ -3,6 +3,7 @@
 #include <format>
 
 #include "applicationData.hpp"
+#include "databaseManager.hpp"
 
 Laboratory::Laboratory(ApplicationData &appData)
 {
@@ -12,6 +13,8 @@ Laboratory::Laboratory(ApplicationData &appData)
 	// opticalDensityTitle = std::format("Оптическая плотность самого светлого участка сварного шва, не менее {:.1f} е.о.п./наибольшая оптическая плотность основного металла в зоне контроля, {:.1f} е.о.п/фактическая яркость негатоскопа {:d} кд/м2",
 	// weldOptDenMin, metalOptDenMax, negatoscopeBrightness);
 }
+
+Laboratory::~Laboratory() = default;
 
 void Laboratory::LoadDB()
 {
