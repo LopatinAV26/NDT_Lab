@@ -172,10 +172,10 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::TableNextColumn(); */
 
         /// ширина формы ограничена контентом - иначе полосы SeparatorText тянутся на всё окно
-        ImGui::BeginChild("##Форма заключения", ImVec2(ImGui::GetFontSize() * 32.0f, 0.0f), ImGuiChildFlags_AutoResizeY);
+        // ImGui::BeginChild("##Форма заключения", ImVec2(ImGui::GetFontSize() * 32.0f, 0.0f), ImGuiChildFlags_AutoResizeY);
 
         /// общая ширина контролов - иначе подписи справа выстраиваются рваной лесенкой
-        ImGui::PushItemWidth(ImGui::GetFontSize() * 18.0f);
+        // ImGui::PushItemWidth(ImGui::GetFontSize() * 18.0f);
 
         ImGui::SeparatorText("Даты");
 
@@ -276,8 +276,6 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
 
         ImGui::InputText("Номер детали 1", &report.sectionNumber1);
         ImGui::InputText("Номер детали 2", &report.sectionNumber2);
-
-        
 
         /// стык может варить бригада - отмечаем всех, кто на нём работал;
         /// в превью шифры через пробел, в бланк каждый уходит с новой строки
@@ -463,6 +461,107 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::TextWrapped("%s", report.equipment.c_str());
         ImGui::EndChild();
 
+        ImGui::TextUnformatted("Схема просвечивания");
+        for (int i = 0; i < static_cast<int>(ExposureScheme::Count); ++i)
+        {
+            const auto item = static_cast<ExposureScheme>(i);
+
+            ImGui::SameLine(); /// схем всего три - помещаются в строку под заголовком
+            if (ImGui::RadioButton(GetExposureSchemeStr(item).c_str(), report.exposureScheme == item))
+            {
+                report.exposureScheme = item;
+                changed = true;
+            }
+        }
+
+        if (ImGui::DragInt("Яркость негатоскопа", &report.negatoscopeBrightness, 1000, 50000, 1000000))
+        {
+            report.metalOptDenMax = NDT::GetMetalDensity(report.negatoscopeBrightness);
+            changed = true;
+        }
+
+        /// строк ровно столько, сколько замеров требует схема: при переходе на эллипс лишние отбрасываются
+        report.filmMeasurements.resize(static_cast<size_t>(GetFilmMeasurementCount(report.exposureScheme)));
+
+        if (ImGui::BeginTable("Оптические параметры снимка", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable))
+        {
+            ImGui::TableSetupColumn("Координата, мм");
+            ImGui::TableSetupColumn("Чувствительность контроля, мм");
+            ImGui::TableSetupColumn("Опт. плотность св. шва, е.о.п.");
+            ImGui::TableSetupColumn("Опт. плотность ОШЗ, е.о.п.");
+            ImGui::TableSetupColumn("Разница опт. плотности, е.о.п.");
+            ImGui::TableHeadersRow();
+
+            /// значение вне допуска показываем красным: снимок светлее минимума неинформативен,
+            /// плотнее предела для яркости негатоскопа - не просматривается
+            const auto densitySlider = [](const char *id, float &value, float minDensity, float maxDensity, const char *tooltip)
+            {
+                const bool outOfRange = value < minDensity || value > maxDensity;
+                if (outOfRange)
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                const bool edited = ImGui::DragFloat(id, &value, 0.01f, 0.f, 5.f, "%.2f");
+
+                if (outOfRange)
+                    ImGui::PopStyleColor(); /// снимаем цвет до подсказки - иначе её текст тоже станет красным
+
+                ImGui::SetItemTooltip("%s", tooltip);
+
+                return edited;
+            };
+
+            /// пределы одни на всю таблицу - собираем подсказки до цикла, а не в каждой ячейке
+            const std::string weldDensityTooltip = std::format("Минимальная оптическая плотность сварного шва должна быть не менее {:.1f} е.о.п.", report.weldOptDenMin);
+            const std::string hazDensityTooltip = std::format("Максимальная оптическая плотность основного металла должна быть не более {:.1f} е.о.п.", report.metalOptDenMax);
+
+            for (int row = 0; row < static_cast<int>(report.filmMeasurements.size()); ++row)
+            {
+                FilmMeasurement &measurement = report.filmMeasurements.at(row);
+
+                ImGui::PushID(row);
+
+                ImGui::TableNextRow();
+
+                ImGui::TableNextColumn();
+                ImGui::SetNextItemWidth(-FLT_MIN);
+
+                if (row > 0 && report.filmMeasurements.at(row).coord < report.filmMeasurements.at(row - 1).coord)
+                    report.filmMeasurements.at(row).coord = report.filmMeasurements.at(row - 1).coord;
+
+                changed |= ImGui::DragInt("##coord", &measurement.coord, 1, 0, report.perimeter, "%d");
+
+                ImGui::TableNextColumn();
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                changed |= ImGui::SliderFloat("##sensitivity", &measurement.sensitivity, 0.f, 1.f, "%.2f");
+
+                ImGui::TableNextColumn();
+                if (densitySlider("##weldDensity", measurement.weldDensity, report.weldOptDenMin, report.metalOptDenMax, weldDensityTooltip.c_str()))
+                {
+                    if (measurement.hazDensity < measurement.weldDensity)
+                        measurement.hazDensity = measurement.weldDensity;
+                    changed = true;
+                }
+
+                ImGui::TableNextColumn();
+                if (densitySlider("##hazDensity", measurement.hazDensity, report.weldOptDenMin, report.metalOptDenMax, hazDensityTooltip.c_str()))
+                {
+                    if (measurement.weldDensity > measurement.hazDensity)
+                        measurement.weldDensity = measurement.hazDensity;
+                    changed = true;
+                }
+
+                ImGui::TableNextColumn();
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                changed |= ImGui::SliderFloat("##densityDiff", &measurement.densityDiff, 0.0f, 2.0f, "%.2f");
+                ImGui::SetItemTooltip("Разница оптических плотностей должна быть не менее %.1f е.о.п.", 0.3f);
+
+                ImGui::PopID();
+            }
+
+            ImGui::EndTable();
+        }
+
         ImGui::SeparatorText("Исполнители");
 
         if (ImGui::BeginCombo("Контроль произвёл", report.controllerName.c_str())) ////////////////////////////////////////
@@ -597,9 +696,9 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             ImGui::EndCombo();
         }
 
-        ImGui::PopItemWidth();
+        // ImGui::PopItemWidth();
 
-        ImGui::EndChild();
+        // ImGui::EndChild();
 
         // ImGui::EndTable();
         //}

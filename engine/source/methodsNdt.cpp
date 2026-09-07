@@ -165,6 +165,57 @@ int GetSeamCount(SectionType value)
     return result;
 }
 
+std::string GetExposureSchemeStr(ExposureScheme value)
+{
+    std::string result;
+
+    switch (value)
+    {
+    case ExposureScheme::Panoramic:
+        result = "панорамное";
+        break;
+    case ExposureScheme::Frontal:
+        result = "фронтальное";
+        break;
+    case ExposureScheme::Ellipse:
+        result = "на эллипс";
+        break;
+    }
+    return result;
+}
+
+ExposureScheme ParseExposureScheme(const std::string &value)
+{
+    for (int i = 0; i < static_cast<int>(ExposureScheme::Count); ++i)
+    {
+        auto item = static_cast<ExposureScheme>(i);
+        if (GetExposureSchemeStr(item) == value)
+            return item;
+    }
+
+    return ExposureScheme::Panoramic;
+}
+
+int GetFilmMeasurementCount(ExposureScheme value)
+{
+    int result = 0;
+
+    switch (value)
+    {
+    case ExposureScheme::Panoramic:
+        result = 4;
+        break;
+    case ExposureScheme::Frontal:
+        result = 4;
+        break;
+    case ExposureScheme::Ellipse:
+        /// через две стенки стык снимают двумя плёнками - замеров столько же
+        result = 2;
+        break;
+    }
+    return result;
+}
+
 std::string GetWeldingMethodStr(WeldingMethod value)
 {
     std::string result;

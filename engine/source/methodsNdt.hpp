@@ -52,6 +52,15 @@ enum class SectionType : uint8_t
     Count
 };
 
+/// @brief схема просвечивания сварного соединения
+enum class ExposureScheme : uint8_t
+{
+    Panoramic, /// панорамное - источник внутри трубы, шов просвечивается за одну экспозицию
+    Frontal,   /// фронтальное - источник снаружи напротив шва
+    Ellipse,   /// на эллипс - через две стенки, шов на снимке раскрывается эллипсом
+    Count
+};
+
 /// @brief способ сварки, обозначения по РД 03-495-02
 enum class WeldingMethod : uint8_t
 {
@@ -91,6 +100,16 @@ SectionType ParseSectionType(const std::string &value);
 /// @brief Количество продольных швов у элемента - столько координат и нужно вводить в заключении
 /// @return 0 для бесшовной секции и фланца, 1 для одношовной и перехода, 2 для двухшовной
 int GetSeamCount(SectionType value);
+
+std::string GetExposureSchemeStr(ExposureScheme value);
+
+/// @brief Обратное преобразование к GetExposureSchemeStr - для разбора значения при загрузке из БД
+/// @return при неизвестной строке возвращает ExposureScheme::Panoramic
+ExposureScheme ParseExposureScheme(const std::string &value);
+
+/// @brief Количество замеров оптических параметров - столько строк и в таблице заключения
+/// @return по замеру на каждую четверть шва, а на эллипс - по замеру на каждую из двух плёнок
+int GetFilmMeasurementCount(ExposureScheme value);
 
 std::string GetWeldingMethodStr(WeldingMethod value);
 

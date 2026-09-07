@@ -68,7 +68,7 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 																	{20, reportData.filmNumberTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
 																	{15, reportData.sensitivityTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
 																	{30, reportData.opticalDensityTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
-																	{15, reportData.opticalDeltaTitle, 6, PoDoFo::PdfHorizontalAlignment::Center, PoDoFo::PdfVerticalAlignment::Bottom},
+																	{15, reportData.opticalDiffTitle, 6, PoDoFo::PdfHorizontalAlignment::Center, PoDoFo::PdfVerticalAlignment::Bottom},
 																	{50, reportData.defectsTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
 																	{20, reportData.acceptableTitle, 6, PoDoFo::PdfHorizontalAlignment::Center},
 																	{0, reportData.notesTitle, 6, PoDoFo::PdfHorizontalAlignment::Center}});

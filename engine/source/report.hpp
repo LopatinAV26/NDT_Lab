@@ -50,6 +50,20 @@ struct DefectRt : NDT::DbRecord
     std::string coordStr;
 };
 
+/// @brief Замеры на одном участке снимка - строка таблицы оптических параметров.
+/// Замеров у заключения несколько, поэтому в БД это отдельная таблица со связью
+/// по reportId - как у DefectRt
+struct FilmMeasurement : NDT::DbRecord
+{
+    std::string reportId; ///< внешний ключ на Report::id - какому заключению принадлежит замер
+
+    int coord = 0;           ///< координата мерного пояса, мм
+    float sensitivity = 0.f; ///< чувствительность контроля, мм
+    float weldDensity = 1.5f; ///< оптическая плотность сварного шва, е.о.п.
+    float hazDensity = 3.0f;  ///< оптическая плотность околошовной зоны, е.о.п.
+    float densityDiff = 0.3f;  ///< разница плотностей между эталоном чувствительности и основным металлом, е.о.п. - измеряется отдельно
+};
+
 struct DefUC
 {
     int defNameAmplitudeUCIndex = 0;
@@ -164,12 +178,32 @@ public:
     int coordSec2Weld1 = 0;
     int coordSec2Weld2 = 0;
 
+    static inline const std::string filmNumberTitle{"Номер снимка, координаты мерного пояса, мм"};
 
+    static inline const std::string sensitivityTitle{"Чувствительность"};
 
+    ExposureScheme exposureScheme; ///< от неё зависит количество замеров - GetFilmMeasurementCount
 
+    /// количество строк задаёт схема просвечивания, отсюда вектор, а не массив
+    std::vector<FilmMeasurement> filmMeasurements{};
 
+    float weldOptDenMin = 1.5f; ///< минимальная оптическая плотность самого светлого участка шва, е.о.п.
+    int negatoscopeBrightness = 100000;
+    float metalOptDenMax;
+    std::string opticalDensityTitle;
 
+    static inline const std::string opticalDiffTitle{"Разница оптических плотностей между эталоном чувствительности и основным металлом, е.о.п."};
+    int coordOfOpticalDiff1 = 0;
+    float opticalDiff1 = 0.0f;
 
+    int coordOfOpticalDiff2 = 0;
+    float opticalDiff2 = 0.0f;
+
+    int coordOfOpticalDiff3 = 0;
+    float opticalDiff3 = 0.0f;
+
+    int coordOfOpticalDiff4 = 0;
+    float opticalDiff4 = 0.0f;
 
 
 
@@ -178,17 +212,12 @@ public:
 
     
 
-    static inline const std::string filmNumberTitle{"Номер снимка, координаты мерного пояса, мм"};
-    static inline const std::string sensitivityTitle{"Чувствительность"};
-    float sensitivity = 0.0f;
+    
+    
 
-    float weldOptDenMin = 1.5f;
-    int negatoscopeBrightness = 100000;
-    float metalOptDenMax;
-    std::string opticalDensityTitle{};
+    
 
-    static inline const std::string opticalDeltaTitle{"Разница оптических плотностей между эталоном чувствительности и основным металлом, е.о.п."};
-    float opticalDelta = 0.0f;
+    
 
     static inline const std::string defectsTitle{"Описание выявленных дефектов"};
 

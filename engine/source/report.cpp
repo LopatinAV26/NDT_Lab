@@ -15,7 +15,9 @@ Report::Report()
     sectionType1 = SectionType::SingleSeam;
     sectionType2 = SectionType::SingleSeam;
     weldingMethods = {WeldingMethod::RD};
+    exposureScheme = ExposureScheme::Panoramic;
     perimeter = static_cast<int>(std::lround(diameter * 3.141592f));
+    metalOptDenMax = NDT::GetMetalDensity(negatoscopeBrightness); /// иначе до правки яркости предел остаётся мусором
 }
 
 std::optional<int> Report::GetMinSeamDistance() const
