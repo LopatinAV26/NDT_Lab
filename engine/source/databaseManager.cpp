@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include "sqlite3.h"
 #include "laboratory.hpp"
+#include "report.hpp"
 
 DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
 {
@@ -27,6 +28,7 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
     EnsureEquipmentTable();
     EnsureControlMapsTable();
     EnsureNormativeDocumentsTable();
+    EnsureFilmMeasurementsTable();
 }
 
 DatabaseManager::~DatabaseManager()
@@ -198,6 +200,18 @@ namespace
         {"certificate_end_mt", "TEXT"},
         {"has_lt", "INTEGER DEFAULT 1"},
         {"certificate_end_lt", "TEXT"},
+    };
+
+    const std::vector<std::pair<std::string, std::string>> filmMeasurementColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"report_id", "TEXT"},
+        {"coord", "INTEGER"},
+        {"sensitivity", "REAL"},
+        {"weld_density", "REAL"},
+        {"haz_density", "REAL"},
+        {"density_diff", "REAL"},
     };
 
     /// @brief sqlite3_column_text возвращает nullptr для NULL-значения (например, у старых строк
@@ -462,6 +476,39 @@ void DatabaseManager::EnsureNormativeDocumentsTable()
         std::string alterSql = "ALTER TABLE normative_documents ADD COLUMN " + normativeDocumentColumns[i].first + " " + normativeDocumentColumns[i].second + ";";
         sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
     }
+}
+
+void DatabaseManager::EnsureFilmMeasurementsTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS film_measurements (";
+    for (size_t i = 0; i < filmMeasurementColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += filmMeasurementColumns[i].first + " " + filmMeasurementColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureFilmMeasurementsTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < filmMeasurementColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE film_measurements ADD COLUMN " + filmMeasurementColumns[i].first + " " + filmMeasurementColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
+
+    // замеры всегда читаются пачкой по своему заключению - без индекса это полный перебор таблицы
+    sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS idx_film_measurements_report ON film_measurements(report_id);", nullptr, nullptr, nullptr);
 }
 
 void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
@@ -1437,6 +1484,159 @@ std::vector<NormativeDocument> DatabaseManager::LoadNormativeDocuments()
     sqlite3_finalize(stmt);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Normative documents loaded.");
     return normativeDocuments;
+}
+
+void DatabaseManager::SaveFilmMeasurements(const std::string &reportId, const std::vector<FilmMeasurement> &measurements)
+{
+    if (!db || reportId.empty())
+        return;
+
+    EnsureFilmMeasurementsTable();
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    std::string columnNames, placeholders, updateSet;
+
+    for (size_t i = 0; i < filmMeasurementColumns.size(); ++i)
+    {
+        const std::string &name = filmMeasurementColumns[i].first;
+
+        if (i > 0)
+        {
+            columnNames += ", ";
+            placeholders += ", ";
+        }
+        columnNames += name;
+        placeholders += "?";
+
+        if (name != "id") // первичный ключ не обновляем при конфликте, только вставляем один раз
+        {
+            if (!updateSet.empty())
+                updateSet += ", ";
+            updateSet += name + " = excluded." + name;
+        }
+    }
+
+    std::string insertSql = "INSERT INTO film_measurements (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveFilmMeasurements: prepare не удался: %s", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return;
+    }
+
+    for (const FilmMeasurement &m : measurements)
+    {
+        sqlite3_bind_text(stmt, 1, m.id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, 2, m.updatedAt.time_since_epoch().count());
+
+        if (m.deletedAt.has_value())
+            sqlite3_bind_int64(stmt, 3, m.deletedAt->time_since_epoch().count());
+        else
+            sqlite3_bind_null(stmt, 3);
+
+        /// связь берём из аргумента, а не из поля записи: замер приходит из вектора заключения
+        /// и своего reportId может ещё не знать
+        sqlite3_bind_text(stmt, 4, reportId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 5, m.coord);
+        sqlite3_bind_double(stmt, 6, m.sensitivity);
+        sqlite3_bind_double(stmt, 7, m.weldDensity);
+        sqlite3_bind_double(stmt, 8, m.hazDensity);
+        sqlite3_bind_double(stmt, 9, m.densityDiff);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveFilmMeasurements: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+        sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+
+    // строки, которых в списке больше нет (таблица сократилась при смене схемы просвечивания),
+    // удаляем физически - иначе следующая загрузка вернёт лишние замеры
+    std::string deleteSql = "DELETE FROM film_measurements WHERE report_id = ?";
+    if (!measurements.empty())
+    {
+        deleteSql += " AND id NOT IN (";
+        for (size_t i = 0; i < measurements.size(); ++i)
+            deleteSql += (i > 0) ? ", ?" : "?";
+        deleteSql += ")";
+    }
+    deleteSql += ";";
+
+    sqlite3_stmt *deleteStmt = nullptr;
+    if (sqlite3_prepare_v2(db, deleteSql.c_str(), -1, &deleteStmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_text(deleteStmt, 1, reportId.c_str(), -1, SQLITE_TRANSIENT);
+        for (size_t i = 0; i < measurements.size(); ++i)
+            sqlite3_bind_text(deleteStmt, static_cast<int>(i) + 2, measurements[i].id.c_str(), -1, SQLITE_TRANSIENT);
+
+        if (sqlite3_step(deleteStmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveFilmMeasurements: удаление лишних замеров не удалось: %s", sqlite3_errmsg(db));
+    }
+    else
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveFilmMeasurements: prepare удаления не удался: %s", sqlite3_errmsg(db));
+
+    sqlite3_finalize(deleteStmt);
+
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Film measurements saved.");
+}
+
+std::vector<FilmMeasurement> DatabaseManager::LoadFilmMeasurements(const std::string &reportId)
+{
+    std::vector<FilmMeasurement> measurements;
+
+    if (!db || reportId.empty())
+        return measurements;
+
+    std::string columnNames;
+    for (size_t i = 0; i < filmMeasurementColumns.size(); ++i)
+    {
+        if (i > 0)
+            columnNames += ", ";
+        columnNames += filmMeasurementColumns[i].first;
+    }
+
+    // ORDER BY id: UUID v7 начинается с отметки времени, поэтому сортировка по нему
+    // возвращает замеры в том порядке, в котором их создавали в форме
+    std::string selectSql = "SELECT " + columnNames + " FROM film_measurements WHERE report_id = ? ORDER BY id;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, selectSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadFilmMeasurements: prepare не удался: %s", sqlite3_errmsg(db));
+        return measurements;
+    }
+
+    sqlite3_bind_text(stmt, 1, reportId.c_str(), -1, SQLITE_TRANSIENT);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        FilmMeasurement m;
+
+        m.id = GetColumnText(stmt, 0);
+        m.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
+
+        if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            m.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
+
+        m.reportId = GetColumnText(stmt, 3);
+        m.coord = sqlite3_column_int(stmt, 4);
+        m.sensitivity = static_cast<float>(sqlite3_column_double(stmt, 5));
+        m.weldDensity = static_cast<float>(sqlite3_column_double(stmt, 6));
+        m.hazDensity = static_cast<float>(sqlite3_column_double(stmt, 7));
+        m.densityDiff = static_cast<float>(sqlite3_column_double(stmt, 8));
+
+        measurements.push_back(std::move(m));
+    }
+
+    sqlite3_finalize(stmt);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Film measurements loaded.");
+    return measurements;
 }
 
 void DatabaseManager::SaveLaboratoryInfo(const Laboratory &lab)

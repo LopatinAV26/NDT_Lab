@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <string>
 #include <vector>
 
 struct sqlite3;
@@ -11,6 +12,7 @@ struct Welder;
 struct Equipment;
 struct ControlMap;
 struct NormativeDocument;
+struct FilmMeasurement;
 class Laboratory;
 
 class DatabaseManager
@@ -47,6 +49,17 @@ public:
     void SaveNormativeDocuments(const std::vector<NormativeDocument> &normativeDocuments);
     std::vector<NormativeDocument> LoadNormativeDocuments();
 
+    /// @brief Записать замеры оптических параметров одного заключения.
+    /// Замеры, исчезнувшие из списка (таблица сокращается при переходе на схему "на эллипс"),
+    /// удаляются из базы физически: без своего заключения строка не имеет смысла,
+    /// а мягкое удаление нужно только там, где запись может понадобиться в старых заключениях
+    /// @param reportId id заключения - проставляется всем записям, поле FilmMeasurement::reportId не используется
+    void SaveFilmMeasurements(const std::string &reportId, const std::vector<FilmMeasurement> &measurements);
+
+    /// @brief Прочитать замеры одного заключения
+    /// @return порядок замеров восстанавливается сортировкой по id: UUID v7 монотонен по времени создания
+    std::vector<FilmMeasurement> LoadFilmMeasurements(const std::string &reportId);
+
 private:
     /// @brief Создать таблицу laboratory_info, если её ещё нет, и дозаполнить отсутствующие
     /// колонки в уже существующей таблице (ALTER TABLE ADD COLUMN). Таблица хранит одну запись -
@@ -76,6 +89,10 @@ private:
 
     /// @brief Аналогично EnsureEmployeesTable, но для таблицы normative_documents
     void EnsureNormativeDocumentsTable();
+
+    /// @brief Аналогично EnsureEmployeesTable, но для таблицы film_measurements.
+    /// Дополнительно создаёт индекс по report_id - выборка всегда идёт по заключению
+    void EnsureFilmMeasurementsTable();
 
     sqlite3 *db = nullptr;
 };
