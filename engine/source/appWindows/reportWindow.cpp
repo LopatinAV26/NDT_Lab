@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <SDL3/SDL.h>
+#include "podofo/podofo.h"
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "laboratory.hpp"
@@ -141,7 +143,28 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
     ImGui::BeginDisabled(indexesList.empty());
     if (ImGui::Button("Сохранить выбранные в PDF")) //////////////////////////////////////
     {
-        builder.BuildReportRGC(repList, indexesList);
+        /// ошибка PoDoFo приходит исключением: без перехвата она роняет всё приложение через abort()
+        std::string error;
+        try
+        {
+            builder.BuildReportRGC(repList, indexesList);
+        }
+        catch (const PoDoFo::PdfError &e)
+        {
+            error = std::format("{} ({})", e.what(), e.GetName());
+            for (const PoDoFo::PdfErrorInfo &info : e.GetCallStack())
+                error += std::format("\n{}:{} {}", info.GetFilePath(), info.GetLine(), info.GetInformation());
+        }
+        catch (const std::exception &e)
+        {
+            error = e.what();
+        }
+
+        if (!error.empty())
+        {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Не удалось сохранить PDF: %s", error.c_str());
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Сохранение в PDF", ("Не удалось сохранить PDF:\n" + error).c_str(), nullptr);
+        }
     }
     ImGui::EndDisabled();
 
@@ -237,39 +260,31 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
         changed |= NDT::EnumCheckboxCombo("Способ сварки", weldingMethodsPreview.c_str(),
                                           report.weldingMethods, GetWeldingMethodStr, GetWeldingMethodName);
 
-        if (ImGui::DragInt("Диаметр", &report.diameter, 1.f, 10, 1500, "%d мм"))
+        if (ImGui::DragInt("Диаметр", &report.diameter, 1.f, 10, 1500, "%d мм", ImGuiSliderFlags_AlwaysClamp))
         {
-            if (report.diameter < 10)
-                report.diameter = 10;
-            if (report.diameter > 1500)
-                report.diameter = 1500;
             report.perimeter = static_cast<int>(std::lround(report.diameter * 3.141592f));
+            report.SetDefaultMeasurementCoords(); /// старые координаты считались от прежней длины шва
             report.technologicalControlMap = "";
             changed = true;
         }
 
-        if (ImGui::DragInt("Длина шва", &report.perimeter, 1.f, 31, 4712, "%d мм"))
+        if (ImGui::DragInt("Длина шва", &report.perimeter, 1.f, 31, 4712, "%d мм", ImGuiSliderFlags_AlwaysClamp))
         {
-            if (report.perimeter < 31)
-                report.perimeter = 31;
-            if (report.perimeter > 4712)
-                report.perimeter = 4712;
             report.diameter = static_cast<int>(std::lround(report.perimeter / 3.141592f));
+            report.SetDefaultMeasurementCoords(); /// старые координаты считались от прежней длины шва
             report.technologicalControlMap = "";
             changed = true;
         }
 
         /// толщины свариваемых элементов могут различаться - по наименьшей из них подбирается техкарта
-        if (ImGui::DragFloat("Толщина 1", &report.thicknes1, 0.1f, 1.0f, 50.0f, "%.1f мм"))
+        if (ImGui::DragFloat("Толщина 1", &report.thicknes1, 0.1f, 1.0f, 50.0f, "%.1f мм", ImGuiSliderFlags_AlwaysClamp))
         {
-            report.thicknes1 = std::clamp(report.thicknes1, 1.0f, 50.0f);
             report.technologicalControlMap = "";
             changed = true;
         }
 
-        if (ImGui::DragFloat("Толщина 2", &report.thicknes2, 0.1f, 1.0f, 50.0f, "%.1f мм"))
+        if (ImGui::DragFloat("Толщина 2", &report.thicknes2, 0.1f, 1.0f, 50.0f, "%.1f мм", ImGuiSliderFlags_AlwaysClamp))
         {
-            report.thicknes2 = std::clamp(report.thicknes2, 1.0f, 50.0f);
             report.technologicalControlMap = "";
             changed = true;
         }
@@ -325,11 +340,11 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
         }
 
         ImGui::BeginDisabled(seamCount1 < 1);
-        changed |= ImGui::DragInt("Секция 1, шов 1", &report.coordSec1Weld1, 1.f, 0, report.perimeter, "%d мм");
+        changed |= ImGui::DragInt("Секция 1, шов 1", &report.coordSec1Weld1, 1.f, 0, report.perimeter, "%d мм", ImGuiSliderFlags_AlwaysClamp);
         ImGui::EndDisabled();
 
         ImGui::BeginDisabled(seamCount1 < 2);
-        changed |= ImGui::DragInt("Секция 1, шов 2", &report.coordSec1Weld2, 1.f, 0, report.perimeter, "%d мм");
+        changed |= ImGui::DragInt("Секция 1, шов 2", &report.coordSec1Weld2, 1.f, 0, report.perimeter, "%d мм", ImGuiSliderFlags_AlwaysClamp);
         ImGui::EndDisabled();
 
         const int seamCount2 = GetSeamCount(report.sectionType2);
@@ -343,11 +358,11 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
         }
 
         ImGui::BeginDisabled(seamCount2 < 1);
-        changed |= ImGui::DragInt("Секция 2, шов 1", &report.coordSec2Weld1, 1.f, 0, report.perimeter, "%d мм");
+        changed |= ImGui::DragInt("Секция 2, шов 1", &report.coordSec2Weld1, 1.f, 0, report.perimeter, "%d мм", ImGuiSliderFlags_AlwaysClamp);
         ImGui::EndDisabled();
 
         ImGui::BeginDisabled(seamCount2 < 2);
-        changed |= ImGui::DragInt("Секция 2, шов 2", &report.coordSec2Weld2, 1.f, 0, report.perimeter, "%d мм");
+        changed |= ImGui::DragInt("Секция 2, шов 2", &report.coordSec2Weld2, 1.f, 0, report.perimeter, "%d мм", ImGuiSliderFlags_AlwaysClamp);
         ImGui::EndDisabled();
 
         /// величина вычисляемая, руками не правится - поэтому LabelText, а не поле ввода
@@ -474,42 +489,37 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             }
         }
 
-        if (ImGui::DragInt("Яркость негатоскопа", &report.negatoscopeBrightness, 1000, 50000, 1000000))
+        if (ImGui::DragInt("Яркость негатоскопа", &report.negatoscopeBrightness, 1000, 50000, 1000000, "%d", ImGuiSliderFlags_AlwaysClamp))
         {
             report.metalOptDenMax = NDT::GetMetalDensity(report.negatoscopeBrightness);
             changed = true;
         }
 
         /// строк ровно столько, сколько замеров требует схема: при переходе на эллипс лишние отбрасываются
-        report.filmMeasurements.resize(static_cast<size_t>(GetFilmMeasurementCount(report.exposureScheme)));
-
-        if (ImGui::BeginTable("Оптические параметры снимка", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable, ImVec2(ImGui::CalcItemWidth(), 0.f)))
+        /// при смене числа строк прежние координаты делили шов на другое число долей - расставляем заново
+        const size_t measurementCount = static_cast<size_t>(report.GetMeasurementCount());
+        if (report.filmMeasurements.size() != measurementCount)
         {
-            ImGui::TableSetupColumn("Координата, мм");
+            report.filmMeasurements.resize(measurementCount);
+            report.SetDefaultMeasurementCoords();
+        }
+
+        /// на эллипс весь шов на двух снимках - замер привязан к экспозиции, а не к координате мерного пояса
+        const bool isEllipse = report.exposureScheme == ExposureScheme::Ellipse;
+
+        /// рядом с координатой показываем строку заключения, куда попадёт замер; на эллипс её и так видно в первой колонке
+        const int columnCount = isEllipse ? 5 : 6;
+
+        if (ImGui::BeginTable("Оптические параметры снимка", columnCount, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable, ImVec2(ImGui::CalcItemWidth(), 0.f)))
+        {
+            ImGui::TableSetupColumn(isEllipse ? "Экспозиция" : "Координата, мм");
+            if (!isEllipse)
+                ImGui::TableSetupColumn(report.GetSectionTitle().c_str());
             ImGui::TableSetupColumn("Чувствительность контроля, мм");
             ImGui::TableSetupColumn("Опт. плотность св. шва, е.о.п.");
             ImGui::TableSetupColumn("Опт. плотность ОШЗ, е.о.п.");
             ImGui::TableSetupColumn("Разница опт. плотности, е.о.п.");
             ImGui::TableHeadersRow();
-
-            /// значение вне допуска показываем красным: снимок светлее минимума неинформативен,
-            /// плотнее предела для яркости негатоскопа - не просматривается
-            const auto densitySlider = [](const char *id, float &value, float minDensity, float maxDensity, const char *tooltip)
-            {
-                const bool outOfRange = value < minDensity || value > maxDensity;
-                if (outOfRange)
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                const bool edited = ImGui::DragFloat(id, &value, 0.01f, 0.f, 5.f, "%.2f");
-
-                if (outOfRange)
-                    ImGui::PopStyleColor(); /// снимаем цвет до подсказки - иначе её текст тоже станет красным
-
-                ImGui::SetItemTooltip("%s", tooltip);
-
-                return edited;
-            };
 
             /// пределы одни на всю таблицу - собираем подсказки до цикла, а не в каждой ячейке
             const std::string weldDensityTooltip = std::format("Минимальная оптическая плотность сварного шва должна быть не менее {:.1f} е.о.п.", report.weldOptDenMin);
@@ -524,42 +534,110 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
                 ImGui::TableNextRow();
 
                 ImGui::TableNextColumn();
-                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (isEllipse)
+                {
+                    ImGui::AlignTextToFramePadding(); /// текст по высоте вровень со слайдерами соседних колонок
+                    ImGui::Text("%d экспозиция", row + 1);
+                }
+                else
+                {
+                    ImGui::SetNextItemWidth(-FLT_MIN);
 
-                if (row > 0 && report.filmMeasurements.at(row).coord < report.filmMeasurements.at(row - 1).coord)
-                    report.filmMeasurements.at(row).coord = report.filmMeasurements.at(row - 1).coord;
+                    if (row > 0 && report.filmMeasurements.at(row).coord < report.filmMeasurements.at(row - 1).coord)
+                        report.filmMeasurements.at(row).coord = report.filmMeasurements.at(row - 1).coord;
 
-                changed |= ImGui::DragInt("##coord", &measurement.coord, 1, 0, report.perimeter, "%d");
+                    changed |= ImGui::DragInt("##coord", &measurement.coord, 1, 0, report.perimeter, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+                    ImGui::TableNextColumn();
+                    const int section = report.GetSection(measurement.coord);
+
+                    /// в строку заключения печатается только первый попавший в неё замер - второй потеряется
+                    bool sectionTaken = false;
+                    for (int prev = 0; prev < row; ++prev)
+                        sectionTaken |= report.GetSection(report.filmMeasurements.at(prev).coord) == section;
+
+                    ImGui::AlignTextToFramePadding();
+                    if (sectionTaken)
+                    {
+                        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", report.GetSectionRangeStr(section).c_str());
+                        ImGui::SetItemTooltip("В эту строку заключения уже попал предыдущий замер - этот не будет напечатан");
+                    }
+                    else
+                        ImGui::TextUnformatted(report.GetSectionRangeStr(section).c_str());
+                }
 
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                changed |= ImGui::SliderFloat("##sensitivity", &measurement.sensitivity, 0.f, 1.f, "%.2f");
+                changed |= ImGui::SliderFloat("##sensitivity", &measurement.sensitivity, 0.f, 1.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 
+                /// значение вне допуска показываем красным: снимок светлее минимума неинформативен,
+                /// плотнее предела для яркости негатоскопа - не просматривается
                 ImGui::TableNextColumn();
-                if (densitySlider("##weldDensity", measurement.weldDensity, report.weldOptDenMin, report.metalOptDenMax, weldDensityTooltip.c_str()))
+                const bool weldOutOfRange = measurement.weldDensity < report.weldOptDenMin || measurement.weldDensity > report.metalOptDenMax;
+                if (weldOutOfRange)
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::SliderFloat("##weldDensity", &measurement.weldDensity, 0.f, 5.f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
                 {
                     if (measurement.hazDensity < measurement.weldDensity)
                         measurement.hazDensity = measurement.weldDensity;
                     changed = true;
                 }
+                if (weldOutOfRange)
+                    ImGui::PopStyleColor(); /// снимаем цвет до подсказки - иначе её текст тоже станет красным
+                ImGui::SetItemTooltip("%s", weldDensityTooltip.c_str());
 
                 ImGui::TableNextColumn();
-                if (densitySlider("##hazDensity", measurement.hazDensity, report.weldOptDenMin, report.metalOptDenMax, hazDensityTooltip.c_str()))
+                const bool hazOutOfRange = measurement.hazDensity < report.weldOptDenMin || measurement.hazDensity > report.metalOptDenMax;
+                if (hazOutOfRange)
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::SliderFloat("##hazDensity", &measurement.hazDensity, 0.f, 5.f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
                 {
                     if (measurement.weldDensity > measurement.hazDensity)
                         measurement.weldDensity = measurement.hazDensity;
                     changed = true;
                 }
+                if (hazOutOfRange)
+                    ImGui::PopStyleColor();
+                ImGui::SetItemTooltip("%s", hazDensityTooltip.c_str());
 
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                changed |= ImGui::SliderFloat("##densityDiff", &measurement.densityDiff, 0.0f, 2.0f, "%.2f");
+                changed |= ImGui::SliderFloat("##densityDiff", &measurement.densityDiff, 0.0f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
                 ImGui::SetItemTooltip("Разница оптических плотностей должна быть не менее %.1f е.о.п.", 0.3f);
 
                 ImGui::PopID();
             }
 
             ImGui::EndTable();
+        }
+
+        if (isEllipse && report.ellipseExposureCount < Report::maxEllipseExposures && ImGui::Button("Добавить экспозицию"))
+        {
+            ++report.ellipseExposureCount; /// строка замера добавится в следующем кадре через resize выше
+            changed = true;
+        }
+
+        if (isEllipse && report.ellipseExposureCount > GetFilmMeasurementCount(ExposureScheme::Ellipse))
+        {
+            ImGui::SameLine();
+
+            /// удаляется последняя экспозиция; дефекты на ней иначе молча переехали бы на предыдущую
+            const int lastExposure = report.ellipseExposureCount - 1;
+            const bool hasDefects = std::any_of(report.defRGCList.begin(), report.defRGCList.end(), [&](const DefectRt &defect)
+                                                { return report.GetDefectSection(defect) == lastExposure; });
+
+            ImGui::BeginDisabled(hasDefects);
+            if (ImGui::Button("Удалить экспозицию"))
+            {
+                --report.ellipseExposureCount; /// лишняя строка замера отрежется в следующем кадре через resize выше
+                changed = true;
+            }
+            ImGui::EndDisabled();
+
+            if (hasDefects && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                ImGui::SetTooltip("На %d экспозиции есть дефекты - сначала удалите их или перенесите на другую экспозицию", lastExposure + 1);
         }
 
         ImGui::SeparatorText("Исполнители");

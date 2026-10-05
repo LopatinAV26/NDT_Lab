@@ -90,6 +90,17 @@ namespace NDT
 		return std::format("{:02d}.{:02d}.{:04d}", date.tm_mday, date.tm_mon + 1, date.tm_year + 1900);
 	}
 
+	std::string MakeSafeFileName(std::string name)
+	{
+		/// все запрещённые символы - ASCII, а байты многобайтных UTF-8 символов в этот диапазон
+		/// не попадают, поэтому заменять можно побайтно, не ломая кириллицу
+		constexpr std::string_view forbidden = "\\/:*?\"<>|";
+		for (char &c : name)
+			if (forbidden.find(c) != std::string_view::npos || static_cast<unsigned char>(c) < 0x20)
+				c = '-';
+		return name;
+	}
+
 	std::vector<std::string> CalculateNumString(int diam, int range)
 	{
 		float perimeter = diam * 3.14159265358979323846f;

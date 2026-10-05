@@ -12,8 +12,6 @@ public:
     void Show(Report &report, bool &isOpen);
 
 private:
-    void ConstructDefectRT(const Report &report, DefectRt &input);
-
     ImGuiWindowFlags window_flags =
         // ImGuiWindowFlags_NoDecoration |
         // ImGuiWindowFlags_NoTitleBar |

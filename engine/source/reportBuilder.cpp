@@ -92,23 +92,33 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 
 		/// Каркас для получения двумерного массива ячеек, для получения координат каждой
 		std::vector<std::vector<Cell>> rowCol;
-		int num = static_cast<int>(NDT::CalculateNumString(reportData.diameter).size()); /// количество строк в таблице, зависит от диаметра свариваемых труб
+		int num = reportData.GetSectionCount(); /// строка таблицы - участок мерного пояса, их число зависит от длины шва
 		rowCol.reserve(num);
 		for (int i = 0; i < num; ++i)
 		{
+			/// колонки 7-9 заполняются только в строке, где делался замер оптических параметров
+			const FilmMeasurement *measurement = reportData.GetSectionMeasurement(i);
+			const std::string sensitivity = measurement ? std::format("{:.2f}", measurement->sensitivity) : "";
+			const std::string density = measurement ? std::format("{:.1f}/{:.1f}", measurement->weldDensity, measurement->hazDensity) : "";
+			const std::string densityDiff = measurement ? std::format("{:.1f}", measurement->densityDiff) : "";
+
+			const std::string acceptable = reportData.IsSectionAcceptable(i) ? "Допустим" : "Не допустим";
+
+			const std::string &note = static_cast<size_t>(i) < reportData.sectionNotes.size() ? reportData.sectionNotes.at(static_cast<size_t>(i)) : std::string{};
+
 			pdfManager.TableNewRow();
 			rowCol.push_back(pdfManager.TableCreateRow(3, {{rowCells.at(0).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
 														   {rowCells.at(1).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
 														   {rowCells.at(2).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
 														   {rowCells.at(3).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
 														   {rowCells.at(4).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
-														   {rowCells.at(5).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
-														   {rowCells.at(6).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
-														   {rowCells.at(7).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
-														   {rowCells.at(8).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
-														   {rowCells.at(9).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
-														   {rowCells.at(10).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center},
-														   {rowCells.at(11).w, "", 8, PoDoFo::PdfHorizontalAlignment::Center}}));
+														   {rowCells.at(5).w, reportData.GetSectionRangeStr(i), 8, PoDoFo::PdfHorizontalAlignment::Center},
+														   {rowCells.at(6).w, sensitivity, 8, PoDoFo::PdfHorizontalAlignment::Center},
+														   {rowCells.at(7).w, density, 8, PoDoFo::PdfHorizontalAlignment::Center},
+														   {rowCells.at(8).w, densityDiff, 8, PoDoFo::PdfHorizontalAlignment::Center},
+														   {rowCells.at(9).w, reportData.GetSectionDefectsStr(i), 8, PoDoFo::PdfHorizontalAlignment::Center},
+														   {rowCells.at(10).w, acceptable, 8, PoDoFo::PdfHorizontalAlignment::Center},
+														   {rowCells.at(11).w, note.empty() ? "-" : note, 8, PoDoFo::PdfHorizontalAlignment::Center}}));
 		}
 
 		pdfManager.cursorRowY -= 3.0 * num;
@@ -172,6 +182,6 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 
 		pdfManager.NewPage();
 
-		pdfManager.SaveDocument(std::format("{:s} {:s} от {:s}.pdf", NDT::GetCurrentIsoDate(), reportData.reportNumber, reportData.reportDate));
+		pdfManager.SaveDocument(NDT::MakeSafeFileName(std::format("{:s} от {:s}.pdf", reportData.reportNumber, reportData.reportDate)));
 	}
 }

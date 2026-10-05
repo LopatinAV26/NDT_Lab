@@ -1,8 +1,24 @@
 #include "defectCreateWindow.hpp"
 
+#include <algorithm>
 #include <cfloat>
 #include <format>
 #include "laboratory.hpp"
+#include "imgui_stdlib.h"
+
+namespace
+{
+/// @brief Поле размера дефекта. Шаг кнопок меняется на границе 3 мм, как и шаг округления,
+/// а само округление по РД делается, когда ввод закончен - иначе число правилось бы во время набора
+void DefectSizeInput(const char *label, float &value)
+{
+    const float step = value <= 3.f + 1e-3f ? 0.1f : 0.5f;
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    ImGui::InputFloat(label, &value, step, step, "%.1f");
+    if (ImGui::IsItemDeactivatedAfterEdit())
+        value = RoundDefectSize(value);
+}
+}
 
 void DefectCreateWindow::Show(Report &report, bool &isOpen)
 {
@@ -12,39 +28,69 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
 
     if (ImGui::Begin("Конструктор дефектов", &isOpen, window_flags))
     {
-        int tableRows = 0;
+        const int tableRows = static_cast<int>(report.defRGCList.size());
+        int removeRow = -1;
 
-        if (ImGui::BeginTable("Defect creator", 7, ImGuiTableFlags_Borders))
+        /// на эллипс дефект привязывается к экспозиции, а не к координате мерного пояса
+        const bool isEllipse = report.exposureScheme == ExposureScheme::Ellipse;
+
+        /// рядом с координатой показываем строку заключения, куда попадёт дефект; на эллипс её выбирают в первой колонке
+        const int columnCount = isEllipse ? 8 : 9;
+
+        if (ImGui::BeginTable("Defect creator", columnCount, ImGuiTableFlags_Borders))
         {
-            ImGui::TableSetupColumn("Координата");
+            ImGui::TableSetupColumn(isEllipse ? "Экспозиция" : "Координата");
+            if (!isEllipse)
+                ImGui::TableSetupColumn(report.GetSectionTitle().c_str());
             ImGui::TableSetupColumn("Обозначение");
             ImGui::TableSetupColumn("Протяжённость");
             ImGui::TableSetupColumn("Длина");
             ImGui::TableSetupColumn("Ширина");
             ImGui::TableSetupColumn("Превышение\nплотности");
-            ImGui::TableSetupColumn("Запись дефекта");
+            ImGui::TableSetupColumn("Допустим");
+            ImGui::TableSetupColumn("##Удалить", ImGuiTableColumnFlags_WidthFixed);
             ImGui::TableHeadersRow();
 
-            tableRows = static_cast<int>(report.defRGCList.size());
             for (int row = 0; row < tableRows; ++row)
             {
                 DefectRt &def = report.defRGCList.at(row);
+                const DefectRtFields fields = GetDefectRtFields(def.symbol);
+
                 ImGui::TableNextRow();
                 ImGui::PushID(row);
 
-                ImGui::TableSetColumnIndex(0); /////////////////////////////////////////////////////////////////
+                ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                if (ImGui::InputInt("##Координата#", &def.coord, 1, 100))
+                if (isEllipse)
                 {
-                    if (def.coord < 0)
-                        def.coord = 0;
-                    if (def.coord > report.perimeter)
-                        def.coord = report.perimeter;
+                    const int section = report.GetDefectSection(def);
+                    if (ImGui::BeginCombo("##Экспозиция", report.GetSectionRangeStr(section).c_str()))
+                    {
+                        for (int i = 0; i < report.GetSectionCount(); ++i)
+                        {
+                            const bool isSelected = (section == i);
+                            if (ImGui::Selectable(report.GetSectionRangeStr(i).c_str(), isSelected))
+                                def.exposure = i;
+
+                            if (isSelected)
+                                ImGui::SetItemDefaultFocus();
+                        }
+                        ImGui::EndCombo();
+                    }
+                }
+                else
+                {
+                    if (ImGui::InputInt("##Координата", &def.coord, 1, 100))
+                        def.coord = std::clamp(def.coord, 0, report.perimeter);
+
+                    ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
+                    ImGui::AlignTextToFramePadding();
+                    ImGui::TextUnformatted(report.GetSectionRangeStr(report.GetDefectSection(def)).c_str());
                 }
 
-                ImGui::TableSetColumnIndex(1); //////////////////////////////////////////////////////////////////////
+                ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                if (ImGui::BeginCombo("##Обозначение#", report.GetDefectRTName(def.symbol).c_str()))
+                if (ImGui::BeginCombo("##Обозначение", report.GetDefectRTName(def.symbol).c_str()))
                 {
                     for (int i = 0; i < static_cast<int>(DefectRtSymbol::Count); ++i)
                     {
@@ -59,30 +105,27 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
                     ImGui::EndCombo();
                 }
 
-                //bool length = (def.symbol == DefectRtSymbol::Ac || def.symbol == DefectRtSymbol::Ab) ? false : true;
-               // ImGui::BeginDisabled(length);
-                ImGui::TableSetColumnIndex(2); /////////////////////////////////////////////////////////////////
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::InputFloat("##Протяжённость#", &def.length, 0.1f, 1.0f, "%.1f");
-                if (def.length < 0.0f)
-                    def.length = 0.0f;
-               //ImGui::EndDisabled();
+                /// поля, которые у этого типа не печатаются, блокируются, но не стираются:
+                /// при возврате к прежнему типу введённое вернётся
+                ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
+                ImGui::BeginDisabled(!fields.length);
+                DefectSizeInput("##Протяжённость", def.length);
+                ImGui::EndDisabled();
 
-                ImGui::TableSetColumnIndex(3); //////////////////////////////////////////////////////////
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::InputFloat("##Длина#", &def.width, 0.1f, 1.0f, "%.1f");
-                if (def.width < 0.0f)
-                    def.width = 0.0f;
+                ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
+                ImGui::BeginDisabled(!fields.size);
+                DefectSizeInput("##Длина", def.width);
+                ImGui::EndDisabled();
 
-                ImGui::TableSetColumnIndex(4); //////////////////////////////////////////////////////
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::InputFloat("##Ширина#", &def.height, 0.1f, 1.0f, "%.1f");
-                if (def.height < 0.0f)
-                    def.height = 0.0f;
+                ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
+                ImGui::BeginDisabled(!fields.size);
+                DefectSizeInput("##Ширина", def.height);
+                ImGui::EndDisabled();
 
-                ImGui::TableSetColumnIndex(5); //////////////////////////////////////////////////////
+                ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
+                ImGui::BeginDisabled(!fields.sign);
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                if (ImGui::BeginCombo("##Окончание#", def.endGreaterThan ? ">" : "≤"))
+                if (ImGui::BeginCombo("##Окончание", def.endGreaterThan ? ">" : "≤"))
                 {
                     if (ImGui::Selectable("≤", !def.endGreaterThan))
                         def.endGreaterThan = false;
@@ -91,77 +134,75 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
 
                     ImGui::EndCombo();
                 }
+                ImGui::EndDisabled();
 
-                ConstructDefectRT(report, def);
+                ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
+                ImGui::Checkbox("##Допустим", &def.acceptable);
 
-                ImGui::TableSetColumnIndex(6); //////////////////////////////
-                if (tableRows > 0)
-                {
-                    ImGui::TextUnformatted(std::format("({:d}) {}", def.coord, def.record).c_str()); // безопаснее
-                }
+                ImGui::TableNextColumn(); /////////////////////////////////////////////////////////////////
+                if (ImGui::SmallButton("Удалить"))
+                    removeRow = row; /// удаляем после цикла: def - ссылка на элемент вектора
+
                 ImGui::PopID();
             }
 
             ImGui::EndTable();
         }
 
+        if (removeRow >= 0)
+            report.defRGCList.erase(report.defRGCList.begin() + removeRow);
+
         if (ImGui::Button("Добавить"))
         {
-            const int prevCoord = tableRows > 0 ? report.defRGCList.at(tableRows - 1).coord : 0;
+            DefectRt def;
+            if (!report.defRGCList.empty())
+            {
+                def.coord = report.defRGCList.back().coord;
+                def.exposure = report.defRGCList.back().exposure;
+            }
+            report.defRGCList.push_back(def);
+        }
 
-            tableRows++;
-            report.defRGCList.resize(tableRows);
-            report.defRGCList.back().coord = prevCoord;
+        ImGui::SeparatorText("Как будет в заключении");
+
+        /// примечаний ровно столько, сколько участков: при смене диаметра лишние отбрасываются
+        const int sectionCount = report.GetSectionCount();
+        report.sectionNotes.resize(static_cast<size_t>(sectionCount));
+
+        if (ImGui::BeginTable("Defect preview", 4, ImGuiTableFlags_Borders))
+        {
+            ImGui::TableSetupColumn(report.GetSectionTitle().c_str(), ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Описание дефектов");
+            ImGui::TableSetupColumn("Заключение", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Примечание");
+            ImGui::TableHeadersRow();
+
+            for (int section = 0; section < sectionCount; ++section)
+            {
+                ImGui::TableNextRow();
+                ImGui::PushID(section);
+
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextUnformatted(report.GetSectionRangeStr(section).c_str());
+
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextWrapped("%s", report.GetSectionDefectsStr(section).c_str());
+
+                ImGui::TableSetColumnIndex(2);
+                if (report.IsSectionAcceptable(section))
+                    ImGui::TextUnformatted("Допустим");
+                else
+                    ImGui::TextColored(ImVec4(1.f, 0.3f, 0.3f, 1.f), "Не допустим");
+
+                ImGui::TableSetColumnIndex(3);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                ImGui::InputText("##Примечание", &report.sectionNotes.at(static_cast<size_t>(section)));
+
+                ImGui::PopID();
+            }
+
+            ImGui::EndTable();
         }
     }
     ImGui::End();
-}
-
-void DefectCreateWindow::ConstructDefectRT(const Report &report, DefectRt &input)
-{
-    // Ас 25.0 – 2.0 × 1.0 ≤	пример записи дефекта
-    // A   B   C  D  E  F  G
-    std::string A = report.GetDefectRTName(input.symbol);
-    std::string B = std::format("{:.1f}", input.length);
-    std::string C = "-";
-    std::string D = std::format("{:.1f}", input.width);
-    std::string E = "×";
-    std::string F = std::format("{:.1f}", input.height);
-    std::string G = input.endGreaterThan ? ">" : "≤";
-
-    input.resultLength = 0.f;
-
-    switch (input.symbol)
-    {
-    case DefectRtSymbol::Ac:
-    case DefectRtSymbol::Ab:
-        input.record = A + B + C + D + E + F + G;
-        input.resultLength = input.length;
-        break;
-    case DefectRtSymbol::E:
-    case DefectRtSymbol::Mw:
-        input.record = A + B;
-        input.resultLength = input.length;
-        break;
-    case DefectRtSymbol::Fa:
-    case DefectRtSymbol::Fb:
-        input.record = A + B + G;
-        input.resultLength = input.length;
-        break;
-    case DefectRtSymbol::Fe:
-        input.record = A + B + G;
-        break;
-    case DefectRtSymbol::Fc1:
-    case DefectRtSymbol::Fd:
-    case DefectRtSymbol::delta1:
-    case DefectRtSymbol::delta2:
-        input.record = A;
-        break;
-    default:
-        input.record = A + D + E + F + G;
-        input.resultLength = input.width;
-        break;
-    }
-
-    input.coordStr = std::format("({:d}) ", input.coord);
 }

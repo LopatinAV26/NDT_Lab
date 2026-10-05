@@ -2,7 +2,102 @@
 
 #include <cmath>
 #include <algorithm>
+#include <format>
+#include <utility>
 #include "laboratory.hpp"
+
+namespace
+{
+/// @brief Размер для записи дефекта: десятичный разделитель - запятая,
+/// ",0" пишется только у однозначных размеров - "1,0", но "15"
+std::string FormatDefectSize(float value)
+{
+    const long tenths = std::lround(value * 10.f);
+    const long whole = tenths / 10;
+    const long fraction = tenths % 10;
+
+    if (fraction == 0 && whole >= 10)
+        return std::to_string(whole);
+
+    return std::format("{:d},{:d}", whole, fraction);
+}
+
+/// @brief Одинаковы ли размеры в записи: сравниваем в целых десятых, а не float напрямую
+bool IsSameDefectSize(float a, float b)
+{
+    return std::lround(a * 10.f) == std::lround(b * 10.f);
+}
+
+/// @brief Одинаковы ли дефекты в записи заключения: сравниваются только печатаемые поля
+bool IsSameDefectRecord(const DefectRt &a, const DefectRt &b)
+{
+    if (a.symbol != b.symbol)
+        return false;
+
+    const DefectRtFields fields = GetDefectRtFields(a.symbol);
+    if (fields.length && !IsSameDefectSize(a.length, b.length))
+        return false;
+    if (fields.size && (!IsSameDefectSize(a.width, b.width) || !IsSameDefectSize(a.height, b.height)))
+        return false;
+    if (fields.sign && a.endGreaterThan != b.endGreaterThan)
+        return false;
+
+    return true;
+}
+}
+
+DefectRtFields GetDefectRtFields(DefectRtSymbol symbol)
+{
+    DefectRtFields result;
+    switch (symbol)
+    {
+    case DefectRtSymbol::Aa: /// одиночные: Ba1,5×1,5≤
+    case DefectRtSymbol::Ak:
+    case DefectRtSymbol::Ba:
+    case DefectRtSymbol::Da:
+    case DefectRtSymbol::Dc:
+    case DefectRtSymbol::Bd:
+    case DefectRtSymbol::Fc2:
+        result.size = true;
+        result.sign = true;
+        break;
+    case DefectRtSymbol::Ac: /// скопления и цепочки: Ac25-2,0×1,0≤
+    case DefectRtSymbol::Bc:
+    case DefectRtSymbol::Ab:
+    case DefectRtSymbol::Bb:
+        result.length = true;
+        result.size = true;
+        result.sign = true;
+        break;
+    case DefectRtSymbol::Fa: /// протяжённые: Fa15>
+    case DefectRtSymbol::Fb:
+    case DefectRtSymbol::Fe:
+        result.length = true;
+        result.sign = true;
+        break;
+    case DefectRtSymbol::E: /// E12
+    case DefectRtSymbol::Mw:
+        result.length = true;
+        break;
+    case DefectRtSymbol::Fc1: /// только обозначение
+    case DefectRtSymbol::Fd:
+    case DefectRtSymbol::delta1:
+    case DefectRtSymbol::delta2:
+    case DefectRtSymbol::Count:
+        break;
+    }
+    return result;
+}
+
+float RoundDefectSize(float value)
+{
+    if (value <= 0.f)
+        return 0.f;
+
+    constexpr float eps = 1e-3f; ///< погрешность float: 1.5f / 0.1f чуть больше 15, без поправки ceil дал бы 16
+    const float step = value <= 3.f + eps ? 0.1f : 0.5f;
+    return std::ceil(value / step - eps) * step;
+}
 
 Report::Report()
 {
@@ -46,6 +141,177 @@ std::optional<int> Report::GetMinSeamDistance() const
     return result;
 }
 
+std::string Report::GetDefectRecord(const DefectRt &defect, int count) const
+{
+    const DefectRtFields fields = GetDefectRtFields(defect.symbol);
+    std::string result;
+
+    if (!defect.acceptable && exposureScheme != ExposureScheme::Ellipse) /// на эллипс координата не вводится
+        result += std::format("({:d}) ", defect.coord);
+
+    if (count > 1)
+        result += std::to_string(count);
+
+    result += GetDefectRTName(defect.symbol);
+
+    if (fields.length)
+    {
+        result += FormatDefectSize(defect.length);
+        if (fields.size)
+            result += "-";
+    }
+
+    if (fields.size)
+        result += FormatDefectSize(defect.width) + "×" + FormatDefectSize(defect.height);
+
+    if (fields.sign)
+        result += defect.endGreaterThan ? ">" : "≤";
+
+    return result;
+}
+
+int Report::GetLengthSectionCount() const
+{
+    constexpr int eps = 2; ///< как в NDT::CalculateNumString: остаток в пару миллиметров не даёт лишнего участка
+    return std::max(1, (perimeter - eps + sectionLength - 1) / sectionLength);
+}
+
+bool Report::IsSplitByFilms() const
+{
+    return exposureScheme != ExposureScheme::Ellipse &&
+           GetLengthSectionCount() <= GetFilmMeasurementCount(exposureScheme);
+}
+
+int Report::GetSectionCount() const
+{
+    if (exposureScheme == ExposureScheme::Ellipse)
+        return ellipseExposureCount;
+
+    if (IsSplitByFilms())
+        return GetFilmMeasurementCount(exposureScheme);
+
+    return GetLengthSectionCount();
+}
+
+std::string Report::GetSectionTitle() const
+{
+    if (exposureScheme == ExposureScheme::Ellipse)
+        return "Экспозиция";
+
+    if (IsSplitByFilms())
+        return "Снимок";
+
+    return "Участок";
+}
+
+int Report::GetSectionStart(int section) const
+{
+    if (IsSplitByFilms())
+        return perimeter * section / GetSectionCount();
+
+    return section * sectionLength;
+}
+
+int Report::GetSection(int coord) const
+{
+    /// по снимкам: обратное к GetSectionStart - координата попадает в долю, начало которой не дальше её
+    const int section = IsSplitByFilms() ? coord * GetSectionCount() / std::max(perimeter, 1) : coord / sectionLength;
+    return std::clamp(section, 0, GetSectionCount() - 1);
+}
+
+int Report::GetDefectSection(const DefectRt &defect) const
+{
+    if (exposureScheme == ExposureScheme::Ellipse)
+        return std::clamp(defect.exposure, 0, GetSectionCount() - 1);
+
+    return GetSection(defect.coord);
+}
+
+int Report::GetMeasurementCount() const
+{
+    if (exposureScheme == ExposureScheme::Ellipse)
+        return ellipseExposureCount;
+
+    return GetFilmMeasurementCount(exposureScheme);
+}
+
+void Report::SetDefaultMeasurementCoords()
+{
+    const int count = static_cast<int>(filmMeasurements.size());
+
+    /// центр i-й доли: perimeter * (i + 0.5) / count - в целых, чтобы не тянуть float ради координаты в мм
+    for (int i = 0; i < count; ++i)
+        filmMeasurements.at(static_cast<size_t>(i)).coord = perimeter * (2 * i + 1) / (2 * count);
+}
+
+std::string Report::GetSectionRangeStr(int section) const
+{
+    if (exposureScheme == ExposureScheme::Ellipse)
+        return std::format("{:d} экспозиция", section + 1);
+
+    const int start = GetSectionStart(section);
+    const int end = section == GetSectionCount() - 1 ? 0 : GetSectionStart(section + 1); /// шов замкнут: последний участок кончается в нуле
+
+    if (IsSplitByFilms())
+        return std::format("{:d} ({:d}-{:d})", section + 1, start, end); /// номер снимка и его участок - коротко, чтобы влезло в ячейку бланка
+
+    return std::format("{:d}-{:d}", start, end);
+}
+
+std::string Report::GetSectionDefectsStr(int section) const
+{
+    /// дефекты участка по порядку координат - в том же порядке пойдут записи
+    std::vector<const DefectRt *> defects;
+    for (const DefectRt &defect : defRGCList)
+        if (GetDefectSection(defect) == section)
+            defects.push_back(&defect);
+
+    std::sort(defects.begin(), defects.end(), [](const DefectRt *a, const DefectRt *b)
+              { return a->coord < b->coord; });
+
+    /// первый дефект группы + сколько таких же нашлось; недопустимые не склеиваются ни с чем
+    std::vector<std::pair<const DefectRt *, int>> groups;
+    for (const DefectRt *defect : defects)
+    {
+        auto same = std::find_if(groups.begin(), groups.end(), [&](const auto &group)
+                                 { return defect->acceptable && group.first->acceptable &&
+                                          IsSameDefectRecord(*group.first, *defect); });
+
+        if (same != groups.end())
+            ++same->second;
+        else
+            groups.emplace_back(defect, 1);
+    }
+
+    std::string result;
+    for (const auto &[defect, count] : groups)
+    {
+        if (!result.empty())
+            result += "; ";
+        result += GetDefectRecord(*defect, count);
+    }
+
+    return result.empty() ? "-" : result;
+}
+
+bool Report::IsSectionAcceptable(int section) const
+{
+    return std::none_of(defRGCList.begin(), defRGCList.end(), [&](const DefectRt &defect)
+                        { return !defect.acceptable && GetDefectSection(defect) == section; });
+}
+
+const FilmMeasurement *Report::GetSectionMeasurement(int section) const
+{
+    if (exposureScheme == ExposureScheme::Ellipse) /// на эллипс замер - по одному на экспозицию, по порядку
+        return static_cast<size_t>(section) < filmMeasurements.size() ? &filmMeasurements.at(static_cast<size_t>(section)) : nullptr;
+
+    for (const FilmMeasurement &measurement : filmMeasurements)
+        if (GetSection(measurement.coord) == section)
+            return &measurement;
+
+    return nullptr;
+}
+
 std::string Report::GetMethodReportTitle(Method value) const
 {
     std::string result;
@@ -81,7 +347,7 @@ std::string Report::GetMethodReportTitle(Method value) const
     return result;
 }
 
-std::string Report::GetDefectRTName(DefectRtSymbol value) const
+std::string Report::GetDefectRTName(DefectRtSymbol value)
 {
     std::string result;
     switch (value)
@@ -153,7 +419,7 @@ std::string Report::GetDefectRTName(DefectRtSymbol value) const
     return result;
 }
 
-DefectRtSymbol Report::ParseDefectRtSymbol(const std::string &name) const
+DefectRtSymbol Report::ParseDefectRtSymbol(const std::string &name)
 {
     for (int i = 0; i < static_cast<int>(DefectRtSymbol::Count); ++i)
     {

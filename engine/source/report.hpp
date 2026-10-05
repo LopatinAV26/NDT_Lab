@@ -40,15 +40,28 @@ struct DefectRt : NDT::DbRecord
     std::string reportId; ///< внешний ключ на Report::id - какому заключению принадлежит дефект
 
     DefectRtSymbol symbol = DefectRtSymbol::Aa;
-    bool endGreaterThan = false; ///< false = "≤", true = ">"
-    float length = 0.f;          ///< протяжённость
-    float width = 0.f;
-    float height = 0.f;
-    float resultLength = 0.f; /// <
-    int coord = 0;
-    std::string record;
-    std::string coordStr;
+    float length = 0.f;          ///< протяжённость; для скоплений и цепочек - всей группы
+    float width = 0.f;           ///< длина; для скоплений и цепочек - размер a наибольшего включения
+    float height = 0.f;          ///< ширина; для скоплений и цепочек - размер b наибольшего включения
+    bool endGreaterThan = false; ///< знак оценки глубины: false = "≤", true = ">"
+    int coord = 0;               ///< координата начала дефекта по мерному поясу, мм - по ней же участок
+    int exposure = 0;            ///< номер экспозиции с нуля - при схеме "на эллипс" вместо координаты
+    bool acceptable = true;      ///< недопустимые не склеиваются при печати и пишутся с координатой
 };
+
+/// @brief Какие поля входят в запись дефекта данного типа (РД табл. 8.7)
+struct DefectRtFields
+{
+    bool length = false; ///< протяжённость
+    bool size = false;   ///< пара "длина×ширина"
+    bool sign = false;   ///< знак оценки глубины
+};
+
+DefectRtFields GetDefectRtFields(DefectRtSymbol symbol);
+
+/// @brief Округление размера дефекта по РД п. 8.4.20.4: до 3 мм включительно - вверх с шагом 0,1 мм,
+/// свыше - вверх с шагом 0,5 мм
+float RoundDefectSize(float value);
 
 /// @brief Замеры на одном участке снимка - строка таблицы оптических параметров.
 /// Замеров у заключения несколько, поэтому в БД это отдельная таблица со связью
@@ -81,17 +94,68 @@ public:
     /// @param name
     /// @return
     std::string GetMethodReportTitle(Method value) const;
-    std::string GetDefectRTName(DefectRtSymbol value) const;
+    /// static: данные заключения не нужны, а DatabaseManager вызывает без объекта Report
+    static std::string GetDefectRTName(DefectRtSymbol value);
 
     /// @brief Обратное преобразование к GetDefectRTName - для разбора значения при загрузке из БД
     /// (хранить нужно именно строковый код, а не число enum - см. GetDefectRTName)
-    DefectRtSymbol ParseDefectRtSymbol(const std::string &name) const;
+    static DefectRtSymbol ParseDefectRtSymbol(const std::string &name);
 
     /// @brief Наименьшее расстояние между продольными швами двух свариваемых секций, мм.
     /// @brief Швы лежат на окружности стыка, поэтому расстояние меряется по короткой дуге,
     /// @brief а из всех пар швов берётся минимальная
     /// @return nullopt, если хотя бы у одной секции продольных швов нет (бесшовная, фланец)
     std::optional<int> GetMinSeamDistance() const;
+
+    /// @brief Запись дефекта по РД табл. 8.7
+    /// @param count сколько одинаковых дефектов описывает запись - печатается перед обозначением, если больше 1
+    std::string GetDefectRecord(const DefectRt &defect, int count = 1) const;
+
+    static constexpr int sectionLength = 300; ///< участок мерного пояса, мм - строка таблицы дефектов заключения
+
+    /// @brief Количество участков по sectionLength на длине шва; последний может быть короче
+    int GetLengthSectionCount() const;
+
+    /// @brief Строки таблицы - снимки, а не участки по 300 мм: на коротком шве участков не больше,
+    /// чем замеров, и несколько замеров попали бы в одну строку
+    bool IsSplitByFilms() const;
+
+    /// @brief Количество строк таблицы дефектов: участки по sectionLength, на коротком шве - снимки
+    /// (по одному на четверть, см. IsSplitByFilms), а при схеме "на эллипс" - экспозиции
+    int GetSectionCount() const;
+
+    /// @brief Чем является строка таблицы дефектов: "Участок", "Снимок" или "Экспозиция" - для заголовков в окнах
+    std::string GetSectionTitle() const;
+
+    /// @brief Координата начала строки таблицы по мерному поясу, мм
+    int GetSectionStart(int section) const;
+
+    /// @brief Номер строки таблицы, в которую попадает координата мерного пояса
+    int GetSection(int coord) const;
+
+    /// @brief Строка таблицы, к которой относится дефект: по координате, а на эллипс - по экспозиции
+    int GetDefectSection(const DefectRt &defect) const;
+
+    /// @brief Подпись строки для заключения: "0-300", ..., последний участок замыкается на ноль - "3600-0";
+    /// на коротком шве - номер снимка и его участок "1 (0-125)"...; на эллипс - "1 экспозиция", "2 экспозиция"...
+    std::string GetSectionRangeStr(int section) const;
+
+    /// @brief Сколько замеров оптических параметров требует схема; на эллипс - по одному на экспозицию
+    int GetMeasurementCount() const;
+
+    /// @brief Расставить координаты замеров по центрам равных долей шва: при четырёх замерах -
+    /// по центрам четвертей (для длины 500 мм - 62, 187, 312, 437)
+    void SetDefaultMeasurementCoords();
+
+    /// @brief Описание дефектов участка: одинаковые допустимые склеены с количеством, записи через "; ", без дефектов - "-"
+    std::string GetSectionDefectsStr(int section) const;
+
+    /// @brief Участок допустим, если на нём не начинается ни один недопустимый дефект
+    bool IsSectionAcceptable(int section) const;
+
+    /// @brief Замер оптических параметров, сделанный на этом участке
+    /// @return nullptr, если на участке замера нет - колонки 7-9 в этой строке пустые
+    const FilmMeasurement *GetSectionMeasurement(int section) const;
 
     std::string controlDate; ///< дата НК
     std::string reportDate;  ///< дата выдачи заключения
@@ -182,7 +246,10 @@ public:
 
     static inline const std::string sensitivityTitle{"Чувствительность"};
 
-    ExposureScheme exposureScheme; ///< от неё зависит количество замеров - GetFilmMeasurementCount
+    ExposureScheme exposureScheme; ///< от неё зависит количество замеров - GetMeasurementCount
+
+    static constexpr int maxEllipseExposures = 4;
+    int ellipseExposureCount = 2; ///< экспозиций при схеме "на эллипс": от GetFilmMeasurementCount(Ellipse) до maxEllipseExposures
 
     /// количество строк задаёт схема просвечивания, отсюда вектор, а не массив
     std::vector<FilmMeasurement> filmMeasurements{};
@@ -193,37 +260,10 @@ public:
     std::string opticalDensityTitle;
 
     static inline const std::string opticalDiffTitle{"Разница оптических плотностей между эталоном чувствительности и основным металлом, е.о.п."};
-    int coordOfOpticalDiff1 = 0;
-    float opticalDiff1 = 0.0f;
-
-    int coordOfOpticalDiff2 = 0;
-    float opticalDiff2 = 0.0f;
-
-    int coordOfOpticalDiff3 = 0;
-    float opticalDiff3 = 0.0f;
-
-    int coordOfOpticalDiff4 = 0;
-    float opticalDiff4 = 0.0f;
-
-
-
-
-
-
     
-
-    
-    
-
-    
-
-    
-
     static inline const std::string defectsTitle{"Описание выявленных дефектов"};
 
     static inline const std::string acceptableTitle{"ЗАКЛЮЧЕНИЕ о допустимости выявленных дефектов (допустим/не допустим)"};
-    int acceptableIndex = 0;
-    static inline const std::vector<std::string> acceptable{"допустим", "не допустим", "-"};
 
     static inline const std::string notesTitle{"Примечания"};
 
@@ -236,6 +276,8 @@ public:
 
     
 
+
+    // Для ВИК/////////////////////
     int brightness = 0;
     int temperature = 0;
 
@@ -247,6 +289,8 @@ public:
     float maxWidthOfWeld = 0.f;
     float minWidthOfWeld = 0.f;
     float edgeDisplacement = 0.f;
+    //////////////////////////////////
 
     std::vector<DefectRt> defRGCList; ///< Список дефектов
+    std::vector<std::string> sectionNotes{}; ///< примечания по участкам, индекс - номер участка
 };
