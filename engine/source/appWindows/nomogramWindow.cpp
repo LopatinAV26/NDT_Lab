@@ -43,7 +43,7 @@ void NomogramWindow::Show()
 	ImGui::SameLine();
 	ImGui::TextLinkOpenURL("Паспорт", "resources/devices_manual/Arina.pdf");
 
-	ImGui::DragFloat("##Фокусное расстояние#", &focusDistance, 1.f, 1.f, 2000.f, "Фокусное расстояние: %.0f мм");
+	ImGui::DragFloat("##Фокусное расстояние#", &focusDistance, 1.f, 1.f, 2000.f, "Фокусное расстояние: %.0f мм", ImGuiSliderFlags_AlwaysClamp);
 
 	if (steelThickness > steelThicknessMax)
 		steelThickness = steelThicknessMax;
@@ -56,7 +56,8 @@ void NomogramWindow::Show()
 					 0.1f,
 					 steelThicknessMin,
 					 steelThicknessMax,
-					 "Толщина стали: %.1f мм");
+					 "Толщина стали: %.1f мм",
+					 ImGuiSliderFlags_AlwaysClamp);
 
 	ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment ||
 						 measureIndex == Measure::mAxmin);
@@ -64,7 +65,8 @@ void NomogramWindow::Show()
 					   &deviceCurrent,
 					   calculatedDevices[deviceIndex].currentMinimum,
 					   calculatedDevices[deviceIndex].currentMaximum,
-					   "Сила тока: %.1f мА");
+					   "Сила тока: %.1f мА",
+					   ImGuiSliderFlags_AlwaysClamp);
 	ImGui::EndDisabled();
 
 	if (!calculatedDevices[deviceIndex].currentAdjustment && measureIndex == Measure::mAxmin)

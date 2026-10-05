@@ -202,11 +202,11 @@ void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen)
 
         ImGui::TextDisabled("Диаметр");
         ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::DragInt("##diameter#", &controlMap.diameter, 1, 10, 1500, "Наружный диаметр трубы %d, мм");
+        changed |= ImGui::DragInt("##diameter#", &controlMap.diameter, 1, 10, 1500, "Наружный диаметр трубы %d, мм", ImGuiSliderFlags_AlwaysClamp);
 
         ImGui::TextDisabled("Толщина стенки");
         ImGui::SetNextItemWidth(-FLT_MIN);
-        changed |= ImGui::DragFloat("##nominalWallThickness#", &controlMap.nominalWallThickness, 0.1f, 1.0f, 50.0f, "Номинальная толщина стенки %.1f, мм");
+        changed |= ImGui::DragFloat("##nominalWallThickness#", &controlMap.nominalWallThickness, 0.1f, 1.0f, 50.0f, "Номинальная толщина стенки %.1f, мм", ImGuiSliderFlags_AlwaysClamp);
 
         ImGui::TextDisabled("Категория трубопровода");
         for (size_t i = 0; i < categoryOptions.size(); ++i)

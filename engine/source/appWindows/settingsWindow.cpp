@@ -30,7 +30,7 @@ void SettingsWindow::Show(bool& isOpen)
 		ImGui::Spacing();
 
 		ImGui::SeparatorText("Font");
-		if (ImGui::SliderFloat("##FontSize#", &appData.fontSize, 6.0f, appData.fontSizeMax, "Font size: %.0f"))
+		if (ImGui::SliderFloat("##FontSize#", &appData.fontSize, 6.0f, appData.fontSizeMax, "Font size: %.0f", ImGuiSliderFlags_AlwaysClamp))
 			ImGui::GetStyle().FontScaleMain = appData.fontSize / appData.fontSizeMax;
 
 		SetFont();
@@ -38,13 +38,13 @@ void SettingsWindow::Show(bool& isOpen)
 		ImGui::Spacing();
 
 		ImGui::SeparatorText("Rounding");
-		if (ImGui::SliderFloat("##WindowRounding#", &appData.windowRounding, 0.f, 12.f, "Window rounding: %.0f"))
+		if (ImGui::SliderFloat("##WindowRounding#", &appData.windowRounding, 0.f, 12.f, "Window rounding: %.0f", ImGuiSliderFlags_AlwaysClamp))
 			ImGui::GetStyle().WindowRounding = appData.windowRounding;
 
-		if (ImGui::SliderFloat("##FrameRounding#", &appData.frameRounding, 0.f, 12.f, "Frame rounding: %.0f"))
+		if (ImGui::SliderFloat("##FrameRounding#", &appData.frameRounding, 0.f, 12.f, "Frame rounding: %.0f", ImGuiSliderFlags_AlwaysClamp))
 			ImGui::GetStyle().FrameRounding = appData.frameRounding;
 
-		if (ImGui::SliderFloat("##GrabRounding#", &appData.grabRounding, 0.f, 12.f, "Grab rounding: %.0f"))
+		if (ImGui::SliderFloat("##GrabRounding#", &appData.grabRounding, 0.f, 12.f, "Grab rounding: %.0f", ImGuiSliderFlags_AlwaysClamp))
 			ImGui::GetStyle().GrabRounding = appData.grabRounding;
 	}
 	ImGui::End();
@@ -82,7 +82,7 @@ void SettingsWindow::GetAppInformation() const
 void SettingsWindow::SetVsyncMode()
 {
 	int vsyncMode = static_cast<int>(appData.mode);
-	if (ImGui::SliderInt("##Vsync#", &vsyncMode, 0, 1, appData.vsyncModeName.c_str()))
+	if (ImGui::SliderInt("##Vsync#", &vsyncMode, 0, 1, appData.vsyncModeName.c_str(), ImGuiSliderFlags_AlwaysClamp))
 	{
 		appData.mode = static_cast<Vsync>(vsyncMode);
 		switch (appData.mode)
