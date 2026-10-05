@@ -1,5 +1,7 @@
 #include "databaseManager.hpp"
 
+#include <algorithm>
+#include <array>
 #include <SDL3/SDL.h>
 #include "sqlite3.h"
 #include "laboratory.hpp"
@@ -29,6 +31,8 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
     EnsureControlMapsTable();
     EnsureNormativeDocumentsTable();
     EnsureFilmMeasurementsTable();
+    EnsureDefectsRtTable();
+    EnsureReportsTable();
 }
 
 DatabaseManager::~DatabaseManager()
@@ -213,6 +217,137 @@ namespace
         {"haz_density", "REAL"},
         {"density_diff", "REAL"},
     };
+
+    const std::vector<std::pair<std::string, std::string>> defectRtColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"report_id", "TEXT"},
+        {"symbol", "TEXT"},
+        {"length", "REAL"},
+        {"width", "REAL"},
+        {"height", "REAL"},
+        {"end_greater_than", "INTEGER DEFAULT 0"},
+        {"coord", "INTEGER"},
+        {"exposure", "INTEGER DEFAULT 0"},
+        {"acceptable", "INTEGER DEFAULT 1"},
+    };
+
+    const std::vector<std::pair<std::string, std::string>> reportColumns = {
+        {"id", "TEXT PRIMARY KEY"},
+        {"updated_at", "INTEGER"},
+        {"deleted_at", "INTEGER"},
+        {"method", "TEXT"},
+        {"control_date", "TEXT"},
+        {"report_date", "TEXT"},
+        {"lab_name", "TEXT"},
+        {"number_attestation", "TEXT"},
+        {"weld_number", "TEXT"},
+        {"report_number", "TEXT"},
+        {"object_name", "TEXT"},
+        {"pipe_category", "TEXT"},
+        {"contractor_organization", "TEXT"},
+        {"customer_organization", "TEXT"},
+        {"controller_name", "TEXT"},
+        {"controller_organization", "TEXT"},
+        {"controller_cert_number", "TEXT"},
+        {"protocol_create_name", "TEXT"},
+        {"protocol_create_organization", "TEXT"},
+        {"protocol_create_cert_number", "TEXT"},
+        {"inspector_name", "TEXT"},
+        {"inspector_organization", "TEXT"},
+        {"inspector_cert_number", "TEXT"},
+        {"master_name", "TEXT"},
+        {"master_organization", "TEXT"},
+        {"master_cert_number", "TEXT"},
+        {"technological_control_map", "TEXT"},
+        {"normative_docs", "TEXT"},
+        {"normative_docs_ids", "TEXT"},
+        {"equipment", "TEXT"},
+        {"equipment_ids", "TEXT"},
+        {"weld_type", "TEXT"},
+        {"welding_methods", "TEXT"},
+        {"diameter", "INTEGER"},
+        {"perimeter", "INTEGER"},
+        {"thickness1", "REAL"},
+        {"thickness2", "REAL"},
+        {"welders_mark", "TEXT"},
+        {"welders_ids", "TEXT"},
+        {"section_type1", "TEXT"},
+        {"section_type2", "TEXT"},
+        {"section_number1", "TEXT"},
+        {"section_number2", "TEXT"},
+        {"coord_sec1_weld1", "INTEGER"},
+        {"coord_sec1_weld2", "INTEGER"},
+        {"coord_sec2_weld1", "INTEGER"},
+        {"coord_sec2_weld2", "INTEGER"},
+        {"exposure_scheme", "TEXT"},
+        {"ellipse_exposure_count", "INTEGER DEFAULT 2"},
+        {"weld_opt_den_min", "REAL"},
+        {"negatoscope_brightness", "INTEGER"},
+        {"extent_of_unacceptable_defects", "REAL"},
+        {"control_result", "TEXT"},
+        {"section_notes", "TEXT"},
+        {"brightness", "INTEGER"},
+        {"temperature", "INTEGER"},
+        {"roughness", "TEXT"},
+        {"max_height_of_weld", "REAL"},
+        {"min_height_of_weld", "REAL"},
+        {"max_width_of_weld", "REAL"},
+        {"min_width_of_weld", "REAL"},
+        {"edge_displacement", "REAL"},
+    };
+
+    /// разделитель списка id в одной колонке: UUID запятых не содержит
+    constexpr char idsSeparator = ',';
+
+    /// разделитель примечаний по участкам: примечание вводится однострочным полем, перевода строки в нём не бывает
+    constexpr char notesSeparator = '\n';
+
+    /// @brief Склеить список строк в одну для колонки TEXT
+    std::string JoinStrings(const std::vector<std::string> &values, char separator)
+    {
+        std::string result;
+        for (size_t i = 0; i < values.size(); ++i)
+        {
+            if (i > 0)
+                result += separator;
+            result += values[i];
+        }
+        return result;
+    }
+
+    /// @brief Обратное к JoinStrings. Пустые элементы сохраняются - у примечаний важен номер участка,
+    /// а пустая строка целиком даёт пустой список
+    std::vector<std::string> SplitStrings(const std::string &value, char separator)
+    {
+        std::vector<std::string> result;
+        if (value.empty())
+            return result;
+
+        size_t begin = 0;
+        while (true)
+        {
+            const size_t end = value.find(separator, begin);
+            result.push_back(value.substr(begin, end == std::string::npos ? std::string::npos : end - begin));
+            if (end == std::string::npos)
+                break;
+            begin = end + 1;
+        }
+        return result;
+    }
+
+    /// @brief Значение из фиксированного списка вариантов хранится строкой, а не индексом -
+    /// как и перечисления, чтобы порядок вариантов не становился форматом хранения
+    /// @return индекс найденной строки, при неизвестной - 0
+    template <size_t N>
+    int FindOptionIndex(const std::array<std::string, N> &options, const std::string &value)
+    {
+        for (size_t i = 0; i < N; ++i)
+            if (options[i] == value)
+                return static_cast<int>(i);
+        return 0;
+    }
 
     /// @brief sqlite3_column_text возвращает nullptr для NULL-значения (например, у старых строк
     /// после ALTER TABLE ADD COLUMN) - присваивание nullptr в std::string это UB/сегфолт
@@ -509,6 +644,69 @@ void DatabaseManager::EnsureFilmMeasurementsTable()
 
     // замеры всегда читаются пачкой по своему заключению - без индекса это полный перебор таблицы
     sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS idx_film_measurements_report ON film_measurements(report_id);", nullptr, nullptr, nullptr);
+}
+
+void DatabaseManager::EnsureDefectsRtTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS defects_rt (";
+    for (size_t i = 0; i < defectRtColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += defectRtColumns[i].first + " " + defectRtColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureDefectsRtTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < defectRtColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE defects_rt ADD COLUMN " + defectRtColumns[i].first + " " + defectRtColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
+
+    // дефекты читаются пачкой по своему заключению - как и замеры
+    sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS idx_defects_rt_report ON defects_rt(report_id);", nullptr, nullptr, nullptr);
+}
+
+void DatabaseManager::EnsureReportsTable()
+{
+    if (!db)
+        return;
+
+    std::string createTableSql = "CREATE TABLE IF NOT EXISTS reports (";
+    for (size_t i = 0; i < reportColumns.size(); ++i)
+    {
+        if (i > 0)
+            createTableSql += ", ";
+
+        createTableSql += reportColumns[i].first + " " + reportColumns[i].second;
+    }
+    createTableSql += ");";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureReportsTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    for (size_t i = 1; i < reportColumns.size(); ++i) // с 1: id уже создан внутри CREATE TABLE выше
+    {
+        std::string alterSql = "ALTER TABLE reports ADD COLUMN " + reportColumns[i].first + " " + reportColumns[i].second + ";";
+        sqlite3_exec(db, alterSql.c_str(), nullptr, nullptr, nullptr);
+    }
 }
 
 void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
@@ -1637,6 +1835,420 @@ std::vector<FilmMeasurement> DatabaseManager::LoadFilmMeasurements(const std::st
     sqlite3_finalize(stmt);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Film measurements loaded.");
     return measurements;
+}
+
+void DatabaseManager::SaveDefectsRt(const std::string &reportId, const std::vector<DefectRt> &defects)
+{
+    if (!db || reportId.empty())
+        return;
+
+    EnsureDefectsRtTable();
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    std::string columnNames, placeholders, updateSet;
+
+    for (size_t i = 0; i < defectRtColumns.size(); ++i)
+    {
+        const std::string &name = defectRtColumns[i].first;
+
+        if (i > 0)
+        {
+            columnNames += ", ";
+            placeholders += ", ";
+        }
+        columnNames += name;
+        placeholders += "?";
+
+        if (name != "id") // первичный ключ не обновляем при конфликте, только вставляем один раз
+        {
+            if (!updateSet.empty())
+                updateSet += ", ";
+            updateSet += name + " = excluded." + name;
+        }
+    }
+
+    std::string insertSql = "INSERT INTO defects_rt (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveDefectsRt: prepare не удался: %s", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return;
+    }
+
+    for (const DefectRt &d : defects)
+    {
+        sqlite3_bind_text(stmt, 1, d.id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, 2, d.updatedAt.time_since_epoch().count());
+
+        if (d.deletedAt.has_value())
+            sqlite3_bind_int64(stmt, 3, d.deletedAt->time_since_epoch().count());
+        else
+            sqlite3_bind_null(stmt, 3);
+
+        /// связь берём из аргумента, а не из поля записи - как у замеров
+        sqlite3_bind_text(stmt, 4, reportId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 5, Report::GetDefectRTName(d.symbol).c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_double(stmt, 6, d.length);
+        sqlite3_bind_double(stmt, 7, d.width);
+        sqlite3_bind_double(stmt, 8, d.height);
+        sqlite3_bind_int(stmt, 9, d.endGreaterThan ? 1 : 0);
+        sqlite3_bind_int(stmt, 10, d.coord);
+        sqlite3_bind_int(stmt, 11, d.exposure);
+        sqlite3_bind_int(stmt, 12, d.acceptable ? 1 : 0);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveDefectsRt: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+        sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+
+    // дефекты, удалённые кнопкой в окне, стираем физически - иначе следующая загрузка вернёт их обратно
+    std::string deleteSql = "DELETE FROM defects_rt WHERE report_id = ?";
+    if (!defects.empty())
+    {
+        deleteSql += " AND id NOT IN (";
+        for (size_t i = 0; i < defects.size(); ++i)
+            deleteSql += (i > 0) ? ", ?" : "?";
+        deleteSql += ")";
+    }
+    deleteSql += ";";
+
+    sqlite3_stmt *deleteStmt = nullptr;
+    if (sqlite3_prepare_v2(db, deleteSql.c_str(), -1, &deleteStmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_text(deleteStmt, 1, reportId.c_str(), -1, SQLITE_TRANSIENT);
+        for (size_t i = 0; i < defects.size(); ++i)
+            sqlite3_bind_text(deleteStmt, static_cast<int>(i) + 2, defects[i].id.c_str(), -1, SQLITE_TRANSIENT);
+
+        if (sqlite3_step(deleteStmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveDefectsRt: удаление лишних дефектов не удалось: %s", sqlite3_errmsg(db));
+    }
+    else
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveDefectsRt: prepare удаления не удался: %s", sqlite3_errmsg(db));
+
+    sqlite3_finalize(deleteStmt);
+
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+}
+
+std::vector<DefectRt> DatabaseManager::LoadDefectsRt(const std::string &reportId)
+{
+    std::vector<DefectRt> defects;
+
+    if (!db || reportId.empty())
+        return defects;
+
+    std::string columnNames;
+    for (size_t i = 0; i < defectRtColumns.size(); ++i)
+    {
+        if (i > 0)
+            columnNames += ", ";
+        columnNames += defectRtColumns[i].first;
+    }
+
+    // ORDER BY id: UUID v7 начинается с отметки времени - дефекты возвращаются в порядке ввода
+    std::string selectSql = "SELECT " + columnNames + " FROM defects_rt WHERE report_id = ? ORDER BY id;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, selectSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadDefectsRt: prepare не удался: %s", sqlite3_errmsg(db));
+        return defects;
+    }
+
+    sqlite3_bind_text(stmt, 1, reportId.c_str(), -1, SQLITE_TRANSIENT);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        DefectRt d;
+
+        d.id = GetColumnText(stmt, 0);
+        d.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};
+
+        if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            d.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 2)}};
+
+        d.reportId = GetColumnText(stmt, 3);
+        d.symbol = Report::ParseDefectRtSymbol(GetColumnText(stmt, 4));
+        d.length = static_cast<float>(sqlite3_column_double(stmt, 5));
+        d.width = static_cast<float>(sqlite3_column_double(stmt, 6));
+        d.height = static_cast<float>(sqlite3_column_double(stmt, 7));
+        d.endGreaterThan = sqlite3_column_int(stmt, 8) != 0;
+        d.coord = sqlite3_column_int(stmt, 9);
+        d.exposure = sqlite3_column_int(stmt, 10);
+        d.acceptable = sqlite3_column_int(stmt, 11) != 0;
+
+        defects.push_back(std::move(d));
+    }
+
+    sqlite3_finalize(stmt);
+    return defects;
+}
+
+void DatabaseManager::SaveReports(const std::vector<Report> &reports)
+{
+    if (!db)
+        return;
+
+    EnsureReportsTable();
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    std::string columnNames, placeholders, updateSet;
+
+    for (size_t i = 0; i < reportColumns.size(); ++i)
+    {
+        const std::string &name = reportColumns[i].first;
+
+        if (i > 0)
+        {
+            columnNames += ", ";
+            placeholders += ", ";
+        }
+        columnNames += name;
+        placeholders += "?";
+
+        if (name != "id") // первичный ключ не обновляем при конфликте, только вставляем один раз
+        {
+            if (!updateSet.empty())
+                updateSet += ", ";
+            updateSet += name + " = excluded." + name;
+        }
+    }
+
+    std::string insertSql = "INSERT INTO reports (" + columnNames + ") VALUES (" + placeholders + ") ON CONFLICT(id) DO UPDATE SET " + updateSet + ";";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveReports: prepare не удался: %s", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return;
+    }
+
+    for (const Report &r : reports)
+    {
+        /// колонок за шестьдесят - номер параметра считаем счётчиком, а не пишем руками:
+        /// вставка колонки в середину reportColumns иначе сдвинула бы все номера ниже
+        int col = 1;
+        const auto bindText = [&](const std::string &value)
+        { sqlite3_bind_text(stmt, col++, value.c_str(), -1, SQLITE_TRANSIENT); };
+        const auto bindInt = [&](int value)
+        { sqlite3_bind_int(stmt, col++, value); };
+        const auto bindDouble = [&](double value)
+        { sqlite3_bind_double(stmt, col++, value); };
+
+        bindText(r.id);
+        sqlite3_bind_int64(stmt, col++, r.updatedAt.time_since_epoch().count());
+
+        if (r.deletedAt.has_value())
+            sqlite3_bind_int64(stmt, col++, r.deletedAt->time_since_epoch().count());
+        else
+            sqlite3_bind_null(stmt, col++);
+
+        bindText(GetMethodAbbreviation(r.methodValue));
+        bindText(r.controlDate);
+        bindText(r.reportDate);
+        bindText(r.nameLab);
+        bindText(r.numberAttestation);
+        bindText(r.weldNumber);
+        bindText(r.reportNumber);
+        bindText(r.objectName);
+        bindText(GetCategoryStr(r.pipeCategory));
+        bindText(r.contractorOrganization);
+        bindText(r.customerOrganization);
+        bindText(r.controllerName);
+        bindText(r.controllerOrganization);
+        bindText(r.controllerCertNumber);
+        bindText(r.protocolCreateName);
+        bindText(r.protocolCreateOrganization);
+        bindText(r.protocolCreateCertNumber);
+        bindText(r.inspectorName);
+        bindText(r.inspectorOrganization);
+        bindText(r.inspectorCertNumber);
+        bindText(r.masterName);
+        bindText(r.masterOrganization);
+        bindText(r.masterCertNumber);
+        bindText(r.technologicalControlMap);
+        bindText(r.normativeDocs);
+        bindText(JoinStrings(r.normativeDocsIds, idsSeparator));
+        bindText(r.equipment);
+        bindText(JoinStrings(r.equipmentIds, idsSeparator));
+        bindText(GetWeldJointTypeStr(r.weldType));
+        bindText(GetWeldingMethodsStr(r.weldingMethods));
+        bindInt(r.diameter);
+        bindInt(r.perimeter);
+        bindDouble(r.thicknes1);
+        bindDouble(r.thicknes2);
+        bindText(r.weldersMark);
+        bindText(JoinStrings(r.weldersIds, idsSeparator));
+        bindText(GetSectionTypeStr(r.sectionType1));
+        bindText(GetSectionTypeStr(r.sectionType2));
+        bindText(r.sectionNumber1);
+        bindText(r.sectionNumber2);
+        bindInt(r.coordSec1Weld1);
+        bindInt(r.coordSec1Weld2);
+        bindInt(r.coordSec2Weld1);
+        bindInt(r.coordSec2Weld2);
+        bindText(GetExposureSchemeStr(r.exposureScheme));
+        bindInt(r.ellipseExposureCount);
+        bindDouble(r.weldOptDenMin);
+        bindInt(r.negatoscopeBrightness);
+        bindDouble(r.extentOfUnacceptableDefects);
+        bindText(Report::controlResult.at(static_cast<size_t>(r.controlResultIndex)));
+        bindText(JoinStrings(r.sectionNotes, notesSeparator));
+        bindInt(r.brightness);
+        bindInt(r.temperature);
+        bindText(Report::roughness.at(static_cast<size_t>(r.roughnessIndex)));
+        bindDouble(r.maxHeightOfWeld);
+        bindDouble(r.minHeightOfWeld);
+        bindDouble(r.maxWidthOfWeld);
+        bindDouble(r.minWidthOfWeld);
+        bindDouble(r.edgeDisplacement);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveReports: вставка/обновление не удались: %s", sqlite3_errmsg(db));
+
+        sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    // дочерние таблицы - после COMMIT: у каждой своя транзакция, а вложенные транзакции SQLite не допускает
+    for (const Report &r : reports)
+    {
+        SaveFilmMeasurements(r.id, r.filmMeasurements);
+        SaveDefectsRt(r.id, r.defRGCList);
+    }
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Reports saved.");
+}
+
+std::vector<Report> DatabaseManager::LoadReports()
+{
+    std::vector<Report> reports;
+
+    if (!db)
+        return reports;
+
+    std::string columnNames;
+    for (size_t i = 0; i < reportColumns.size(); ++i)
+    {
+        if (i > 0)
+            columnNames += ", ";
+        columnNames += reportColumns[i].first;
+    }
+
+    // ORDER BY id: UUID v7 - заключения в списке идут в порядке создания
+    std::string selectSql = "SELECT " + columnNames + " FROM reports ORDER BY id;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, selectSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadReports: prepare не удался: %s", sqlite3_errmsg(db));
+        return reports;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        Report r;
+
+        int col = 0; /// в том же порядке, что и reportColumns - см. SaveReports
+        const auto text = [&]
+        { return GetColumnText(stmt, col++); };
+        const auto integer = [&]
+        { return sqlite3_column_int(stmt, col++); };
+        const auto real = [&]
+        { return static_cast<float>(sqlite3_column_double(stmt, col++)); };
+
+        r.id = text();
+        r.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, col++)}};
+
+        if (sqlite3_column_type(stmt, col) != SQLITE_NULL)
+            r.deletedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, col)}};
+        ++col;
+
+        r.methodValue = ParseMethod(text());
+        r.methodHeader = r.GetMethodReportTitle(r.methodValue); /// заголовок не хранится - он целиком следует из метода
+        r.controlDate = text();
+        r.reportDate = text();
+        r.nameLab = text();
+        r.numberAttestation = text();
+        r.weldNumber = text();
+        r.reportNumber = text();
+        r.objectName = text();
+        r.pipeCategory = ParseCategory(text());
+        r.contractorOrganization = text();
+        r.customerOrganization = text();
+        r.controllerName = text();
+        r.controllerOrganization = text();
+        r.controllerCertNumber = text();
+        r.protocolCreateName = text();
+        r.protocolCreateOrganization = text();
+        r.protocolCreateCertNumber = text();
+        r.inspectorName = text();
+        r.inspectorOrganization = text();
+        r.inspectorCertNumber = text();
+        r.masterName = text();
+        r.masterOrganization = text();
+        r.masterCertNumber = text();
+        r.technologicalControlMap = text();
+        r.normativeDocs = text();
+        r.normativeDocsIds = SplitStrings(text(), idsSeparator);
+        r.equipment = text();
+        r.equipmentIds = SplitStrings(text(), idsSeparator);
+        r.weldType = ParseWeldJointType(text());
+        r.weldingMethods = ParseWeldingMethods(text());
+        r.diameter = integer();
+        r.perimeter = integer();
+        r.thicknes1 = real();
+        r.thicknes2 = real();
+        r.weldersMark = text();
+        r.weldersIds = SplitStrings(text(), idsSeparator);
+        r.sectionType1 = ParseSectionType(text());
+        r.sectionType2 = ParseSectionType(text());
+        r.sectionNumber1 = text();
+        r.sectionNumber2 = text();
+        r.coordSec1Weld1 = integer();
+        r.coordSec1Weld2 = integer();
+        r.coordSec2Weld1 = integer();
+        r.coordSec2Weld2 = integer();
+        r.exposureScheme = ParseExposureScheme(text());
+        r.ellipseExposureCount = std::clamp(integer(), GetFilmMeasurementCount(ExposureScheme::Ellipse), Report::maxEllipseExposures);
+        r.weldOptDenMin = real();
+        r.negatoscopeBrightness = integer();
+        r.metalOptDenMax = NDT::GetMetalDensity(r.negatoscopeBrightness); /// предел не хранится - он следует из яркости
+        r.extentOfUnacceptableDefects = real();
+        r.controlResultIndex = FindOptionIndex(Report::controlResult, text());
+        r.sectionNotes = SplitStrings(text(), notesSeparator);
+        r.brightness = integer();
+        r.temperature = integer();
+        r.roughnessIndex = FindOptionIndex(Report::roughness, text());
+        r.maxHeightOfWeld = real();
+        r.minHeightOfWeld = real();
+        r.maxWidthOfWeld = real();
+        r.minWidthOfWeld = real();
+        r.edgeDisplacement = real();
+
+        reports.push_back(std::move(r));
+    }
+
+    sqlite3_finalize(stmt);
+
+    for (Report &r : reports)
+    {
+        r.filmMeasurements = LoadFilmMeasurements(r.id);
+        r.defRGCList = LoadDefectsRt(r.id);
+    }
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Reports loaded.");
+    return reports;
 }
 
 void DatabaseManager::SaveLaboratoryInfo(const Laboratory &lab)

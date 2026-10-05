@@ -13,6 +13,8 @@ struct Equipment;
 struct ControlMap;
 struct NormativeDocument;
 struct FilmMeasurement;
+struct DefectRt;
+class Report;
 class Laboratory;
 
 class DatabaseManager
@@ -60,6 +62,21 @@ public:
     /// @return порядок замеров восстанавливается сортировкой по id: UUID v7 монотонен по времени создания
     std::vector<FilmMeasurement> LoadFilmMeasurements(const std::string &reportId);
 
+    /// @brief Записать дефекты РК одного заключения. Удалённые в окне дефекты стираются из базы
+    /// физически - по той же причине, что и замеры (см. SaveFilmMeasurements)
+    /// @param reportId id заключения - проставляется всем записям, поле DefectRt::reportId не используется
+    void SaveDefectsRt(const std::string &reportId, const std::vector<DefectRt> &defects);
+
+    /// @brief Прочитать дефекты одного заключения в порядке ввода (сортировка по id - UUID v7)
+    std::vector<DefectRt> LoadDefectsRt(const std::string &reportId);
+
+    /// @brief Записать заключения вместе с их замерами и дефектами.
+    /// Удалённое заключение остаётся в базе с deleted_at, как и записи справочников
+    void SaveReports(const std::vector<Report> &reports);
+
+    /// @brief Прочитать заключения вместе с их замерами и дефектами, в порядке создания
+    std::vector<Report> LoadReports();
+
 private:
     /// @brief Создать таблицу laboratory_info, если её ещё нет, и дозаполнить отсутствующие
     /// колонки в уже существующей таблице (ALTER TABLE ADD COLUMN). Таблица хранит одну запись -
@@ -93,6 +110,12 @@ private:
     /// @brief Аналогично EnsureEmployeesTable, но для таблицы film_measurements.
     /// Дополнительно создаёт индекс по report_id - выборка всегда идёт по заключению
     void EnsureFilmMeasurementsTable();
+
+    /// @brief Аналогично EnsureFilmMeasurementsTable, но для таблицы defects_rt
+    void EnsureDefectsRtTable();
+
+    /// @brief Аналогично EnsureEmployeesTable, но для таблицы reports
+    void EnsureReportsTable();
 
     sqlite3 *db = nullptr;
 };

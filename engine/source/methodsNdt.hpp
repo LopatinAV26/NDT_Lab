@@ -82,7 +82,16 @@ enum class WeldingMethod : uint8_t
 };
 
 std::string GetMethodAbbreviation(Method value);
+
+/// @brief Обратное преобразование к GetMethodAbbreviation - для разбора значения при загрузке из БД
+/// @return при неизвестной строке возвращает Method::VT
+Method ParseMethod(const std::string &value);
+
 std::string GetCategoryStr(Category value);
+
+/// @brief Обратное преобразование к GetCategoryStr - для разбора значения при загрузке из БД
+/// @return при неизвестной строке возвращает Category::H
+Category ParseCategory(const std::string &value);
 std::string GetWeldJointTypeStr(WeldJointType value);
 
 /// @brief Обратное преобразование к GetWeldJointTypeStr - для разбора значения при загрузке из БД

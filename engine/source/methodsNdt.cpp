@@ -42,6 +42,18 @@ std::string GetMethodAbbreviation(Method value)
     return result;
 }
 
+Method ParseMethod(const std::string &value)
+{
+    for (int i = 0; i < static_cast<int>(Method::Count); ++i)
+    {
+        auto item = static_cast<Method>(i);
+        if (GetMethodAbbreviation(item) == value)
+            return item;
+    }
+
+    return Method::VT;
+}
+
 std::string GetCategoryStr(Category value)
 {
     std::string result;
@@ -65,6 +77,18 @@ std::string GetCategoryStr(Category value)
         break;
     }
     return result;
+}
+
+Category ParseCategory(const std::string &value)
+{
+    for (int i = 0; i < static_cast<int>(Category::Count); ++i)
+    {
+        auto item = static_cast<Category>(i);
+        if (GetCategoryStr(item) == value)
+            return item;
+    }
+
+    return Category::H;
 }
 
 std::string GetWeldJointTypeStr(WeldJointType value)

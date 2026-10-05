@@ -29,6 +29,7 @@ void Laboratory::LoadDB()
 	equpmentsList = dbManager->LoadEquipment();
 	controlMapsList = dbManager->LoadControlMaps();
 	normativeDocumentsList = dbManager->LoadNormativeDocuments();
+	reportsList = dbManager->LoadReports();
 
 	isLoaded = true;
 }
@@ -46,4 +47,5 @@ void Laboratory::SaveDB()
 	dbManager->SaveEquipment(equpmentsList);
 	dbManager->SaveControlMaps(controlMapsList);
 	dbManager->SaveNormativeDocuments(normativeDocumentsList);
+	dbManager->SaveReports(reportsList);
 }
