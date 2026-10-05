@@ -483,7 +483,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
         /// строк ровно столько, сколько замеров требует схема: при переходе на эллипс лишние отбрасываются
         report.filmMeasurements.resize(static_cast<size_t>(GetFilmMeasurementCount(report.exposureScheme)));
 
-        if (ImGui::BeginTable("Оптические параметры снимка", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable))
+        if (ImGui::BeginTable("Оптические параметры снимка", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable, ImVec2(ImGui::CalcItemWidth(), 0.f)))
         {
             ImGui::TableSetupColumn("Координата, мм");
             ImGui::TableSetupColumn("Чувствительность контроля, мм");
