@@ -101,7 +101,9 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
     if (ImGui::Button("Создать заключение")) //////////////////////////////////////////
         ImGui::OpenPopup("Метод контроля");
 
-    if (ImGui::BeginPopupModal("Метод контроля", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    /// по центру главного окна каждый кадр - и после ресайза тоже
+    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("Метод контроля", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
     {
         // ImGui::TextUnformatted("Выберите метод контроля");
         // ImGui::Separator();

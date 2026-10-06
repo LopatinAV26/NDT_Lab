@@ -128,6 +128,8 @@ void Gui::IterateImGui()
 		ImGui::OpenPopup("Выход из приложения");
 	}
 
+	/// позиция задаётся каждый кадр (ImGuiCond_Always) - иначе после ресайза окна попап остаётся на старом месте
+	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Выход из приложения", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
 		ImGui::TextUnformatted("Завершить работу?");

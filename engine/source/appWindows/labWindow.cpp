@@ -41,6 +41,8 @@ void LabWindow::Show(bool &isOpen)
             ImGui::IsKeyPressed(ImGuiKey_Escape, false))
             ImGui::OpenPopup("Закрыть окно?");
 
+        /// по центру главного окна каждый кадр - и после ресайза тоже
+        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
         if (ImGui::BeginPopupModal("Закрыть окно?", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
             ImGui::Text("Выйти из лаборатории?");
