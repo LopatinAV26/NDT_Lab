@@ -182,6 +182,6 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 
 		pdfManager.NewPage();
 
-		pdfManager.SaveDocument(NDT::MakeSafeFileName(std::format("{:s} от {:s}.pdf", reportData.reportNumber, reportData.reportDate)));
+		pdfManager.SaveDocument(NDT::MakeSafeFileName(std::format("{:s} {:s}.pdf", reportData.reportDate, reportData.reportNumber)));
 	}
 }

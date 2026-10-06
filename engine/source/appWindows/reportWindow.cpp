@@ -19,12 +19,13 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
     static std::vector<int> indexesList; ///< Список индексов для печати в pdf
     static std::vector<bool> selected;
 
-    if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 2))
+    if (ImGui::BeginTable("Отчёты по неразрушающему контролю", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable))
     {
-        // ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-        //  ImGui::TableSetupColumn("Номер заключения");
-        //  ImGui::TableSetupColumn("Дата заключения");
-        //  ImGui::TableHeadersRow();
+        ImGui::TableSetupColumn("Номер заключения");
+        ImGui::TableSetupColumn("Дата выдачи заключения");
+        ImGui::TableSetupColumn("Наименование объекта");
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableHeadersRow();
 
         tableRows = static_cast<int>(repList.size());
         selected.resize(tableRows);
@@ -84,6 +85,10 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
             ImGui::TableNextColumn(); //-----------------------------------------------------
 
             ImGui::TextUnformatted(NDT::FormatDateForDisplay(repList.at(row).reportDate).c_str());
+
+            ImGui::TableNextColumn();
+
+            ImGui::TextUnformatted(repList.at(row).objectName.c_str());
 
             ImGui::PopID();
         }
@@ -444,7 +449,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
 
         /// в превью держим счётчик, а не собранную строку - выбранное оборудование показано ниже
         const std::string equipmentPreview = std::format("Выбрано: {}", report.equipmentIds.size());
-        if (ImGui::BeginCombo("Оборудование", equipmentPreview.c_str())) ////////////////////////////////////////
+        if (ImGui::BeginCombo("Оборудование", equipmentPreview.c_str()))
         {
             std::vector<Equipment> equipList = MethodFilter(lab.equpmentsList, report.methodValue, report.controlDate);
             for (const auto &equipment : equipList)
@@ -455,7 +460,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
                 ImGui::PushID(equipment.id.c_str()); /// иначе у приборов с одинаковым наименованием чекбоксы получат один ID
 
                 bool isSelected = std::ranges::find(report.equipmentIds, equipment.id) != report.equipmentIds.end();
-                if (ImGui::Checkbox(equipment.name.c_str(), &isSelected))
+                if (ImGui::Checkbox(std::format("{:s} зав.№{:s}", equipment.name, equipment.serialNumber).c_str(), &isSelected))
                 {
                     if (isSelected)
                         report.equipmentIds.push_back(equipment.id);
