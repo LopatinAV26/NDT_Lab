@@ -37,6 +37,24 @@ void Laboratory::LoadDB()
 	isLoaded = true;
 }
 
+bool Laboratory::IsUnsaved(const NDT::DbRecord &record) const
+{
+	return dbManager->IsChanged(record);
+}
+
+bool Laboratory::HasUnsavedChanges() const
+{
+	return IsUnsaved(labInfo) ||
+		   HasUnsaved(employeesList) ||
+		   HasUnsaved(inspectorsList) ||
+		   HasUnsaved(mastersList) ||
+		   HasUnsaved(weldersList) ||
+		   HasUnsaved(reportsList) ||
+		   HasUnsaved(controlMapsList) ||
+		   HasUnsaved(equpmentsList) ||
+		   HasUnsaved(normativeDocumentsList);
+}
+
 void Laboratory::SaveDB()
 {
 	if (!isLoaded)

@@ -7,7 +7,7 @@
 #include "utilities.hpp"
 #include "ImGuiDatePicker.hpp"
 
-void WeldersWindow::Show(std::vector<Welder> &weldersList)
+void WeldersWindow::Show(std::vector<Welder> &weldersList, const Laboratory &lab)
 {
     static int tableRows = 0;     ///< количество строк в таблице
     static int editingIndex = -1; ///< текущий индекс сварщика, который создаётся/редактируется
@@ -111,16 +111,16 @@ void WeldersWindow::Show(std::vector<Welder> &weldersList)
     }
     if (editWindow && editingIndex >= 0 &&
         editingIndex < static_cast<int>(weldersList.size()))
-        Edit(weldersList.at(editingIndex), editWindow);
+        Edit(weldersList.at(editingIndex), editWindow, lab.IsUnsaved(weldersList.at(editingIndex)));
 }
 
-void WeldersWindow::Edit(Welder &welder, bool &isOpen)
+void WeldersWindow::Edit(Welder &welder, bool &isOpen, bool isUnsaved)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    if (ImGui::Begin("Сварщик", &isOpen, window_flags))
+    if (ImGui::Begin("Сварщик", &isOpen, window_flags | (isUnsaved ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         bool changed = false;
 

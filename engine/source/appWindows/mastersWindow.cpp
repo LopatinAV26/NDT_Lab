@@ -7,7 +7,7 @@
 #include "utilities.hpp"
 #include "ImGuiDatePicker.hpp"
 
-void MastersWindow::Show(std::vector<Master> &mastersList)
+void MastersWindow::Show(std::vector<Master> &mastersList, const Laboratory &lab)
 {
     static int tableRows = 0;     ///< количество строк в таблице
     static int editingIndex = -1; ///< текущий индекс производителя СМР, который создаётся/редактируется
@@ -107,16 +107,16 @@ void MastersWindow::Show(std::vector<Master> &mastersList)
     }
     if (editWindow && editingIndex >= 0 &&
         editingIndex < static_cast<int>(mastersList.size()))
-        Edit(mastersList.at(editingIndex), editWindow);
+        Edit(mastersList.at(editingIndex), editWindow, lab.IsUnsaved(mastersList.at(editingIndex)));
 }
 
-void MastersWindow::Edit(Master &master, bool &isOpen)
+void MastersWindow::Edit(Master &master, bool &isOpen, bool isUnsaved)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    if (ImGui::Begin("Производитель СМР", &isOpen, window_flags))
+    if (ImGui::Begin("Производитель СМР", &isOpen, window_flags | (isUnsaved ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         bool changed = false;
 

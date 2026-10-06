@@ -13,7 +13,7 @@
 #include "ImGuiDatePicker.hpp"
 #include "methodsNdt.hpp"
 
-void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
+void EquipmentWindow::Show(std::vector<Equipment> &equipmentList, const Laboratory &lab)
 {
     static int tableRows = 0;     ///< количество строк в таблице
     static int editingIndex = -1; ///< текущий индекс оборудования, которое создаётся/редактируется
@@ -154,16 +154,16 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
     }
     if (editWindow && editingIndex >= 0 &&
         editingIndex < static_cast<int>(equipmentList.size()))
-        Edit(equipmentList.at(editingIndex), editWindow);
+        Edit(equipmentList.at(editingIndex), editWindow, lab.IsUnsaved(equipmentList.at(editingIndex)));
 }
 
-void EquipmentWindow::Edit(Equipment &equipment, bool &isOpen)
+void EquipmentWindow::Edit(Equipment &equipment, bool &isOpen, bool isUnsaved)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    if (ImGui::Begin("Оборудование", &isOpen, window_flags))
+    if (ImGui::Begin("Оборудование", &isOpen, window_flags | (isUnsaved ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         bool changed = false;
 

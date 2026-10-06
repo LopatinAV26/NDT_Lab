@@ -9,6 +9,20 @@
 #include "utilities.hpp"
 #include "laboratory.hpp"
 
+namespace
+{
+/// @brief Вкладка с точкой у названия, пока в ней есть правки, не записанные в базу,
+/// и подсказкой, как их записать
+/// @return вкладка выбрана - как у ImGui::BeginTabItem
+bool BeginLabTab(const char *label, bool isUnsaved)
+{
+    const bool isOpen = ImGui::BeginTabItem(label, nullptr, isUnsaved ? ImGuiTabItemFlags_UnsavedDocument : ImGuiTabItemFlags_None);
+    if (isUnsaved)
+        ImGui::SetItemTooltip("Нажмите Ctrl+S для сохранения изменений");
+    return isOpen;
+}
+}
+
 LabWindow::LabWindow(ApplicationData &coreAppData, ResourceManager &resourceManager, Laboratory &laboratory)
     : lab{laboratory},
       nomogramWindow{coreAppData, resourceManager}
@@ -47,60 +61,68 @@ void LabWindow::Show(bool &isOpen)
             ImGui::EndPopup();
         }
 
+        /// без сохранения вручную база пишется только при выходе из программы
+        const bool hasUnsaved = lab.HasUnsavedChanges();
+
+        /// RouteGlobal: Ctrl+S работает и из окон редактирования, которые открыты поверх лаборатории
+        if (hasUnsaved && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal))
+            lab.SaveDB();
+
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
         {
-            if (ImGui::BeginTabItem("Главная"))
+
+            if (BeginLabTab("Главная", lab.IsUnsaved(lab.labInfo)))
             {
                 ShowMain();
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Сотрудники"))
+            if (BeginLabTab("Сотрудники", lab.HasUnsaved(lab.employeesList)))
             {
-                emplWindow.Show(lab.employeesList);
+                emplWindow.Show(lab.employeesList, lab);
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Оборудование"))
+            if (BeginLabTab("Оборудование", lab.HasUnsaved(lab.equpmentsList)))
             {
-                equipmentWindow.Show(lab.equpmentsList);
+                equipmentWindow.Show(lab.equpmentsList, lab);
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Технологические карты"))
+            if (BeginLabTab("Технологические карты", lab.HasUnsaved(lab.controlMapsList)))
             {
-                controlMapsWindow.Show(lab.controlMapsList);
+                controlMapsWindow.Show(lab.controlMapsList, lab);
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Нормативные документы"))
+            if (BeginLabTab("Нормативные документы", lab.HasUnsaved(lab.normativeDocumentsList)))
             {
-                normativeDocumentsWindow.Show(lab.normativeDocumentsList);
+                normativeDocumentsWindow.Show(lab.normativeDocumentsList, lab);
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Отчёты контроля"))
+            if (BeginLabTab("Отчёты контроля", lab.HasUnsaved(lab.reportsList)))
             {
                 reportWindow.Show(lab.reportsList, lab);
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Сварщики"))
+            if (BeginLabTab("Сварщики", lab.HasUnsaved(lab.weldersList)))
             {
-                weldersWindow.Show(lab.weldersList);
+                weldersWindow.Show(lab.weldersList, lab);
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Производители СМР"))
+            if (BeginLabTab("Производители СМР", lab.HasUnsaved(lab.mastersList)))
             {
-                mastersWindow.Show(lab.mastersList);
+                mastersWindow.Show(lab.mastersList, lab);
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Сотрудники надзора"))
+            if (BeginLabTab("Сотрудники надзора", lab.HasUnsaved(lab.inspectorsList)))
             {
-                inspectorsWindow.Show(lab.inspectorsList);
+                inspectorsWindow.Show(lab.inspectorsList, lab);
                 ImGui::EndTabItem();
             }
 

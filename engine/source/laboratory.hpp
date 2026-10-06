@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -184,6 +185,20 @@ public:
 	void SaveDB();
 
 	bool IsLoaded() const { return isLoaded; }
+
+	/// @brief Запись изменена и ещё не записана в базу - по этому окна и вкладки ставят точку в заголовке
+	bool IsUnsaved(const NDT::DbRecord &record) const;
+
+	/// @brief Есть ли хоть одна несохранённая правка во всех справочниках и заключениях
+	bool HasUnsavedChanges() const;
+
+	/// @brief Есть ли в списке хоть одна несохранённая запись (в том числе удалённая)
+	template <typename T>
+	bool HasUnsaved(const std::vector<T> &records) const
+	{
+		return std::ranges::any_of(records, [this](const T &record)
+								   { return IsUnsaved(record); });
+	}
 
 	LaboratoryInfo labInfo;
 	std::vector<Employee> employeesList;				   /// список сотрудников

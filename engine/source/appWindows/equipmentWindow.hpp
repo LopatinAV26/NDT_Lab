@@ -7,13 +7,15 @@
 
 struct Equipment;
 
+class Laboratory;
+
 class EquipmentWindow
 {
 public:
-    void Show(std::vector<Equipment> &equipmentList);
+    void Show(std::vector<Equipment> &equipmentList, const Laboratory &lab);
 
 private:
-    void Edit(Equipment &equipment, bool &isOpen);
+    void Edit(Equipment &equipment, bool &isOpen, bool isUnsaved);
     static void SDLCALL OnFileSelected(void *userdata, const char *const *filelist, int filter);
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;

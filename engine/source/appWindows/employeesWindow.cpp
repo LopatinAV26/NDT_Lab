@@ -7,7 +7,7 @@
 #include "utilities.hpp"
 #include "ImGuiDatePicker.hpp"
 
-void EmployeesWindow::Show(std::vector<Employee> &emplList)
+void EmployeesWindow::Show(std::vector<Employee> &emplList, const Laboratory &lab)
 {
     static int tableRows = 0;     ///< количество строк в таблице
     static int editingIndex = -1; ///< текущий индекс сотрудника, который создаётся/редактируется
@@ -143,16 +143,16 @@ void EmployeesWindow::Show(std::vector<Employee> &emplList)
 
     if (editWindow && editingIndex >= 0 &&
         editingIndex < static_cast<int>(emplList.size()))
-        Edit(emplList.at(editingIndex), editWindow);
+        Edit(emplList.at(editingIndex), editWindow, lab.IsUnsaved(emplList.at(editingIndex)));
 }
 
-void EmployeesWindow::Edit(Employee &empl, bool &isOpen)
+void EmployeesWindow::Edit(Employee &empl, bool &isOpen, bool isUnsaved)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    if (ImGui::Begin("Сотрудник", &isOpen, window_flags))
+    if (ImGui::Begin("Сотрудник", &isOpen, window_flags | (isUnsaved ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         bool changed = false;
 

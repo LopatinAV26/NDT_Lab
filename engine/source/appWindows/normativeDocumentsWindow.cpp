@@ -12,7 +12,7 @@
 #include "utilities.hpp"
 #include "methodsNdt.hpp"
 
-void NormativeDocumentsWindow::Show(std::vector<NormativeDocument> &normativeDocumentsList)
+void NormativeDocumentsWindow::Show(std::vector<NormativeDocument> &normativeDocumentsList, const Laboratory &lab)
 {
     static int tableRows = 0;     ///< количество строк в таблице
     static int editingIndex = -1; ///< текущий индекс документа, который создаётся/редактируется
@@ -111,16 +111,16 @@ void NormativeDocumentsWindow::Show(std::vector<NormativeDocument> &normativeDoc
     }
     if (editWindow && editingIndex >= 0 &&
         editingIndex < static_cast<int>(normativeDocumentsList.size()))
-        Edit(normativeDocumentsList.at(editingIndex), editWindow);
+        Edit(normativeDocumentsList.at(editingIndex), editWindow, lab.IsUnsaved(normativeDocumentsList.at(editingIndex)));
 }
 
-void NormativeDocumentsWindow::Edit(NormativeDocument &normativeDocument, bool &isOpen)
+void NormativeDocumentsWindow::Edit(NormativeDocument &normativeDocument, bool &isOpen, bool isUnsaved)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    if (ImGui::Begin("Нормативный документ", &isOpen, window_flags))
+    if (ImGui::Begin("Нормативный документ", &isOpen, window_flags | (isUnsaved ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         bool changed = false;
 

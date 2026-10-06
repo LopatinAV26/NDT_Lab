@@ -186,7 +186,10 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
 
     const std::string windowTitle = "Заключение " + NDT::ToLowerUtf8(report.methodHeader);
 
-    if (ImGui::Begin(windowTitle.c_str(), &isOpen, window_flags))
+    /// точка в заголовке, пока правки заключения не записаны в базу
+    const bool isUnsaved = lab.IsUnsaved(report);
+
+    if (ImGui::Begin(windowTitle.c_str(), &isOpen, window_flags | (isUnsaved ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         bool changed = false;
 
@@ -803,7 +806,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
     ImGui::End();
 
     if (defectWindowIsOpen)
-        defectCreateWindow.Show(report, defectWindowIsOpen);
+        defectCreateWindow.Show(report, defectWindowIsOpen, lab.IsUnsaved(report));
 }
 
 std::vector<Employee> ReportWindow::MethodFilter(const std::vector<Employee> &lists, Method method, const std::string &reportDate)

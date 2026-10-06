@@ -22,13 +22,13 @@ bool DefectSizeInput(const char *label, float &value)
 }
 }
 
-void DefectCreateWindow::Show(Report &report, bool &isOpen)
+void DefectCreateWindow::Show(Report &report, bool &isOpen, bool isUnsaved)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    if (ImGui::Begin("Конструктор дефектов", &isOpen, window_flags))
+    if (ImGui::Begin("Конструктор дефектов", &isOpen, window_flags | (isUnsaved ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         bool changed = false; ///< правка дефектов, примечаний или результата - всё это данные заключения
 

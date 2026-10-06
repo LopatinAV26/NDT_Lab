@@ -7,13 +7,15 @@
 
 struct NormativeDocument;
 
+class Laboratory;
+
 class NormativeDocumentsWindow
 {
 public:
-    void Show(std::vector<NormativeDocument> &normativeDocumentsList);
+    void Show(std::vector<NormativeDocument> &normativeDocumentsList, const Laboratory &lab);
 
 private:
-    void Edit(NormativeDocument &normativeDocument, bool &isOpen);
+    void Edit(NormativeDocument &normativeDocument, bool &isOpen, bool isUnsaved);
     static void SDLCALL OnFileSelected(void *userdata, const char *const *filelist, int filter);
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;

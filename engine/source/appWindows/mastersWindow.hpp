@@ -5,13 +5,15 @@
 
 struct Master;
 
+class Laboratory;
+
 class MastersWindow
 {
 public:
-    void Show(std::vector<Master> &mastersList);
+    void Show(std::vector<Master> &mastersList, const Laboratory &lab);
 
 private:
-    void Edit(Master &master, bool &isOpen);
+    void Edit(Master &master, bool &isOpen, bool isUnsaved);
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
     bool editWindow = false;

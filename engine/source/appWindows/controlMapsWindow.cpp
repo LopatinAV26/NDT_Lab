@@ -21,7 +21,7 @@ static constexpr std::array<std::pair<Category, bool ControlMap::*>, static_cast
     {Category::IV, &ControlMap::categoryIV},
 }};
 
-void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
+void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList, const Laboratory &lab)
 {
     static int tableRows = 0;     ///< количество строк в таблице
     static int editingIndex = -1; ///< текущий индекс техкарты, которая создаётся/редактируется
@@ -155,16 +155,16 @@ void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
     }
 
     if (editWindow && editingIndex >= 0 && editingIndex < static_cast<int>(controlMapsList.size()))
-        Edit(controlMapsList.at(editingIndex), editWindow);
+        Edit(controlMapsList.at(editingIndex), editWindow, lab.IsUnsaved(controlMapsList.at(editingIndex)));
 }
 
-void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen)
+void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen, bool isUnsaved)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
     ImGui::SetNextWindowSize(viewport->Size);
 
-    if (ImGui::Begin("Технологическая карта", &isOpen, window_flags))
+    if (ImGui::Begin("Технологическая карта", &isOpen, window_flags | (isUnsaved ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         bool changed = false;
 
