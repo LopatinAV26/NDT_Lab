@@ -70,7 +70,7 @@ void NormativeDocumentsWindow::Show(std::vector<NormativeDocument> &normativeDoc
                     editingIndex = row;
                 }
                 if (ImGui::MenuItem("Удалить"))
-                    normativeDocumentsList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                    NDT::MarkDeleted(normativeDocumentsList.at(row));
                 ImGui::EndPopup();
             }
 

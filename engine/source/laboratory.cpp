@@ -21,6 +21,9 @@ void Laboratory::LoadDB()
 	if (isLoaded)
 		return;
 
+	/// всё, что после этого момента получит updatedAt, - изменения, которые нужно записать
+	dbManager->SetSyncedAt(std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()));
+
 	dbManager->LoadLaboratoryInfo(*this);
 	employeesList = dbManager->LoadEmployees();
 	inspectorsList = dbManager->LoadInspectors();
@@ -39,6 +42,9 @@ void Laboratory::SaveDB()
 	if (!isLoaded)
 		return;
 
+	/// момент берём до записи: правка в ту же секунду, но после сохранения, попадёт в следующее
+	const auto saveStart = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+
 	dbManager->SaveLaboratoryInfo(*this);
 	dbManager->SaveEmployees(employeesList);
 	dbManager->SaveInspectors(inspectorsList);
@@ -48,4 +54,6 @@ void Laboratory::SaveDB()
 	dbManager->SaveControlMaps(controlMapsList);
 	dbManager->SaveNormativeDocuments(normativeDocumentsList);
 	dbManager->SaveReports(reportsList);
+
+	dbManager->SetSyncedAt(saveStart); /// записанное больше не считается изменённым
 }

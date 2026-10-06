@@ -39,6 +39,18 @@ DatabaseManager::~DatabaseManager()
     sqlite3_close(db);
 }
 
+bool DatabaseManager::IsChanged(const NDT::DbRecord &record) const
+{
+    return record.updatedAt >= syncedAt;
+}
+
+template <typename T>
+int DatabaseManager::CountChanged(const std::vector<T> &records) const
+{
+    return static_cast<int>(std::ranges::count_if(records, [this](const T &record)
+                                                  { return IsChanged(record); }));
+}
+
 namespace
 {
     const std::vector<std::pair<std::string, std::string>> laboratoryInfoColumns = {
@@ -698,7 +710,8 @@ void DatabaseManager::EnsureReportsTable()
 
 void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
 {
-    if (!db)
+    const int changedCount = CountChanged(employees);
+    if (!db || changedCount == 0) /// нечего записывать - не открываем транзакцию впустую
         return;
 
     EnsureEmployeesTable();
@@ -739,6 +752,9 @@ void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
 
     for (const Employee &e : employees)
     {
+        if (!IsChanged(e)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         sqlite3_bind_text(stmt, 1, e.id.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, 2, e.updatedAt.time_since_epoch().count());
 
@@ -778,7 +794,7 @@ void DatabaseManager::SaveEmployees(const std::vector<Employee> &employees)
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Employees saved.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Employees saved: %d", changedCount);
 }
 
 std::vector<Employee> DatabaseManager::LoadEmployees()
@@ -847,7 +863,8 @@ std::vector<Employee> DatabaseManager::LoadEmployees()
 
 void DatabaseManager::SaveInspectors(const std::vector<Inspector> &inspectors)
 {
-    if (!db)
+    const int changedCount = CountChanged(inspectors);
+    if (!db || changedCount == 0) /// нечего записывать - не открываем транзакцию впустую
         return;
 
     EnsureInspectorsTable();
@@ -888,6 +905,9 @@ void DatabaseManager::SaveInspectors(const std::vector<Inspector> &inspectors)
 
     for (const Inspector &i : inspectors)
     {
+        if (!IsChanged(i)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         sqlite3_bind_text(stmt, 1, i.id.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, 2, i.updatedAt.time_since_epoch().count());
 
@@ -922,7 +942,7 @@ void DatabaseManager::SaveInspectors(const std::vector<Inspector> &inspectors)
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Inspectors saved.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Inspectors saved: %d", changedCount);
 }
 
 std::vector<Inspector> DatabaseManager::LoadInspectors()
@@ -986,7 +1006,8 @@ std::vector<Inspector> DatabaseManager::LoadInspectors()
 
 void DatabaseManager::SaveMasters(const std::vector<Master> &masters)
 {
-    if (!db)
+    const int changedCount = CountChanged(masters);
+    if (!db || changedCount == 0) /// нечего записывать - не открываем транзакцию впустую
         return;
 
     EnsureMastersTable();
@@ -1027,6 +1048,9 @@ void DatabaseManager::SaveMasters(const std::vector<Master> &masters)
 
     for (const Master &m : masters)
     {
+        if (!IsChanged(m)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         sqlite3_bind_text(stmt, 1, m.id.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, 2, m.updatedAt.time_since_epoch().count());
 
@@ -1051,7 +1075,7 @@ void DatabaseManager::SaveMasters(const std::vector<Master> &masters)
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Masters saved.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Masters saved: %d", changedCount);
 }
 
 std::vector<Master> DatabaseManager::LoadMasters()
@@ -1105,7 +1129,8 @@ std::vector<Master> DatabaseManager::LoadMasters()
 
 void DatabaseManager::SaveWelders(const std::vector<Welder> &welders)
 {
-    if (!db)
+    const int changedCount = CountChanged(welders);
+    if (!db || changedCount == 0) /// нечего записывать - не открываем транзакцию впустую
         return;
 
     EnsureWeldersTable();
@@ -1146,6 +1171,9 @@ void DatabaseManager::SaveWelders(const std::vector<Welder> &welders)
 
     for (const Welder &w : welders)
     {
+        if (!IsChanged(w)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         sqlite3_bind_text(stmt, 1, w.id.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, 2, w.updatedAt.time_since_epoch().count());
 
@@ -1171,7 +1199,7 @@ void DatabaseManager::SaveWelders(const std::vector<Welder> &welders)
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Welders saved.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Welders saved: %d", changedCount);
 }
 
 std::vector<Welder> DatabaseManager::LoadWelders()
@@ -1226,7 +1254,8 @@ std::vector<Welder> DatabaseManager::LoadWelders()
 
 void DatabaseManager::SaveEquipment(const std::vector<Equipment> &equipmentList)
 {
-    if (!db)
+    const int changedCount = CountChanged(equipmentList);
+    if (!db || changedCount == 0) /// нечего записывать - не открываем транзакцию впустую
         return;
 
     EnsureEquipmentTable();
@@ -1267,6 +1296,9 @@ void DatabaseManager::SaveEquipment(const std::vector<Equipment> &equipmentList)
 
     for (const Equipment &eq : equipmentList)
     {
+        if (!IsChanged(eq)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         sqlite3_bind_text(stmt, 1, eq.id.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, 2, eq.updatedAt.time_since_epoch().count());
 
@@ -1314,7 +1346,7 @@ void DatabaseManager::SaveEquipment(const std::vector<Equipment> &equipmentList)
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Equipment saved.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Equipment saved: %d", changedCount);
 }
 
 std::vector<Equipment> DatabaseManager::LoadEquipment()
@@ -1391,7 +1423,8 @@ std::vector<Equipment> DatabaseManager::LoadEquipment()
 
 void DatabaseManager::SaveControlMaps(const std::vector<ControlMap> &controlMaps)
 {
-    if (!db)
+    const int changedCount = CountChanged(controlMaps);
+    if (!db || changedCount == 0) /// нечего записывать - не открываем транзакцию впустую
         return;
 
     EnsureControlMapsTable();
@@ -1432,6 +1465,9 @@ void DatabaseManager::SaveControlMaps(const std::vector<ControlMap> &controlMaps
 
     for (const ControlMap &cm : controlMaps)
     {
+        if (!IsChanged(cm)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         sqlite3_bind_text(stmt, 1, cm.id.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, 2, cm.updatedAt.time_since_epoch().count());
 
@@ -1469,7 +1505,7 @@ void DatabaseManager::SaveControlMaps(const std::vector<ControlMap> &controlMaps
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Control maps saved.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Control maps saved: %d", changedCount);
 }
 
 std::vector<ControlMap> DatabaseManager::LoadControlMaps()
@@ -1536,7 +1572,8 @@ std::vector<ControlMap> DatabaseManager::LoadControlMaps()
 
 void DatabaseManager::SaveNormativeDocuments(const std::vector<NormativeDocument> &normativeDocuments)
 {
-    if (!db)
+    const int changedCount = CountChanged(normativeDocuments);
+    if (!db || changedCount == 0) /// нечего записывать - не открываем транзакцию впустую
         return;
 
     EnsureNormativeDocumentsTable();
@@ -1577,6 +1614,9 @@ void DatabaseManager::SaveNormativeDocuments(const std::vector<NormativeDocument
 
     for (const NormativeDocument &doc : normativeDocuments)
     {
+        if (!IsChanged(doc)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         sqlite3_bind_text(stmt, 1, doc.id.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, 2, doc.updatedAt.time_since_epoch().count());
 
@@ -1610,7 +1650,7 @@ void DatabaseManager::SaveNormativeDocuments(const std::vector<NormativeDocument
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Normative documents saved.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Normative documents saved: %d", changedCount);
 }
 
 std::vector<NormativeDocument> DatabaseManager::LoadNormativeDocuments()
@@ -1979,7 +2019,8 @@ std::vector<DefectRt> DatabaseManager::LoadDefectsRt(const std::string &reportId
 
 void DatabaseManager::SaveReports(const std::vector<Report> &reports)
 {
-    if (!db)
+    const int changedCount = CountChanged(reports);
+    if (!db || changedCount == 0) /// нечего записывать - не открываем транзакцию впустую
         return;
 
     EnsureReportsTable();
@@ -2020,6 +2061,9 @@ void DatabaseManager::SaveReports(const std::vector<Report> &reports)
 
     for (const Report &r : reports)
     {
+        if (!IsChanged(r)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         /// колонок за шестьдесят - номер параметра считаем счётчиком, а не пишем руками:
         /// вставка колонки в середину reportColumns иначе сдвинула бы все номера ниже
         int col = 1;
@@ -2110,11 +2154,14 @@ void DatabaseManager::SaveReports(const std::vector<Report> &reports)
     // дочерние таблицы - после COMMIT: у каждой своя транзакция, а вложенные транзакции SQLite не допускает
     for (const Report &r : reports)
     {
+        if (!IsChanged(r)) /// не менялась с прошлого сохранения - в базе уже то же самое
+            continue;
+
         SaveFilmMeasurements(r.id, r.filmMeasurements);
         SaveDefectsRt(r.id, r.defRGCList);
     }
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Reports saved.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Reports saved: %d", changedCount);
 }
 
 std::vector<Report> DatabaseManager::LoadReports()
@@ -2240,7 +2287,7 @@ std::vector<Report> DatabaseManager::LoadReports()
 
 void DatabaseManager::SaveLaboratoryInfo(const Laboratory &lab)
 {
-    if (!db)
+    if (!db || !IsChanged(lab.labInfo))
         return;
 
     EnsureLaboratoryInfoTable();
@@ -2291,8 +2338,11 @@ void DatabaseManager::LoadLaboratoryInfo(Laboratory &lab)
     }
 
     // если строки ещё нет (первый запуск) - оставляем lab.id таким, каким его сгенерировал
-    // конструктор Laboratory; первый SaveDB() создаст именно эту запись
-    if (sqlite3_step(stmt) == SQLITE_ROW)
+    // конструктор Laboratory; первый SaveDB() создаст именно эту запись. Отметка изменения
+    // обязательна: запись создана до загрузки и иначе считалась бы уже сохранённой
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+        NDT::MarkUpdated(lab.labInfo);
+    else
     {
         lab.labInfo.id = GetColumnText(stmt, 0);
         lab.labInfo.updatedAt = std::chrono::sys_seconds{std::chrono::seconds{sqlite3_column_int64(stmt, 1)}};

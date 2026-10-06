@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -16,6 +17,11 @@ struct FilmMeasurement;
 struct DefectRt;
 class Report;
 class Laboratory;
+
+namespace NDT
+{
+    struct DbRecord;
+}
 
 class DatabaseManager
 {
@@ -77,7 +83,25 @@ public:
     /// @brief Прочитать заключения вместе с их замерами и дефектами, в порядке создания
     std::vector<Report> LoadReports();
 
+    /// @brief Запомнить момент, с которого считаются изменения: Save* пишут только записи
+    /// с updatedAt не раньше него. Вызывается перед загрузкой и перед каждым сохранением -
+    /// время берётся до работы с базой, чтобы правка в ту же секунду не потерялась
+    void SetSyncedAt(std::chrono::sys_seconds time) { syncedAt = time; }
+
+    /// @brief Запись менялась после прошлой загрузки или сохранения.
+    /// Сравнение нестрогое: updatedAt хранится с точностью до секунды, и правка в ту же секунду,
+    /// что и сохранение, при строгом сравнении потерялась бы - лишняя перезапись безвредна
+    bool IsChanged(const NDT::DbRecord &record) const;
+
 private:
+    /// @brief Сколько записей списка изменилось - при нуле Save* не трогает базу вовсе.
+    /// Определение в databaseManager.cpp: шаблон нужен только там
+    template <typename T>
+    int CountChanged(const std::vector<T> &records) const;
+
+    /// по умолчанию - начало эпохи: пока момент не задан, сохраняется всё
+    std::chrono::sys_seconds syncedAt{};
+
     /// @brief Создать таблицу laboratory_info, если её ещё нет, и дозаполнить отсутствующие
     /// колонки в уже существующей таблице (ALTER TABLE ADD COLUMN). Таблица хранит одну запись -
     /// SaveLaboratoryInfo/LoadLaboratoryInfo работают с ней через тот же upsert-по-id, что и

@@ -197,7 +197,11 @@ void DefectCreateWindow::Show(Report &report, bool &isOpen)
 
         /// примечаний ровно столько, сколько участков: при смене диаметра лишние отбрасываются
         const int sectionCount = report.GetSectionCount();
-        report.sectionNotes.resize(static_cast<size_t>(sectionCount));
+        if (report.sectionNotes.size() != static_cast<size_t>(sectionCount))
+        {
+            report.sectionNotes.resize(static_cast<size_t>(sectionCount));
+            changed = true;
+        }
 
         if (ImGui::BeginTable("Defect preview", 4, ImGuiTableFlags_Borders))
         {

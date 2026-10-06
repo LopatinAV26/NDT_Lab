@@ -69,7 +69,7 @@ void InspectorsWindow::Show(std::vector<Inspector> &inspectorsList)
                     editingIndex = row;
                 }
                 if (ImGui::MenuItem("Удалить"))
-                    inspectorsList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                    NDT::MarkDeleted(inspectorsList.at(row));
                 ImGui::EndPopup();
             }
 

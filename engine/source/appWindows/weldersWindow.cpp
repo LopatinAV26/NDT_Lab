@@ -66,7 +66,7 @@ void WeldersWindow::Show(std::vector<Welder> &weldersList)
                     editingIndex = row;
                 }
                 if (ImGui::MenuItem("Удалить"))
-                    weldersList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                    NDT::MarkDeleted(weldersList.at(row));
                 ImGui::EndPopup();
             }
 

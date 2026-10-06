@@ -77,7 +77,7 @@ void EmployeesWindow::Show(std::vector<Employee> &emplList)
                         editingIndex = row;
                     }
                     if (ImGui::MenuItem("Удалить"))
-                        emplList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                        NDT::MarkDeleted(emplList.at(row));
                     ImGui::EndPopup();
                 }
 

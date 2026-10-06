@@ -65,7 +65,7 @@ void MastersWindow::Show(std::vector<Master> &mastersList)
                     editingIndex = row;
                 }
                 if (ImGui::MenuItem("Удалить"))
-                    mastersList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                    NDT::MarkDeleted(mastersList.at(row));
                 ImGui::EndPopup();
             }
 

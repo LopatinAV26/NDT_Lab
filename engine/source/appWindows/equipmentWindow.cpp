@@ -88,7 +88,7 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList)
                     editingIndex = row;
                 }
                 if (ImGui::MenuItem("Удалить"))
-                    equipmentList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                    NDT::MarkDeleted(equipmentList.at(row));
                 ImGui::EndPopup();
             }
 

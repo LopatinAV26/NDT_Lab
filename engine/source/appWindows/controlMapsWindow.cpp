@@ -80,7 +80,7 @@ void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList)
                         editingIndex = row;
                     }
                     if (ImGui::MenuItem("Удалить"))
-                        controlMapsList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                        NDT::MarkDeleted(controlMapsList.at(row));
                     ImGui::EndPopup();
                 }
 

@@ -71,6 +71,21 @@ namespace NDT
 		std::optional<std::chrono::sys_seconds> deletedAt;							   ///< nullopt = не удалена; иначе - момент "мягкого" удаления
 	};
 
+	/// @brief Отметить запись изменённой. База перезаписывает только записи с updatedAt
+	/// не раньше прошлого сохранения - правка без этой отметки не сохранится
+	inline void MarkUpdated(DbRecord &record)
+	{
+		record.updatedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	}
+
+	/// @brief Мягко удалить запись. Удаление - тоже изменение: без отметки updatedAt
+	/// запись с проставленным deletedAt не попала бы в базу
+	inline void MarkDeleted(DbRecord &record)
+	{
+		MarkUpdated(record);
+		record.deletedAt = record.updatedAt;
+	}
+
 	/// @brief Сбросить fileData во временный файл с именем fileName и открыть его
 	/// ассоциированным приложением ОС (через ImGui::GetPlatformIO().Platform_OpenInShellFn -
 	/// ShellExecuteW на Windows, system("open ...")/xdg-open на macOS/Linux)

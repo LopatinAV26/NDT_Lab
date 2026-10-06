@@ -75,7 +75,7 @@ void ReportWindow::Show(std::vector<Report> &repList, Laboratory &lab)
                 }
                 if (ImGui::MenuItem("Удалить"))
                 {
-                    repList.at(row).deletedAt = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+                    NDT::MarkDeleted(repList.at(row));
                     selected.at(row) = false;
                     std::erase(indexesList, row);
                 }
@@ -294,8 +294,8 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
             changed = true;
         }
 
-        ImGui::InputText("Номер детали 1", &report.sectionNumber1);
-        ImGui::InputText("Номер детали 2", &report.sectionNumber2);
+        changed |= ImGui::InputText("Номер детали 1", &report.sectionNumber1);
+        changed |= ImGui::InputText("Номер детали 2", &report.sectionNumber2);
 
         /// стык может варить бригада - отмечаем всех, кто на нём работал;
         /// в превью шифры через пробел, в бланк каждый уходит с новой строки
@@ -507,6 +507,7 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
         {
             report.filmMeasurements.resize(measurementCount);
             report.SetDefaultMeasurementCoords();
+            changed = true;
         }
 
         /// на эллипс весь шов на двух снимках - замер привязан к экспозиции, а не к координате мерного пояса
@@ -549,7 +550,10 @@ void ReportWindow::Edit(Report &report, bool &isOpen, Laboratory &lab)
                     ImGui::SetNextItemWidth(-FLT_MIN);
 
                     if (row > 0 && report.filmMeasurements.at(row).coord < report.filmMeasurements.at(row - 1).coord)
+                    {
                         report.filmMeasurements.at(row).coord = report.filmMeasurements.at(row - 1).coord;
+                        changed = true;
+                    }
 
                     changed |= ImGui::DragInt("##coord", &measurement.coord, 1, 0, report.perimeter, "%d", ImGuiSliderFlags_AlwaysClamp);
 
