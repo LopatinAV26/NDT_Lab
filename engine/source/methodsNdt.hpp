@@ -61,6 +61,26 @@ enum class ExposureScheme : uint8_t
     Count
 };
 
+/// @brief шероховатость поверхности сварного соединения
+enum class Roughness : uint8_t
+{
+    Rz20,
+    Rz40,
+    Rz60,
+    Rz80,
+    Count
+};
+
+/// @brief заключение о годности сварного соединения
+enum class ControlResult : uint8_t
+{
+    Fit,    /// годен
+    Repair, /// ремонт
+    Cut,    /// вырезать
+    Retest, /// повторный контроль
+    Count
+};
+
 /// @brief способ сварки, обозначения по РД 03-495-02
 enum class WeldingMethod : uint8_t
 {
@@ -119,6 +139,18 @@ ExposureScheme ParseExposureScheme(const std::string &value);
 /// @brief Количество замеров оптических параметров - столько строк и в таблице заключения
 /// @return по замеру на каждую четверть шва, а на эллипс - по замеру на каждую из двух плёнок
 int GetFilmMeasurementCount(ExposureScheme value);
+
+std::string GetRoughnessStr(Roughness value);
+
+/// @brief Обратное преобразование к GetRoughnessStr - для разбора значения при загрузке из БД
+/// @return при неизвестной строке возвращает Roughness::Rz20
+Roughness ParseRoughness(const std::string &value);
+
+std::string GetControlResultStr(ControlResult value);
+
+/// @brief Обратное преобразование к GetControlResultStr - для разбора значения при загрузке из БД
+/// @return при неизвестной строке возвращает ControlResult::Fit
+ControlResult ParseControlResult(const std::string &value);
 
 std::string GetWeldingMethodStr(WeldingMethod value);
 

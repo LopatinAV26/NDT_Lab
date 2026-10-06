@@ -151,7 +151,7 @@ void ReportBuilder::BuildReportRGC(const std::vector<Report> &reportList, const 
 		pdfManager.TableNewRow();
 		pdfManager.TableCreateRow(4, {{.width = 0, .text = reportData.extentOfUnacceptableDefectsTitle + ": " + std::format("{:.1f}", reportData.extentOfUnacceptableDefects), .isRectVisible = false}});
 		pdfManager.TableNewRow();
-		pdfManager.TableCreateRow(4, {{.width = 0, .text = reportData.controlResultTitle + ": " + reportData.controlResult.at(reportData.controlResultIndex), .isRectVisible = false}});
+		pdfManager.TableCreateRow(4, {{.width = 0, .text = reportData.controlResultTitle + ": " + GetControlResultStr(reportData.controlResult), .isRectVisible = false}});
 
 		double signHeight = 8.0;
 		pdfManager.cursorRowY = {pdfManager.yEnd - signHeight * 4.0};

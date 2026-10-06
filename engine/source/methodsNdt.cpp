@@ -240,6 +240,74 @@ int GetFilmMeasurementCount(ExposureScheme value)
     return result;
 }
 
+std::string GetRoughnessStr(Roughness value)
+{
+    std::string result;
+
+    switch (value)
+    {
+    case Roughness::Rz20:
+        result = "Rz20";
+        break;
+    case Roughness::Rz40:
+        result = "Rz40";
+        break;
+    case Roughness::Rz60:
+        result = "Rz60";
+        break;
+    case Roughness::Rz80:
+        result = "Rz80";
+        break;
+    }
+    return result;
+}
+
+Roughness ParseRoughness(const std::string &value)
+{
+    for (int i = 0; i < static_cast<int>(Roughness::Count); ++i)
+    {
+        auto item = static_cast<Roughness>(i);
+        if (GetRoughnessStr(item) == value)
+            return item;
+    }
+
+    return Roughness::Rz20;
+}
+
+std::string GetControlResultStr(ControlResult value)
+{
+    std::string result;
+
+    switch (value)
+    {
+    case ControlResult::Fit:
+        result = "годен";
+        break;
+    case ControlResult::Repair:
+        result = "ремонт";
+        break;
+    case ControlResult::Cut:
+        result = "вырезать";
+        break;
+    case ControlResult::Retest:
+        result = "повторный контроль";
+        break;
+    }
+    return result;
+}
+
+ControlResult ParseControlResult(const std::string &value)
+{
+    for (int i = 0; i < static_cast<int>(ControlResult::Count); ++i)
+    {
+        auto item = static_cast<ControlResult>(i);
+        if (GetControlResultStr(item) == value)
+            return item;
+    }
+
+    return ControlResult::Fit;
+}
+
 std::string GetWeldingMethodStr(WeldingMethod value)
 {
     std::string result;

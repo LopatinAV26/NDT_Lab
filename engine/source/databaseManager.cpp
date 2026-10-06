@@ -1,7 +1,6 @@
 #include "databaseManager.hpp"
 
 #include <algorithm>
-#include <array>
 #include <SDL3/SDL.h>
 #include "sqlite3.h"
 #include "laboratory.hpp"
@@ -335,18 +334,6 @@ namespace
             begin = end + 1;
         }
         return result;
-    }
-
-    /// @brief Значение из фиксированного списка вариантов хранится строкой, а не индексом -
-    /// как и перечисления, чтобы порядок вариантов не становился форматом хранения
-    /// @return индекс найденной строки, при неизвестной - 0
-    template <size_t N>
-    int FindOptionIndex(const std::array<std::string, N> &options, const std::string &value)
-    {
-        for (size_t i = 0; i < N; ++i)
-            if (options[i] == value)
-                return static_cast<int>(i);
-        return 0;
     }
 
     /// @brief sqlite3_column_text возвращает nullptr для NULL-значения (например, у старых строк
@@ -2100,11 +2087,11 @@ void DatabaseManager::SaveReports(const std::vector<Report> &reports)
         bindDouble(r.weldOptDenMin);
         bindInt(r.negatoscopeBrightness);
         bindDouble(r.extentOfUnacceptableDefects);
-        bindText(Report::controlResult.at(static_cast<size_t>(r.controlResultIndex)));
+        bindText(GetControlResultStr(r.controlResult));
         bindText(JoinStrings(r.sectionNotes, notesSeparator));
         bindInt(r.brightness);
         bindInt(r.temperature);
-        bindText(Report::roughness.at(static_cast<size_t>(r.roughnessIndex)));
+        bindText(GetRoughnessStr(r.roughness));
         bindDouble(r.maxHeightOfWeld);
         bindDouble(r.minHeightOfWeld);
         bindDouble(r.maxWidthOfWeld);
@@ -2225,11 +2212,11 @@ std::vector<Report> DatabaseManager::LoadReports()
         r.negatoscopeBrightness = integer();
         r.metalOptDenMax = NDT::GetMetalDensity(r.negatoscopeBrightness); /// предел не хранится - он следует из яркости
         r.extentOfUnacceptableDefects = real();
-        r.controlResultIndex = FindOptionIndex(Report::controlResult, text());
+        r.controlResult = ParseControlResult(text());
         r.sectionNotes = SplitStrings(text(), notesSeparator);
         r.brightness = integer();
         r.temperature = integer();
-        r.roughnessIndex = FindOptionIndex(Report::roughness, text());
+        r.roughness = ParseRoughness(text());
         r.maxHeightOfWeld = real();
         r.minHeightOfWeld = real();
         r.maxWidthOfWeld = real();

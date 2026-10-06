@@ -246,7 +246,7 @@ public:
 
     static inline const std::string sensitivityTitle{"Чувствительность"};
 
-    ExposureScheme exposureScheme; ///< от неё зависит количество замеров - GetMeasurementCount
+    ExposureScheme exposureScheme;
 
     static constexpr int maxEllipseExposures = 4;
     int ellipseExposureCount = 2; ///< экспозиций при схеме "на эллипс": от GetFilmMeasurementCount(Ellipse) до maxEllipseExposures
@@ -271,8 +271,7 @@ public:
     float extentOfUnacceptableDefects = 0.f;
 
     static inline const std::string controlResultTitle{"Заключение о годности сварного соединения: («годен», «ремонт», «вырезать», «повторный контроль»)"};
-    int controlResultIndex = 0;
-    static inline const std::array<std::string, 4> controlResult{"годен", "ремонт", "вырезать", "повторный контроль"};
+    ControlResult controlResult = ControlResult::Fit;
 
     
 
@@ -281,8 +280,7 @@ public:
     int brightness = 0;
     int temperature = 0;
 
-    static inline const std::array<std::string, 4> roughness{"Rz20", "Rz40", "Rz60", "Rz80"};
-    int roughnessIndex = 0;
+    Roughness roughness = Roughness::Rz20;
 
     float maxHeightOfWeld = 0.f;
     float minHeightOfWeld = 0.f;
