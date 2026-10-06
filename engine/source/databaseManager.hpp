@@ -21,6 +21,7 @@ class Laboratory;
 namespace NDT
 {
     struct DbRecord;
+    struct AttachedFile;
 }
 
 class DatabaseManager
@@ -140,6 +141,24 @@ private:
 
     /// @brief Аналогично EnsureEmployeesTable, но для таблицы reports
     void EnsureReportsTable();
+
+    /// @brief Создать таблицу files - прикреплённые файлы. Строка после вставки не меняется:
+    /// другой файл получает новый id (см. NDT::AttachedFile)
+    void EnsureFilesTable();
+
+    /// @brief Перенести файлы из колонок file_name/file_data таблицы table в таблицу files
+    /// и удалить старые колонки. Для базы, созданной до появления files; повторно ничего не делает
+    /// @return true - перенос был, файл базы стоит сжать (VACUUM)
+    bool MigrateEmbeddedFiles(const std::string &table);
+
+    /// @brief Записать файл в files, если его там ещё нет. Пустой файл пропускается
+    void SaveAttachedFile(const NDT::AttachedFile &file);
+
+    /// @brief Прочитать файл по id. Пустой id или отсутствующая строка - file остаётся пустым
+    void LoadAttachedFile(const std::string &fileId, NDT::AttachedFile &file);
+
+    /// @brief Удалить из files файлы, на которые не ссылается ни одна запись (открепили или заменили)
+    void DeleteOrphanFiles();
 
     sqlite3 *db = nullptr;
 };

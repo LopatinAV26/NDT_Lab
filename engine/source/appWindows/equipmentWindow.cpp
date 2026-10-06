@@ -134,10 +134,10 @@ void EquipmentWindow::Show(std::vector<Equipment> &equipmentList, const Laborato
             ImGui::TableNextColumn();
             {
                 Equipment &equipment = equipmentList.at(row);
-                if (equipment.fileName.empty())
+                if (equipment.file.IsEmpty())
                     ImGui::TextUnformatted("-");
-                else if (ImGui::TextLink(equipment.fileName.c_str()))
-                    NDT::OpenFileFromBytes(equipment.fileName, equipment.fileData);
+                else if (ImGui::TextLink(equipment.file.name.c_str()))
+                    equipment.file.Open();
             }
 
             ImGui::PopID();
@@ -269,20 +269,19 @@ void EquipmentWindow::Edit(Equipment &equipment, bool &isOpen, bool isUnsaved)
         }
 
         ImGui::TextDisabled("Файл свидетельства");
-        if (equipment.fileName.empty())
+        if (equipment.file.IsEmpty())
             ImGui::TextUnformatted("(не прикреплён)");
-        else if (ImGui::TextLink(equipment.fileName.c_str()))
-            NDT::OpenFileFromBytes(equipment.fileName, equipment.fileData);
+        else if (ImGui::TextLink(equipment.file.name.c_str()))
+            equipment.file.Open();
 
         if (ImGui::Button("Прикрепить файл..."))
             SDL_ShowOpenFileDialog(&EquipmentWindow::OnFileSelected, this, nullptr, nullptr, 0, nullptr, false);
 
-        ImGui::BeginDisabled(equipment.fileName.empty());
+        ImGui::BeginDisabled(equipment.file.IsEmpty());
         ImGui::SameLine();
         if (ImGui::Button("Открепить"))
         {
-            equipment.fileName.clear();
-            equipment.fileData.clear();
+            equipment.file.Clear();
             changed = true;
         }
         ImGui::EndDisabled();
@@ -295,14 +294,8 @@ void EquipmentWindow::Edit(Equipment &equipment, bool &isOpen, bool isUnsaved)
 
             if (!pendingFilePath.empty())
             {
-                std::filesystem::path filePath = NDT::PathFromUtf8(pendingFilePath);
-                std::ifstream file(filePath, std::ios::binary);
-                if (file)
-                {
-                    equipment.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-                    equipment.fileName = NDT::PathToUtf8(filePath.filename());
+                if (equipment.file.LoadFromDisk(NDT::PathFromUtf8(pendingFilePath)))
                     changed = true;
-                }
 
                 pendingFilePath.clear();
             }

@@ -136,10 +136,10 @@ void ControlMapsWindow::Show(std::vector<ControlMap> &controlMapsList, const Lab
                 ImGui::TableNextColumn();
                 {
                     ControlMap &controlMap = controlMapsList.at(row);
-                    if (controlMap.fileName.empty())
+                    if (controlMap.file.IsEmpty())
                         ImGui::TextUnformatted("(не прикреплён)");
-                    else if (ImGui::TextLink(controlMap.fileName.c_str()))
-                        NDT::OpenFileFromBytes(controlMap.fileName, controlMap.fileData);
+                    else if (ImGui::TextLink(controlMap.file.name.c_str()))
+                        controlMap.file.Open();
                 }
 
                 ImGui::PopID();
@@ -222,20 +222,19 @@ void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen, bool isUnsave
         changed |= ImGui::InputTextMultiline("##description#", &controlMap.description, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 4));
 
         ImGui::TextDisabled("Файл техкарты");
-        if (controlMap.fileName.empty())
+        if (controlMap.file.IsEmpty())
             ImGui::TextUnformatted("(не прикреплён)");
-        else if (ImGui::TextLink(controlMap.fileName.c_str()))
-            NDT::OpenFileFromBytes(controlMap.fileName, controlMap.fileData);
+        else if (ImGui::TextLink(controlMap.file.name.c_str()))
+            controlMap.file.Open();
 
         if (ImGui::Button("Прикрепить файл..."))
             SDL_ShowOpenFileDialog(&ControlMapsWindow::OnFileSelected, this, nullptr, nullptr, 0, nullptr, false);
 
-        ImGui::BeginDisabled(controlMap.fileName.empty());
+        ImGui::BeginDisabled(controlMap.file.IsEmpty());
         ImGui::SameLine();
         if (ImGui::Button("Открепить"))
         {
-            controlMap.fileName.clear();
-            controlMap.fileData.clear();
+            controlMap.file.Clear();
             changed = true;
         }
         ImGui::EndDisabled();
@@ -246,14 +245,8 @@ void ControlMapsWindow::Edit(ControlMap &controlMap, bool &isOpen, bool isUnsave
 
             if (!pendingFilePath.empty())
             {
-                std::filesystem::path filePath = NDT::PathFromUtf8(pendingFilePath);
-                std::ifstream file(filePath, std::ios::binary);
-                if (file)
-                {
-                    controlMap.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-                    controlMap.fileName = NDT::PathToUtf8(filePath.filename());
+                if (controlMap.file.LoadFromDisk(NDT::PathFromUtf8(pendingFilePath)))
                     changed = true;
-                }
 
                 pendingFilePath.clear();
             }

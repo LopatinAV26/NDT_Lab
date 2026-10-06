@@ -32,6 +32,17 @@ DatabaseManager::DatabaseManager(const std::filesystem::path &pathToDb)
     EnsureFilmMeasurementsTable();
     EnsureDefectsRtTable();
     EnsureReportsTable();
+    EnsureFilesTable();
+
+    /// базы, созданные до таблицы files, хранят файлы прямо в записях - переносим один раз.
+    /// Все три вызова обязательны, поэтому | вместо ||
+    const bool migrated = MigrateEmbeddedFiles("equipment") |
+                          MigrateEmbeddedFiles("control_maps") |
+                          MigrateEmbeddedFiles("normative_documents");
+
+    /// без VACUUM файл базы сохранил бы прежний размер: место от удалённых колонок только помечается свободным
+    if (migrated)
+        sqlite3_exec(db, "VACUUM;", nullptr, nullptr, nullptr);
 }
 
 DatabaseManager::~DatabaseManager()
@@ -135,8 +146,7 @@ namespace
         {"category_ii", "INTEGER"},
         {"category_iii", "INTEGER"},
         {"category_iv", "INTEGER"},
-        {"file_name", "TEXT"},
-        {"file_data", "BLOB"},
+        {"file_id", "TEXT"}, // ссылка на files.id, NULL - файла нет
     };
 
     const std::vector<std::pair<std::string, std::string>> normativeDocumentColumns = {
@@ -156,8 +166,7 @@ namespace
         {"for_mt", "INTEGER"},
         {"for_lt", "INTEGER"},
         {"for_ect", "INTEGER"},
-        {"file_name", "TEXT"},
-        {"file_data", "BLOB"},
+        {"file_id", "TEXT"},
     };
 
     const std::vector<std::pair<std::string, std::string>> equipmentColumns = {
@@ -191,8 +200,7 @@ namespace
         {"is_pending_disposal", "INTEGER DEFAULT 0"},
         {"is_preserved", "INTEGER DEFAULT 0"},
         {"is_calibrated", "INTEGER DEFAULT 0"},
-        {"file_name", "TEXT"},
-        {"file_data", "BLOB"},
+        {"file_id", "TEXT"},
     };
 
     const std::vector<std::pair<std::string, std::string>> inspectorColumns = {
@@ -366,6 +374,15 @@ namespace
 
         const std::uint8_t *bytes = static_cast<const std::uint8_t *>(data);
         return std::vector<std::uint8_t>(bytes, bytes + size);
+    }
+
+    /// @brief id прикреплённого файла: пустая строка уходит в базу как NULL - "файла нет"
+    void BindFileId(sqlite3_stmt *stmt, int col, const NDT::AttachedFile &file)
+    {
+        if (file.IsEmpty())
+            sqlite3_bind_null(stmt, col);
+        else
+            sqlite3_bind_text(stmt, col, file.id.c_str(), -1, SQLITE_TRANSIENT);
     }
 }
 
@@ -1334,17 +1351,20 @@ void DatabaseManager::SaveEquipment(const std::vector<Equipment> &equipmentList)
         sqlite3_bind_int(stmt, 28, eq.isPendingDisposal ? 1 : 0);
         sqlite3_bind_int(stmt, 29, eq.isPreserved ? 1 : 0);
         sqlite3_bind_int(stmt, 30, eq.isCalibrated ? 1 : 0);
-        sqlite3_bind_text(stmt, 31, eq.fileName.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_blob(stmt, 32, eq.fileData.data(), static_cast<int>(eq.fileData.size()), SQLITE_TRANSIENT);
+        BindFileId(stmt, 31, eq.file);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveEquipment: вставка/обновление не удались: %s", sqlite3_errmsg(db));
 
         sqlite3_reset(stmt);
+
+        SaveAttachedFile(eq.file);
     }
 
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    DeleteOrphanFiles();
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Equipment saved: %d", changedCount);
 }
@@ -1410,8 +1430,7 @@ std::vector<Equipment> DatabaseManager::LoadEquipment()
         eq.isPendingDisposal = sqlite3_column_int(stmt, 27) != 0;
         eq.isPreserved = sqlite3_column_int(stmt, 28) != 0;
         eq.isCalibrated = sqlite3_column_int(stmt, 29) != 0;
-        eq.fileName = GetColumnText(stmt, 30);
-        eq.fileData = GetColumnBlob(stmt, 31);
+        LoadAttachedFile(GetColumnText(stmt, 30), eq.file);
 
         equipmentList.push_back(std::move(eq));
     }
@@ -1493,17 +1512,20 @@ void DatabaseManager::SaveControlMaps(const std::vector<ControlMap> &controlMaps
         sqlite3_bind_int(stmt, 18, cm.categoryII ? 1 : 0);
         sqlite3_bind_int(stmt, 19, cm.categoryIII ? 1 : 0);
         sqlite3_bind_int(stmt, 20, cm.categoryIV ? 1 : 0);
-        sqlite3_bind_text(stmt, 21, cm.fileName.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_blob(stmt, 22, cm.fileData.data(), static_cast<int>(cm.fileData.size()), SQLITE_TRANSIENT);
+        BindFileId(stmt, 21, cm.file);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveControlMaps: вставка/обновление не удались: %s", sqlite3_errmsg(db));
 
         sqlite3_reset(stmt);
+
+        SaveAttachedFile(cm.file);
     }
 
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    DeleteOrphanFiles();
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Control maps saved: %d", changedCount);
 }
@@ -1559,8 +1581,7 @@ std::vector<ControlMap> DatabaseManager::LoadControlMaps()
         cm.categoryII = sqlite3_column_int(stmt, 17) != 0;
         cm.categoryIII = sqlite3_column_int(stmt, 18) != 0;
         cm.categoryIV = sqlite3_column_int(stmt, 19) != 0;
-        cm.fileName = GetColumnText(stmt, 20);
-        cm.fileData = GetColumnBlob(stmt, 21);
+        LoadAttachedFile(GetColumnText(stmt, 20), cm.file);
 
         controlMaps.push_back(std::move(cm));
     }
@@ -1638,17 +1659,20 @@ void DatabaseManager::SaveNormativeDocuments(const std::vector<NormativeDocument
         sqlite3_bind_int(stmt, 14, doc.forMT ? 1 : 0);
         sqlite3_bind_int(stmt, 15, doc.forLT ? 1 : 0);
         sqlite3_bind_int(stmt, 16, doc.forECT ? 1 : 0);
-        sqlite3_bind_text(stmt, 17, doc.fileName.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_blob(stmt, 18, doc.fileData.data(), static_cast<int>(doc.fileData.size()), SQLITE_TRANSIENT);
+        BindFileId(stmt, 17, doc.file);
 
         if (sqlite3_step(stmt) != SQLITE_DONE)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveNormativeDocuments: вставка/обновление не удались: %s", sqlite3_errmsg(db));
 
         sqlite3_reset(stmt);
+
+        SaveAttachedFile(doc.file);
     }
 
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    DeleteOrphanFiles();
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Normative documents saved: %d", changedCount);
 }
@@ -1700,8 +1724,7 @@ std::vector<NormativeDocument> DatabaseManager::LoadNormativeDocuments()
         doc.forMT = sqlite3_column_int(stmt, 13) != 0;
         doc.forLT = sqlite3_column_int(stmt, 14) != 0;
         doc.forECT = sqlite3_column_int(stmt, 15) != 0;
-        doc.fileName = GetColumnText(stmt, 16);
-        doc.fileData = GetColumnBlob(stmt, 17);
+        LoadAttachedFile(GetColumnText(stmt, 16), doc.file);
 
         normativeDocuments.push_back(std::move(doc));
     }
@@ -2357,4 +2380,191 @@ void DatabaseManager::LoadLaboratoryInfo(Laboratory &lab)
 
     sqlite3_finalize(stmt);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Laboratory info loaded.");
+}
+
+void DatabaseManager::EnsureFilesTable()
+{
+    if (!db)
+        return;
+
+    const char *createTableSql =
+        "CREATE TABLE IF NOT EXISTS files ("
+        "id TEXT PRIMARY KEY, "
+        "created_at INTEGER NOT NULL, "
+        "name TEXT NOT NULL, "
+        "size INTEGER NOT NULL, "
+        "data BLOB NOT NULL);";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, createTableSql, nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnsureFilesTable: не удалось создать таблицу: %s", errMsg);
+        sqlite3_free(errMsg);
+    }
+}
+
+bool DatabaseManager::MigrateEmbeddedFiles(const std::string &table)
+{
+    if (!db)
+        return false;
+
+    /// старые колонки уже удалены - переносить нечего
+    bool hasOldColumn = false;
+    {
+        sqlite3_stmt *stmt = nullptr;
+        const std::string sql = "SELECT 1 FROM pragma_table_info('" + table + "') WHERE name = 'file_data';";
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+            hasOldColumn = sqlite3_step(stmt) == SQLITE_ROW;
+        sqlite3_finalize(stmt);
+    }
+    if (!hasOldColumn)
+        return false;
+
+    struct EmbeddedFile
+    {
+        std::string recordId;
+        NDT::AttachedFile file;
+    };
+
+    /// сначала читаем всё, потом пишем: менять таблицу во время её же выборки SQLite не гарантирует
+    std::vector<EmbeddedFile> embedded;
+    {
+        sqlite3_stmt *stmt = nullptr;
+        const std::string sql = "SELECT id, file_name, file_data FROM " + table + " WHERE length(file_data) > 0;";
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+        {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MigrateEmbeddedFiles(%s): prepare не удался: %s", table.c_str(), sqlite3_errmsg(db));
+            return false;
+        }
+
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            EmbeddedFile item;
+            item.recordId = GetColumnText(stmt, 0);
+            item.file.id = NDT::GenerateUuidV7();
+            item.file.name = GetColumnText(stmt, 1);
+            item.file.data = GetColumnBlob(stmt, 2);
+            embedded.push_back(std::move(item));
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+    sqlite3_stmt *updateStmt = nullptr;
+    const std::string updateSql = "UPDATE " + table + " SET file_id = ? WHERE id = ?;";
+    if (sqlite3_prepare_v2(db, updateSql.c_str(), -1, &updateStmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MigrateEmbeddedFiles(%s): prepare не удался: %s", table.c_str(), sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return false;
+    }
+
+    /// updated_at записей не трогаем: данные те же, поменялся только способ хранения
+    for (const EmbeddedFile &item : embedded)
+    {
+        SaveAttachedFile(item.file);
+
+        sqlite3_bind_text(updateStmt, 1, item.file.id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(updateStmt, 2, item.recordId.c_str(), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(updateStmt) != SQLITE_DONE)
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MigrateEmbeddedFiles(%s): обновление не удалось: %s", table.c_str(), sqlite3_errmsg(db));
+        sqlite3_reset(updateStmt);
+    }
+    sqlite3_finalize(updateStmt);
+
+    const std::string dropSql = "ALTER TABLE " + table + " DROP COLUMN file_data; ALTER TABLE " + table + " DROP COLUMN file_name;";
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, dropSql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        /// без удаления колонок перенос повторился бы при следующем запуске - откатываем целиком
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MigrateEmbeddedFiles(%s): не удалось удалить старые колонки: %s", table.c_str(), errMsg);
+        sqlite3_free(errMsg);
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        return false;
+    }
+
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s: files moved to table files: %d", table.c_str(), static_cast<int>(embedded.size()));
+    return true;
+}
+
+void DatabaseManager::SaveAttachedFile(const NDT::AttachedFile &file)
+{
+    if (!db || file.IsEmpty())
+        return;
+
+    /// содержимое под одним id не меняется - уже записанный файл не перезаписываем
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, "INSERT INTO files (id, created_at, name, size, data) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING;", -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveAttachedFile: prepare не удался: %s", sqlite3_errmsg(db));
+        return;
+    }
+
+    const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+
+    sqlite3_bind_text(stmt, 1, file.id.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, 2, now.time_since_epoch().count());
+    sqlite3_bind_text(stmt, 3, file.name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, 4, static_cast<sqlite3_int64>(file.data.size()));
+    /// SQLITE_STATIC: данные живут до sqlite3_finalize ниже, копировать мегабайты незачем
+    sqlite3_bind_blob64(stmt, 5, file.data.data(), static_cast<sqlite3_uint64>(file.data.size()), SQLITE_STATIC);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveAttachedFile: вставка не удалась: %s", sqlite3_errmsg(db));
+
+    sqlite3_finalize(stmt);
+}
+
+void DatabaseManager::LoadAttachedFile(const std::string &fileId, NDT::AttachedFile &file)
+{
+    file.Clear();
+    if (!db || fileId.empty())
+        return;
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, "SELECT name, data FROM files WHERE id = ?;", -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadAttachedFile: prepare не удался: %s", sqlite3_errmsg(db));
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, fileId.c_str(), -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        file.id = fileId;
+        file.name = GetColumnText(stmt, 0);
+        file.data = GetColumnBlob(stmt, 1);
+    }
+    else /// ссылка есть, файла нет - показываем запись без файла, а не падаем
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "LoadAttachedFile: файл %s не найден", fileId.c_str());
+
+    sqlite3_finalize(stmt);
+}
+
+void DatabaseManager::DeleteOrphanFiles()
+{
+    if (!db)
+        return;
+
+    /// файлы удалённых записей остаются: запись лишь помечена deleted_at и по-прежнему на них ссылается
+    const char *sql =
+        "DELETE FROM files WHERE id NOT IN ("
+        "SELECT file_id FROM equipment WHERE file_id IS NOT NULL "
+        "UNION SELECT file_id FROM control_maps WHERE file_id IS NOT NULL "
+        "UNION SELECT file_id FROM normative_documents WHERE file_id IS NOT NULL);";
+
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, sql, nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DeleteOrphanFiles: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    if (const int deleted = sqlite3_changes(db); deleted > 0)
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Orphan files deleted: %d", deleted);
 }

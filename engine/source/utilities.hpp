@@ -91,6 +91,28 @@ namespace NDT
 	/// ShellExecuteW на Windows, system("open ...")/xdg-open на macOS/Linux)
 	void OpenFileFromBytes(const std::string &fileName, const std::vector<std::uint8_t> &fileData);
 
+	/// @brief Файл, прикреплённый к записи (свидетельство о поверке, техкарта, документ).
+	/// В базе лежит в отдельной таблице files, запись хранит только его id. Содержимое под одним
+	/// id никогда не меняется: другой файл получает новый id - так файл уходит на сервер один раз,
+	/// а правка самой записи не тащит за собой мегабайты
+	struct AttachedFile
+	{
+		std::string id;					///< пусто - файл не прикреплён
+		std::string name;				///< исходное имя с расширением - по нему ОС выбирает, чем открыть
+		std::vector<std::uint8_t> data; ///< содержимое целиком
+
+		bool IsEmpty() const { return id.empty(); }
+
+		/// @brief Прочитать файл с диска под новым id
+		/// @return false - файл не открылся, прежнее содержимое не тронуто
+		bool LoadFromDisk(const std::filesystem::path &path);
+
+		/// @brief Открыть приложением ОС (через временную копию - см. OpenFileFromBytes)
+		void Open() const { OpenFileFromBytes(name, data); }
+
+		void Clear();
+	};
+
 	/// @brief Построить std::filesystem::path из UTF-8 строки в обход текущей кодовой страницы ОС
 	/// (обычный конструктор path(std::string)/path::string() на Windows трактует байты через ANSI-
 	/// кодовую страницу процесса - кириллица в имени файла ломается, если она не совпадает с CP1251)

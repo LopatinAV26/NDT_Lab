@@ -241,6 +241,25 @@ namespace NDT
 		ImGui::GetPlatformIO().Platform_OpenInShellFn(ImGui::GetCurrentContext(), PathToUtf8(tempPath).c_str());
 	}
 
+	bool AttachedFile::LoadFromDisk(const std::filesystem::path &path)
+	{
+		std::ifstream file(path, std::ios::binary);
+		if (!file)
+			return false;
+
+		data.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+		name = PathToUtf8(path.filename());
+		id = GenerateUuidV7();
+		return true;
+	}
+
+	void AttachedFile::Clear()
+	{
+		id.clear();
+		name.clear();
+		data.clear();
+	}
+
 	std::string ToLowerUtf8(const std::string &s)
 	{
 		std::string out;

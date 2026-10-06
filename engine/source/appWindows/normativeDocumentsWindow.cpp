@@ -92,10 +92,10 @@ void NormativeDocumentsWindow::Show(std::vector<NormativeDocument> &normativeDoc
             ImGui::TableNextColumn();
             {
                 NormativeDocument &normativeDocument = normativeDocumentsList.at(row);
-                if (normativeDocument.fileName.empty())
+                if (normativeDocument.file.IsEmpty())
                     ImGui::TextUnformatted("(не прикреплён)");
-                else if (ImGui::TextLink(normativeDocument.fileName.c_str()))
-                    NDT::OpenFileFromBytes(normativeDocument.fileName, normativeDocument.fileData);
+                else if (ImGui::TextLink(normativeDocument.file.name.c_str()))
+                    normativeDocument.file.Open();
             }
 
             ImGui::PopID();
@@ -189,20 +189,19 @@ void NormativeDocumentsWindow::Edit(NormativeDocument &normativeDocument, bool &
         changed |= ImGui::InputInt("##year#", &normativeDocument.year);
 
         ImGui::TextDisabled("Файл документа");
-        if (normativeDocument.fileName.empty())
+        if (normativeDocument.file.IsEmpty())
             ImGui::TextUnformatted("(не прикреплён)");
-        else if (ImGui::TextLink(normativeDocument.fileName.c_str()))
-            NDT::OpenFileFromBytes(normativeDocument.fileName, normativeDocument.fileData);
+        else if (ImGui::TextLink(normativeDocument.file.name.c_str()))
+            normativeDocument.file.Open();
 
         if (ImGui::Button("Прикрепить файл..."))
             SDL_ShowOpenFileDialog(&NormativeDocumentsWindow::OnFileSelected, this, nullptr, nullptr, 0, nullptr, false);
 
-        ImGui::BeginDisabled(normativeDocument.fileName.empty());
+        ImGui::BeginDisabled(normativeDocument.file.IsEmpty());
         ImGui::SameLine();
         if (ImGui::Button("Открепить"))
         {
-            normativeDocument.fileName.clear();
-            normativeDocument.fileData.clear();
+            normativeDocument.file.Clear();
             changed = true;
         }
         ImGui::EndDisabled();
@@ -213,14 +212,8 @@ void NormativeDocumentsWindow::Edit(NormativeDocument &normativeDocument, bool &
 
             if (!pendingFilePath.empty())
             {
-                std::filesystem::path filePath = NDT::PathFromUtf8(pendingFilePath);
-                std::ifstream file(filePath, std::ios::binary);
-                if (file)
-                {
-                    normativeDocument.fileData.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-                    normativeDocument.fileName = NDT::PathToUtf8(filePath.filename());
+                if (normativeDocument.file.LoadFromDisk(NDT::PathFromUtf8(pendingFilePath)))
                     changed = true;
-                }
 
                 pendingFilePath.clear();
             }

@@ -101,8 +101,7 @@ struct ControlMap : NDT::DbRecord /// Технологическая карта 
 	bool categoryIII = false;
 	bool categoryIV = false;
 
-	std::string fileName;				/// исходное имя прикреплённого файла (сохраняет расширение)
-	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (PDF/скан/Word)
+	NDT::AttachedFile file; /// прикреплённый файл техкарты (PDF/скан/Word)
 };
 
 struct NormativeDocument : NDT::DbRecord
@@ -122,8 +121,7 @@ struct NormativeDocument : NDT::DbRecord
 	bool forLT = false;
 	bool forECT = false;
 
-	std::string fileName;
-	std::vector<std::uint8_t> fileData;
+	NDT::AttachedFile file; /// текст документа
 };
 
 struct Equipment : NDT::DbRecord /// оборудование лаборатории по "СДАНК-01-2020"
@@ -159,8 +157,7 @@ struct Equipment : NDT::DbRecord /// оборудование лаборатор
 
 	bool isCalibrated = false; /// Поверяется/калибруется
 
-	std::string fileName;				/// исходное имя прикреплённого файла (сохраняет расширение)
-	std::vector<std::uint8_t> fileData; /// содержимое файла целиком (паспорт/формуляр и т.п.)
+	NDT::AttachedFile file; /// свидетельство о поверке/калибровке, паспорт, формуляр
 };
 
 struct LaboratoryInfo : NDT::DbRecord
