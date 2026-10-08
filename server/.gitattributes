@@ -1,3 +1,5 @@
 # файлы для Linux-сервера: с CRLF bash и systemd их не поймут
 *.sh      text eol=lf
 *.service text eol=lf
+# а этот запускается в Windows
+*.ps1     text eol=crlf
