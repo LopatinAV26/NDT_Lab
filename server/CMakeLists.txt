@@ -22,6 +22,7 @@ add_executable(ndtsync
     src/schema.cpp
     src/devices.cpp
     src/httpServer.cpp
+    src/sync.cpp
 )
 
 target_compile_options(ndtsync PRIVATE -Wall -Wextra)
