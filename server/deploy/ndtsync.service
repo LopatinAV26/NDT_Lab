@@ -1,0 +1,26 @@
+[Unit]
+Description=NDT Lab sync server
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+User=ndtsync
+Group=ndtsync
+EnvironmentFile=/etc/ndtlab/db.env
+ExecStart=/usr/local/bin/ndtsync serve
+Restart=on-failure
+RestartSec=3
+
+# служба только принимает запросы и ходит в базу - всё остальное ей закрыто
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target
