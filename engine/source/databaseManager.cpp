@@ -1739,10 +1739,6 @@ void DatabaseManager::SaveFilmMeasurements(const std::string &reportId, const st
     if (!db || reportId.empty())
         return;
 
-    EnsureFilmMeasurementsTable();
-
-    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-
     std::string columnNames, placeholders, updateSet;
 
     for (size_t i = 0; i < filmMeasurementColumns.size(); ++i)
@@ -1771,7 +1767,6 @@ void DatabaseManager::SaveFilmMeasurements(const std::string &reportId, const st
     if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
     {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveFilmMeasurements: prepare не удался: %s", sqlite3_errmsg(db));
-        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
         return;
     }
 
@@ -1828,8 +1823,6 @@ void DatabaseManager::SaveFilmMeasurements(const std::string &reportId, const st
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveFilmMeasurements: prepare удаления не удался: %s", sqlite3_errmsg(db));
 
     sqlite3_finalize(deleteStmt);
-
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", "Film measurements saved.");
 }
@@ -1892,10 +1885,6 @@ void DatabaseManager::SaveDefectsRt(const std::string &reportId, const std::vect
     if (!db || reportId.empty())
         return;
 
-    EnsureDefectsRtTable();
-
-    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-
     std::string columnNames, placeholders, updateSet;
 
     for (size_t i = 0; i < defectRtColumns.size(); ++i)
@@ -1924,7 +1913,6 @@ void DatabaseManager::SaveDefectsRt(const std::string &reportId, const std::vect
     if (sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
     {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveDefectsRt: prepare не удался: %s", sqlite3_errmsg(db));
-        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
         return;
     }
 
@@ -1982,8 +1970,6 @@ void DatabaseManager::SaveDefectsRt(const std::string &reportId, const std::vect
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveDefectsRt: prepare удаления не удался: %s", sqlite3_errmsg(db));
 
     sqlite3_finalize(deleteStmt);
-
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
 }
 
 std::vector<DefectRt> DatabaseManager::LoadDefectsRt(const std::string &reportId)
@@ -2047,6 +2033,8 @@ void DatabaseManager::SaveReports(const std::vector<Report> &reports)
         return;
 
     EnsureReportsTable();
+    EnsureFilmMeasurementsTable();
+    EnsureDefectsRtTable();
 
     sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
 
@@ -2169,20 +2157,15 @@ void DatabaseManager::SaveReports(const std::vector<Report> &reports)
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SaveReports: вставка/обновление не удались: %s", sqlite3_errmsg(db));
 
         sqlite3_reset(stmt);
+
+        /// замеры и дефекты - часть заключения: пишутся в той же транзакции, чтобы в базе
+        /// не оказалось нового заключения со старыми дефектами, если запись прервётся на полпути
+        SaveFilmMeasurements(r.id, r.filmMeasurements);
+        SaveDefectsRt(r.id, r.defRGCList);
     }
 
     sqlite3_finalize(stmt);
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
-
-    // дочерние таблицы - после COMMIT: у каждой своя транзакция, а вложенные транзакции SQLite не допускает
-    for (const Report &r : reports)
-    {
-        if (!IsChanged(r)) /// не менялась с прошлого сохранения - в базе уже то же самое
-            continue;
-
-        SaveFilmMeasurements(r.id, r.filmMeasurements);
-        SaveDefectsRt(r.id, r.defRGCList);
-    }
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Reports saved: %d", changedCount);
 }

@@ -58,26 +58,16 @@ public:
     void SaveNormativeDocuments(const std::vector<NormativeDocument> &normativeDocuments);
     std::vector<NormativeDocument> LoadNormativeDocuments();
 
-    /// @brief Записать замеры оптических параметров одного заключения.
-    /// Замеры, исчезнувшие из списка (таблица сокращается при переходе на схему "на эллипс"),
-    /// удаляются из базы физически: без своего заключения строка не имеет смысла,
-    /// а мягкое удаление нужно только там, где запись может понадобиться в старых заключениях
-    /// @param reportId id заключения - проставляется всем записям, поле FilmMeasurement::reportId не используется
-    void SaveFilmMeasurements(const std::string &reportId, const std::vector<FilmMeasurement> &measurements);
-
     /// @brief Прочитать замеры одного заключения
     /// @return порядок замеров восстанавливается сортировкой по id: UUID v7 монотонен по времени создания
     std::vector<FilmMeasurement> LoadFilmMeasurements(const std::string &reportId);
 
-    /// @brief Записать дефекты РК одного заключения. Удалённые в окне дефекты стираются из базы
-    /// физически - по той же причине, что и замеры (см. SaveFilmMeasurements)
-    /// @param reportId id заключения - проставляется всем записям, поле DefectRt::reportId не используется
-    void SaveDefectsRt(const std::string &reportId, const std::vector<DefectRt> &defects);
-
     /// @brief Прочитать дефекты одного заключения в порядке ввода (сортировка по id - UUID v7)
     std::vector<DefectRt> LoadDefectsRt(const std::string &reportId);
 
-    /// @brief Записать заключения вместе с их замерами и дефектами.
+    /// @brief Записать заключения вместе с их замерами и дефектами - каждое целиком, в одной транзакции.
+    /// Замеры и дефекты не имеют собственной отметки изменения: любая их правка помечает изменённым
+    /// заключение, и его список записывается заново. Так же заключение будет уходить и на сервер.
     /// Удалённое заключение остаётся в базе с deleted_at, как и записи справочников
     void SaveReports(const std::vector<Report> &reports);
 
@@ -102,6 +92,17 @@ private:
 
     /// по умолчанию - начало эпохи: пока момент не задан, сохраняется всё
     std::chrono::sys_seconds syncedAt{};
+
+    /// @brief Записать замеры одного заключения так, чтобы в базе остался ровно этот список:
+    /// замеры, которых в нём нет, удаляются физически. Своей транзакции не открывает -
+    /// вызывается только из SaveReports внутри транзакции заключения.
+    /// updated_at/deleted_at замера ни на что не влияют: изменённым считается заключение целиком
+    /// @param reportId id заключения - проставляется всем записям, поле FilmMeasurement::reportId не используется
+    void SaveFilmMeasurements(const std::string &reportId, const std::vector<FilmMeasurement> &measurements);
+
+    /// @brief Аналогично SaveFilmMeasurements, но для дефектов РК
+    /// @param reportId id заключения - проставляется всем записям, поле DefectRt::reportId не используется
+    void SaveDefectsRt(const std::string &reportId, const std::vector<DefectRt> &defects);
 
     /// @brief Создать таблицу laboratory_info, если её ещё нет, и дозаполнить отсутствующие
     /// колонки в уже существующей таблице (ALTER TABLE ADD COLUMN). Таблица хранит одну запись -
