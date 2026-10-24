@@ -161,10 +161,12 @@ IMPLOT_INLINE void GetLineRenderProps(const ImDrawList& draw_list, float& half_w
     const bool aa = ImHasFlag(draw_list.Flags, ImDrawListFlags_AntiAliasedLines) &&
                     ImHasFlag(draw_list.Flags, ImDrawListFlags_AntiAliasedLinesUseTex);
     if (aa) {
+        // NDT_Lab: с ImGui 1.93 TexUvLines хранит (u0, u1, v, 1/толщина) вместо (u0, v, u1, v),
+        // а поля текстуры вокруг линии сократились с 1 до 0.5 текселя
         ImVec4 tex_uvs = draw_list._Data->TexUvLines[(int)(half_weight*2)];
-        tex_uv0 = ImVec2(tex_uvs.x, tex_uvs.y);
-        tex_uv1 = ImVec2(tex_uvs.z, tex_uvs.w);
-        half_weight += 1;
+        tex_uv0 = ImVec2(tex_uvs.x, tex_uvs.z);
+        tex_uv1 = ImVec2(tex_uvs.y, tex_uvs.z);
+        half_weight += 0.5f;
     }
     else {
         tex_uv0 = tex_uv1 = draw_list._Data->TexUvWhitePixel;

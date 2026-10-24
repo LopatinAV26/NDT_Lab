@@ -15,7 +15,7 @@
 
 ## Программа (Windows, `engine/`)
 
-- C++20, Dear ImGui 1.92, SDL3, SQLite (`external/sqlite`), PoDoFo, vcpkg. Сборка: `cmake --build build`
+- C++20, Dear ImGui 1.93, SDL3, SQLite (`external/sqlite`), PoDoFo, vcpkg. Сборка: `cmake --build build`
   (MSBuild, Debug → `build/Debug/NDTLab.exe`). Если exe запущен — линковка падает с LNK1168.
 - `laboratory.*` — модель (все справочники и `reportsList`), `LoadDB`/`SaveDB`.
 - `databaseManager.*` — SQLite: `Ensure*Table` (CREATE IF NOT EXISTS + ALTER ADD COLUMN), upsert `ON CONFLICT(id)`.
