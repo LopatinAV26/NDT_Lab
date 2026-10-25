@@ -60,6 +60,12 @@ std::vector<XrayDevice> ResourceManager::LoadDevices(const std::filesystem::path
         if (auto *value = deviceTable->get("focalSpotSize"))
             device.focalSpotSize = value->value_or(1.f);
 
+        if (auto *value = deviceTable->get("beamAngleX"))
+            device.beamAngleX = value->value_or(40.f);
+
+        if (auto *value = deviceTable->get("beamAngleY"))
+            device.beamAngleY = value->value_or(60.f);
+
         if (auto *value = deviceTable->get("exposureMultiplier"))
             device.exposureMultiplier = value->value_or(1.f);
 

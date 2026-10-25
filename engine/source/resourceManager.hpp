@@ -23,6 +23,8 @@ struct XrayDevice
 	float currentMaximum = {1.f};
 	float focusDistanceDefault = {700.f};
 	float focalSpotSize = {1.f};
+	float beamAngleX = {40.f}; // угол раскрытия пучка вдоль оси трубки, градусы
+	float beamAngleY = {60.f}; // поперёк оси трубки, 360 — панорамный
 	float exposureMultiplier = {1.f};
 	bool currentAdjustment = {true};
 };

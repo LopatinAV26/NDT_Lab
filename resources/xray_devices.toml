@@ -9,6 +9,9 @@ currentMinimum = 0.5
 currentMaximum = 7.5
 focusDistanceDefault = 700.0
 focalSpotSize = 4.0
+# угол раскрытия пучка, градусы: X — вдоль оси трубки, Y — поперёк (360 — панорамный)
+beamAngleX = 40.0
+beamAngleY = 360.0
 exposureMultiplier = 1.0
 #steelThicknessMax = 36.0
 
@@ -58,6 +61,8 @@ currentMinimum = 0.5
 currentMaximum = 6.0
 focusDistanceDefault = 700.0
 focalSpotSize = 3.0
+beamAngleX = 40.0
+beamAngleY = 60.0
 exposureMultiplier = 1.0
 #steelThicknessMax = 70.0
 
@@ -127,6 +132,8 @@ currentMinimum = 0.5
 currentMaximum = 6.5
 focusDistanceDefault = 700.0
 focalSpotSize = 3.0
+beamAngleX = 40.0
+beamAngleY = 60.0
 exposureMultiplier = 1.0
 #steelThicknessMax = 70.0
 
@@ -166,6 +173,8 @@ currentMinimum = 0.5
 currentMaximum = 0.5
 focusDistanceDefault = 700.0
 focalSpotSize = 2.2
+beamAngleX = 140.0
+beamAngleY = 140.0
 exposureMultiplier = 1.0
 #steelThicknessMax = 20.0
 
@@ -199,6 +208,8 @@ currentMinimum = 1.0
 currentMaximum = 5.0
 focusDistanceDefault = 700.0
 focalSpotSize = 2.0
+beamAngleX = 40.0
+beamAngleY = 60.0
 exposureMultiplier = 1.0
 #steelThicknessMax = 36.0
 
@@ -248,6 +259,8 @@ currentMinimum = 1.0
 currentMaximum = 5.0
 focusDistanceDefault = 700.0
 focalSpotSize = 3.5
+beamAngleX = 40.0
+beamAngleY = 360.0
 exposureMultiplier = 1.0
 #steelThicknessMax = 36.0
 
@@ -297,6 +310,8 @@ currentMinimum = 1.0
 currentMaximum = 1.0
 focusDistanceDefault = 700.0
 focalSpotSize = 2.5
+beamAngleX = 180.0
+beamAngleY = 180.0
 exposureMultiplier = 1.0
 #steelThicknessMax = 23.0
 
