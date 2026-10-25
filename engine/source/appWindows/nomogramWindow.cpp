@@ -817,6 +817,13 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 		std::snprintf(textA, sizeof(textA), "f = %.0f мм", elliptic ? aReal : aReal + D - t);
 		DimV(cl, lMin.x - gap, 0.f, elliptic ? top : bottom - t, sx, -pipeLen / 2.f, textA, true, false,
 			 broken ? breakY : noBreak);
+		if (!elliptic && aReal >= 0.5f)
+		{
+			// у фронтальной ещё и расстояние до наружной поверхности трубы — справа
+			char textP[64];
+			std::snprintf(textP, sizeof(textP), "f' = %.0f мм", aReal);
+			DimV(cl, lMax.x + gap, 0.f, top, sx, pipeLen / 2.f, textP, false, false, broken ? breakY : noBreak);
+		}
 		if (sourceShift >= 0.5f)
 		{
 			char textS[64];
@@ -846,9 +853,9 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 
 			char textN[96];
 			std::snprintf(textN, sizeof(textN), "Экспозиций по ГОСТ 7512-82: %d", exposures);
+			// вверху своего вида, по центру
 			const ImVec2 ts = ImGui::CalcTextSize(textN);
-			const ImVec2 under = cc.P(0.f, filmY);
-			cc.dl->AddText({under.x - ts.x / 2.f, under.y + filmPx + 4.f}, cc.line, textN);
+			cc.dl->AddText({(splitX + p1.x) / 2.f - ts.x / 2.f, p0.y + 4.f}, cc.line, textN);
 		}
 		Source(cc, 0.f, 0.f);
 		break;
