@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <limits>
+#include <optional>
 #include "implot.h"
 #include "applicationData.hpp"
 #include "utilities.hpp"
@@ -132,6 +133,23 @@ namespace
 		c.dl->AddConvexPolyFilled(poly, arcPoints + 2, c.line);
 	}
 
+	// Обратный валик (корень шва): сегмент дуги шириной 2 * half и высотой bulge (мм)
+	// на поверхности y; dir = +1 — выпуклость вниз, -1 — вверх
+	void RootBead(const SchemeCanvas &c, float x, float y, float half, float bulge, float dir)
+	{
+		half = std::max(half, c.Mm(1.f));
+		constexpr int arcPoints = 12;
+		ImVec2 poly[arcPoints + 1];
+		const float rho = (half * half + bulge * bulge) / (2.f * std::max(bulge, 1e-3f));
+		for (int i = 0; i <= arcPoints; ++i)
+		{
+			const float px = (-1.f + 2.f * static_cast<float>(i) / arcPoints) * half;
+			const float py = std::sqrt(std::max(rho * rho - px * px, 0.f)) - (rho - bulge);
+			poly[i] = c.P(x + px, y + dir * py);
+		}
+		c.dl->AddConvexPolyFilled(poly, arcPoints + 1, c.line);
+	}
+
 	// Линия стыка между швами противоположных стенок
 	void JointLine(const SchemeCanvas &c, float x, float y0, float y1)
 	{
@@ -144,6 +162,187 @@ namespace
 		const ImVec2 a = c.P(x - half, y);
 		const ImVec2 b = c.P(x + half, y);
 		c.dl->AddRectFilled({a.x, a.y + 1.f}, {std::max(b.x, a.x + 2.f), a.y + filmPx - 1.f}, c.line);
+	}
+
+	// lg экспозиции на кривой при толщине x: кривые — ломаные на логарифмической шкале,
+	// за концами продолжаются крайние отрезки. Толщины кривой делятся на xScale
+	float CurveLogExposure(const Curve &curve, float x, float xScale)
+	{
+		const auto &xs = curve.xData;
+		const auto &ys = curve.yData;
+		const size_t n = std::min(xs.size(), ys.size());
+		if (n == 0)
+			return 0.f;
+		if (n == 1)
+			return std::log10(ys[0]);
+		size_t i = 0;
+		while (i + 2 < n && x > xs[i + 1] / xScale)
+			++i;
+		const float x0 = xs[i] / xScale;
+		const float x1 = xs[i + 1] / xScale;
+		const float l0 = std::log10(ys[i]);
+		const float l1 = std::log10(ys[i + 1]);
+		if (std::fabs(x1 - x0) < 1e-6f)
+			return l0;
+		return l0 + (x - x0) / (x1 - x0) * (l1 - l0);
+	}
+
+	// Соседние по напряжению кривые вокруг u и доля u между ними. Только внутри диапазона
+	// напряжений кривых и при хотя бы двух разных напряжениях, иначе nullopt
+	struct VoltageNeighbors
+	{
+		const Curve *a;
+		const Curve *b;
+		float share; // 0 — на кривой a, 1 — на кривой b
+	};
+	std::optional<VoltageNeighbors> NeighborCurves(const std::vector<Curve> &curves, float u)
+	{
+		std::vector<const Curve *> sorted;
+		for (const Curve &curve : curves)
+			sorted.push_back(&curve);
+		std::sort(sorted.begin(), sorted.end(), [](const Curve *a, const Curve *b) { return a->voltage < b->voltage; });
+		// одинаковые напряжения (разные плёнки) для интерполяции не годятся — берём первую
+		sorted.erase(std::unique(sorted.begin(), sorted.end(), [](const Curve *a, const Curve *b)
+								 { return std::fabs(a->voltage - b->voltage) < 0.5f; }),
+					 sorted.end());
+		if (sorted.size() < 2 || u < sorted.front()->voltage || u > sorted.back()->voltage)
+			return std::nullopt;
+
+		size_t k = 0;
+		while (k + 2 < sorted.size() && u > sorted[k + 1]->voltage)
+			++k;
+		const Curve *a = sorted[k];
+		const Curve *b = sorted[k + 1];
+		return VoltageNeighbors{a, b, (u - a->voltage) / (b->voltage - a->voltage)};
+	}
+
+	// Промежуточная кривая по точкам: каждая её точка — между соответствующими точками соседних
+	// кривых по доле напряжения (толщина линейно, экспозиция — по логарифму). Так пробиваемая
+	// толщина растёт с напряжением линейно, как у самих номограмм. Если число точек у кривых
+	// разное — по первой и последней. Толщины делятся на xScale
+	Curve InterpolatedCurve(const VoltageNeighbors &n, float xScale)
+	{
+		const Curve &a = *n.a;
+		const Curve &b = *n.b;
+		Curve result;
+		result.voltage = a.voltage + n.share * (b.voltage - a.voltage);
+		auto add = [&](size_t ia, size_t ib)
+		{
+			result.xData.push_back((a.xData[ia] + n.share * (b.xData[ib] - a.xData[ia])) / xScale);
+			const float la = std::log10(a.yData[ia]);
+			const float lb = std::log10(b.yData[ib]);
+			result.yData.push_back(std::pow(10.f, la + n.share * (lb - la)));
+		};
+		if (a.xData.size() == b.xData.size() && a.xData.size() >= 2)
+			for (size_t i = 0; i < a.xData.size(); ++i)
+				add(i, i);
+		else
+		{
+			add(0, 0);
+			add(a.xData.size() - 1, b.xData.size() - 1);
+		}
+		return result;
+	}
+
+	// Вид на детектор при просвечивании на эллипс в прямоугольнике rMin-rMax — как на снимке:
+	// плёнка тёмная, труба светлее там, где луч проходит больший путь в металле (у краёв),
+	// шов — светлая полоса по проекции кольца шва из источника.
+	// По горизонтали — поперёк трубы (длина детектора filmLen), по вертикали — вдоль трубы
+	// (ширина filmWidth). f — от источника до трубы, s — смещение источника вдоль трубы, мм
+	void EllipseDetectorView(const SchemeCanvas &c, ImVec2 rMin, ImVec2 rMax, float D, float t, float f,
+							 float bulge, float s, float filmLen, float filmWidth)
+	{
+		const float rounding = ImGui::GetStyle().FrameRounding;
+		c.dl->AddRectFilled(rMin, rMax, ImGui::GetColorU32(ImGuiCol_WindowBg), rounding);
+		c.dl->AddRect(rMin, rMax, ImGui::GetColorU32(ImGuiCol_Border), rounding);
+
+		const float pad = 6.f;
+		const float sc = std::min((rMax.x - rMin.x - 2.f * pad) / filmLen, (rMax.y - rMin.y - 2.f * pad) / filmWidth);
+		const ImVec2 mid{(rMin.x + rMax.x) / 2.f, (rMin.y + rMax.y) / 2.f};
+		auto Q = [&](float across, float along) { return ImVec2{mid.x + across * sc, mid.y + along * sc}; };
+
+		const ImVec2 f0 = Q(-filmLen / 2.f, -filmWidth / 2.f);
+		const ImVec2 f1 = Q(filmLen / 2.f, filmWidth / 2.f);
+		c.dl->AddRectFilled(f0, f1, IM_COL32(12, 12, 14, 255)); // засвеченная плёнка
+		c.dl->PushClipRect(f0, f1, true); // на детекторе — только то, что на него попадает
+
+		if (f > 0.f)
+		{
+			// источник на высоте 0, ось трубы на f + R, детектор на f + D + bulge
+			const float R = D / 2.f;
+			const float zc = f + R;
+			const float zf = f + D + bulge;
+			const float r = std::max(R - t, 0.f);
+
+			// края изображения трубы — следы касательных плоскостей из источника
+			const float wall = zf * R / std::sqrt(zc * zc - R * R);
+
+			// путь луча через обе стенки на расстоянии y от оси (луч почти вертикален)
+			auto path = [&](float y)
+			{
+				y = std::fabs(y);
+				if (y >= R)
+					return 0.f;
+				const float outer = 2.f * std::sqrt(R * R - y * y);
+				return y < r ? outer - 2.f * std::sqrt(r * r - y * y) : outer;
+			};
+			// яркость на снимке: больше металла — светлее; через две стенки в центре — серый
+			const float k = -std::log(0.55f) / std::max(2.f * t, 0.1f);
+			auto shade = [&](float across)
+			{
+				const float y = across * R / wall; // назад на трубу
+				if (std::fabs(y) >= R)
+					return IM_COL32(12, 12, 14, 255);
+				const auto g = static_cast<int>(40.f + 205.f * (1.f - std::exp(-k * path(y))));
+				return IM_COL32(g, g, g, 255);
+			};
+
+			// тело трубы — вертикальные полосы с горизонтальным градиентом
+			const float x0 = Q(-wall, 0.f).x;
+			const float x1 = Q(wall, 0.f).x;
+			const int columns = std::max(8, static_cast<int>((x1 - x0) / 2.f));
+			for (int i = 0; i < columns; ++i)
+			{
+				const float a0 = -wall + 2.f * wall * static_cast<float>(i) / columns;
+				const float a1 = -wall + 2.f * wall * static_cast<float>(i + 1) / columns;
+				const ImU32 cl = shade(a0);
+				const ImU32 cr = shade(a1);
+				c.dl->AddRectFilledMultiColor({Q(a0, 0.f).x, f0.y}, {Q(a1, 0.f).x, f1.y}, cl, cr, cr, cl);
+			}
+
+			// шов — светлая полоса: кольцо валика (радиус R + bulge) шириной 2·hw вдоль трубы,
+			// каждая точка проецируется из источника. Ширина полосы откладывается вдоль трубы,
+			// поэтому по бокам шов выступает за трубу только на высоту валика
+			const float Rw = R + bulge;
+			constexpr int n = 96;
+			const ImVec2 uv = ImGui::GetFontTexUvWhitePixel();
+			auto band = [&](float hw, ImU32 col)
+			{
+				c.dl->PrimReserve(6 * n, 2 * (n + 1));
+				const auto base = static_cast<ImDrawIdx>(c.dl->_VtxCurrentIdx);
+				for (int i = 0; i <= n; ++i)
+				{
+					const float phi = 2.f * pi * static_cast<float>(i) / n;
+					const float lambda = zf / (zc + Rw * std::cos(phi)); // увеличение для этой точки
+					const float across = Rw * std::sin(phi) * lambda;
+					c.dl->PrimWriteVtx(Q(across, s + (-hw - s) * lambda), uv, col);
+					c.dl->PrimWriteVtx(Q(across, s + (hw - s) * lambda), uv, col);
+				}
+				for (int i = 0; i < n; ++i)
+				{
+					const auto a0 = static_cast<ImDrawIdx>(base + 2 * i);
+					const ImDrawIdx idx[6] = {a0, static_cast<ImDrawIdx>(a0 + 1), static_cast<ImDrawIdx>(a0 + 3),
+											  a0, static_cast<ImDrawIdx>(a0 + 3), static_cast<ImDrawIdx>(a0 + 2)};
+					for (ImDrawIdx id : idx)
+						c.dl->PrimWriteIdx(id);
+				}
+			};
+			const float hw = 0.7f * t; // полуширина шва вдоль трубы, как на разрезе
+			band(1.6f * hw, IM_COL32(255, 255, 255, 50)); // размытое свечение
+			band(hw, IM_COL32(240, 240, 240, 140));		  // плотный валик
+		}
+		c.dl->PopClipRect();
+		c.dl->AddRect(f0, f1, c.film); // рамка детектора
 	}
 
 	// Плоский детектор: dir = +1 — рисуется ниже y, -1 — выше
@@ -337,6 +536,14 @@ void NomogramWindow::Show()
 		return;
 	}
 
+	// слева параметры и номограмма, справа схема; всё по высоте окна, без прокрутки
+	const float spacing = ImGui::GetStyle().ItemSpacing.x;
+	const float controlsWidth = std::max(380.f, ImGui::GetContentRegionAvail().x * 0.45f);
+	ImGui::BeginChild("##controls", ImVec2(controlsWidth, 0.f));
+	ImGui::PushItemWidth(-FLT_MIN); // поля и график — на всю ширину левой части
+
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("(?)").x -
+							ImGui::CalcTextSize("Паспорт").x - 2.f * spacing);
 	if (ImGui::BeginCombo("##Аппарат#", calculatedDevices[deviceIndex].name.c_str()))
 	{
 		for (int i = 0; i < std::ssize(calculatedDevices); ++i)
@@ -409,14 +616,15 @@ void NomogramWindow::Show()
 	// конус внутри трубы смотрит вдоль неё, F — по наклонному лучу до детектора у шва
 	const bool shifted = scheme == Scheme::Frontal || scheme == Scheme::Elliptic;
 	const float shift = (scheme == Scheme::Frontal) ? sourceShift : 0.f;
+	const float bulge = WeldBulge();
 	if (scheme == Scheme::Panoramic)
-		focusDistance = IsConeInPipe() ? std::hypot(sourceShift, pipeDiameter / 2.f + weldBulge)
-									   : pipeDiameter / 2.f + weldBulge;
+		focusDistance = IsConeInPipe() ? std::hypot(sourceShift, pipeDiameter / 2.f + bulge)
+									   : pipeDiameter / 2.f + bulge;
 	else if (isPipe)
-		focusDistance = std::max(focusDistance, std::hypot(pipeDiameter + weldBulge, shift));
+		focusDistance = std::max(focusDistance, std::hypot(pipeDiameter + bulge, shift));
 
 	// нижняя граница в самом поле, иначе в кадре правки F окажется ближе поверхности трубы
-	const float focusMin = shifted ? std::hypot(pipeDiameter + weldBulge, shift) : 1.f;
+	const float focusMin = shifted ? std::hypot(pipeDiameter + bulge, shift) : 1.f;
 	ImGui::BeginDisabled(scheme == Scheme::Panoramic);
 	ImGui::DragFloat("##Фокусное расстояние#", &focusDistance, 1.f, focusMin, std::max(2000.f, focusMin),
 					 "Фокусное расстояние: %.0f мм", ImGuiSliderFlags_AlwaysClamp);
@@ -428,14 +636,21 @@ void NomogramWindow::Show()
 	{
 		// от источника до трубы по перпендикуляру
 		const float h = std::sqrt(std::max(focusDistance * focusDistance - shift * shift, 0.f));
-		const float f = std::max(h - pipeDiameter - weldBulge, 0.f);
-		// эллипс: не более 0,2f; фронтальная: луч на центр детектора не более 5° к плоскости шва
+		const float f = std::max(h - pipeDiameter - bulge, 0.f);
+		// эллипс: не более 45° от плоскости шва (смещение ≤ f), больше 0,2f — с предупреждением на схеме;
+		// фронтальная: луч на центр детектора не более 5° к плоскости шва
 		const float shiftMax = (scheme == Scheme::Elliptic)
-								   ? 0.2f * f
+								   ? f
 								   : focusDistance * std::sin(frontalAngleMax * 3.14159265f / 180.f);
 		sourceShift = std::clamp(sourceShift, 0.f, shiftMax);
+		// у эллипса больше 0,2f — подпись красная, как предупреждение на схеме
+		const bool overShift = scheme == Scheme::Elliptic && sourceShift > 0.2f * f + 0.5f;
+		if (overShift)
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 80, 60, 255));
 		ImGui::DragFloat("##Смещение источника#", &sourceShift, 0.5f, 0.f, shiftMax,
 						 "Смещение источника: %.0f мм", ImGuiSliderFlags_AlwaysClamp);
+		if (overShift)
+			ImGui::PopStyleColor();
 	}
 	else if (IsConeInPipe())
 	{
@@ -446,17 +661,14 @@ void NomogramWindow::Show()
 						 "Смещение источника: %.0f мм", ImGuiSliderFlags_AlwaysClamp);
 	}
 
-	if (steelThickness > steelThicknessMax / wallFactor)
-		steelThickness = steelThicknessMax / wallFactor;
-
-	if (steelThickness < steelThicknessMin / wallFactor)
-		steelThickness = steelThicknessMin / wallFactor;
+	const auto [thicknessMin, thicknessMax] = ThicknessRange();
+	steelThickness = std::clamp(steelThickness, thicknessMin, thicknessMax);
 
 	ImGui::DragFloat("##Толщина стали#",
 					 &steelThickness,
 					 0.1f,
-					 steelThicknessMin / wallFactor,
-					 steelThicknessMax / wallFactor,
+					 thicknessMin,
+					 thicknessMax,
 					 isPipe ? "Толщина стенки: %.1f мм" : "Толщина стали: %.1f мм",
 					 ImGuiSliderFlags_AlwaysClamp);
 
@@ -476,9 +688,7 @@ void NomogramWindow::Show()
 		nameAxisY = "Время экспозиции, мин";
 	}
 
-	// высоты постоянные: если окно ниже, вкладка прокручивается
-	DrawScheme(ImVec2(ImGui::GetContentRegionAvail().x, 24.f * ImGui::GetFontSize()));
-
+	ImGui::SeparatorText("Номограмма экспозиции");
 	ImGui::BeginDisabled(!calculatedDevices[deviceIndex].currentAdjustment);
 	if (ImGui::RadioButton("мА х мин", measureIndex == Measure::mAxmin))
 	{
@@ -499,8 +709,43 @@ void NomogramWindow::Show()
 		nameAxisY = "Время экспозиции, с";
 	}
 
+	// при смещённом источнике луч идёт через стенку наклонно — путь в ней длиннее толщины
+	ImGui::Checkbox("Фактический путь в стенке", &actualWallPath);
+	const float pathFactor = actualWallPath ? WallPathFactor() : 1.f;
+
+	// рекомендуемое напряжение U = 7·S + 100 кВ, S — просвечиваемая толщина (с учётом пути, если включён);
+	// на номограмме для него — точка и пунктирная кривая, если аппарат может дать такой режим
+	const XrayDevice &device = calculatedDevices[deviceIndex];
+	const float recommendedU = 7.f * steelThickness * wallFactor * pathFactor + 100.f;
+	float curveUMin = std::numeric_limits<float>::max();
+	float curveUMax = 0.f;
+	for (const Curve &curve : device.curveVector)
+	{
+		curveUMin = std::min(curveUMin, curve.voltage);
+		curveUMax = std::max(curveUMax, curve.voltage);
+	}
+	const bool byVoltage = curveUMax - curveUMin >= 0.5f; // кривые разных напряжений, а не плёнок
+	const bool inRange = recommendedU >= curveUMin && recommendedU <= curveUMax;
+	const bool overVoltage = recommendedU > device.voltageMaximum;
+	const bool overPower = recommendedU * deviceCurrent > device.electricPower;
+	const bool drawRecommended = byVoltage && inRange && !overVoltage && !overPower;
+	ImGui::SameLine();
+	if (!byVoltage)
+		ImGui::Text("Рекомендуемое напряжение: %.0f кВ (кривые не по напряжению)", recommendedU);
+	else if (!inRange)
+		ImGui::Text("Рекомендуемое напряжение: %.0f кВ (вне кривых %.0f–%.0f кВ)", recommendedU, curveUMin, curveUMax);
+	else if (overVoltage)
+		ImGui::TextColored(ImVec4(1.f, 0.31f, 0.24f, 1.f), "Рекомендуемое напряжение: %.0f кВ — выше %.0f кВ аппарата",
+						   recommendedU, device.voltageMaximum);
+	else if (overPower)
+		ImGui::TextColored(ImVec4(1.f, 0.31f, 0.24f, 1.f),
+						   "Рекомендуемое напряжение: %.0f кВ — при %.1f мА превышена мощность", recommendedU,
+						   deviceCurrent);
+	else
+		ImGui::Text("Рекомендуемое напряжение: %.0f кВ", recommendedU);
+
 	if (ImPlot::BeginPlot(calculatedDevices[deviceIndex].name.c_str(),
-						  ImVec2(-1, 30.f * ImGui::GetFontSize()),
+						  ImVec2(-1.f, ImGui::GetContentRegionAvail().y), // до низа окна
 						  ImPlotFlags_NoLegend))
 	{
 		ImPlot::SetupAxes("Толщина стали, мм", nameAxisY.c_str(),
@@ -514,17 +759,36 @@ void NomogramWindow::Show()
 		std::vector<CurvesRef> visibleLines; // массив структур массивов
 		visibleLines.reserve(calculatedDevices[deviceIndex].curveVector.size());
 
+		int colorIndex = 0;
 		for (const auto &curve : calculatedDevices[deviceIndex].curveVector)
 		{
 			if (calculatedDevices[deviceIndex].electricPower >= curve.voltage * deviceCurrent)
 			{
-				ImPlot::PlotLine(curve.label.c_str(),
-								 curve.xData.data(),
-								 curve.yData.data(),
-								 static_cast<int>(curve.xData.size()));
+				const ImVec4 color = ImPlot::GetColormapColor(colorIndex++);
+				const int count = static_cast<int>(curve.xData.size());
+				ImPlotSpec spec;
+				spec.LineColor = color;
 
-				visibleLines.push_back({curve.xData, curve.yData,
-										ImPlot::GetLastItemColor(), curve.label});
+				if (pathFactor > 1.0001f)
+				{
+					// исходная кривая бледно, для сравнения
+					ImPlotSpec faded;
+					faded.LineColor = ImVec4(color.x, color.y, color.z, 0.3f);
+					ImPlot::PlotLine(("##nominal-" + curve.label).c_str(), curve.xData.data(), curve.yData.data(),
+									 count, faded);
+
+					// по толщине стенки t нужна экспозиция как для пути t·k: кривая сжимается по толщине в k раз
+					std::vector<float> xs = curve.xData;
+					for (float &x : xs) // cppcheck-suppress useStlAlgorithm
+						x /= pathFactor;
+					ImPlot::PlotLine(curve.label.c_str(), xs.data(), curve.yData.data(), count, spec);
+					visibleLines.push_back({xs, curve.yData, color, curve.label});
+				}
+				else
+				{
+					ImPlot::PlotLine(curve.label.c_str(), curve.xData.data(), curve.yData.data(), count, spec);
+					visibleLines.push_back({curve.xData, curve.yData, color, curve.label});
+				}
 			}
 		}
 		if (!visibleLines.empty())
@@ -534,8 +798,119 @@ void NomogramWindow::Show()
 		}
 		DrawMarkers(visibleLines, steelThickness * wallFactor);
 
+		const auto neighbors = NeighborCurves(calculatedDevices[deviceIndex].curveVector, recommendedU);
+		if (drawRecommended && neighbors)
+		{
+			const Curve between = InterpolatedCurve(*neighbors, pathFactor);
+			auto exposure = [&](float x) { return std::pow(10.f, CurveLogExposure(between, x, 1.f)); };
+
+			// пунктирная кривая от начала до конца промежуточной кривой: отрезки через один
+			const float xMin = between.xData.front();
+			const float xMax = between.xData.back();
+			constexpr int dashes = 60;
+			std::vector<float> dx;
+			std::vector<float> dy;
+			for (int i = 0; i < dashes; ++i)
+			{
+				const float xa = xMin + (xMax - xMin) * static_cast<float>(i) / dashes;
+				const float xb = xa + 0.5f * (xMax - xMin) / dashes;
+				dx.insert(dx.end(), {xa, xb});
+				dy.insert(dy.end(), {exposure(xa), exposure(xb)});
+			}
+			const ImVec4 white{0.95f, 0.95f, 0.95f, 1.f};
+			ImPlotSpec dashSpec;
+			dashSpec.LineColor = white;
+			dashSpec.LineWeight = 1.5f;
+			dashSpec.Flags = ImPlotLineFlags_Segments;
+			ImPlot::PlotLine("##recommended", dx.data(), dy.data(), static_cast<int>(dx.size()), dashSpec);
+
+			// точка при текущей толщине — только в пределах кривой
+			const double px = steelThickness * wallFactor;
+			if (px >= xMin && px <= xMax)
+			{
+				const double py = exposure(static_cast<float>(px));
+				ImPlotSpec markerSpec;
+				markerSpec.Marker = ImPlotMarker_Diamond;
+				markerSpec.MarkerSize = 6.f;
+				markerSpec.MarkerFillColor = white;
+				markerSpec.MarkerLineColor = ImVec4(0.05f, 0.05f, 0.05f, 1.f);
+				ImPlot::PlotScatter("##recommended-point", &px, &py, 1, markerSpec);
+
+				const char *unit = measureIndex == Measure::mAxmin ? "мА х мин"
+								   : measureIndex == Measure::min  ? "мин"
+																   : "с";
+				ImPlot::Annotation(px, py, white, ImVec2(8.f, 14.f), true,
+								   measureIndex == Measure::sec ? "U=%.0f кВ T=%.0f %s" : "U=%.0f кВ T=%.1f %s",
+								   recommendedU, py, unit);
+			}
+		}
+
 		ImPlot::EndPlot();
 	}
+	ImGui::PopItemWidth();
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+	//ImGui::BeginChild("##scheme");
+	//if (ImGui::CollapsingHeader("Схема просвечивания", ImGuiTreeNodeFlags_DefaultOpen))
+		DrawScheme(ImGui::GetContentRegionAvail());
+	//ImGui::EndChild();
+}
+
+std::pair<float, float> NomogramWindow::ThicknessRange() const
+{
+	// через две стенки номограмма считает 2t, поэтому и пределы стенки вдвое меньше;
+	// у трубы стенка меньше радиуса — должен остаться внутренний канал не меньше 1 мм в радиусе
+	const float wallFactor = (scheme == Scheme::Frontal || scheme == Scheme::Elliptic) ? 2.f : 1.f;
+	const float tMin = steelThicknessMin / wallFactor;
+	float tMax = steelThicknessMax / wallFactor;
+	if (scheme != Scheme::Plate)
+		tMax = std::min(tMax, pipeDiameter / 2.f - 1.f);
+	return {tMin, std::max(tMin, tMax)};
+}
+
+float NomogramWindow::ThicknessShare() const
+{
+	// 0 — самая тонкая стенка в пределах ползунка, 1 — самая толстая
+	const auto [tMin, tMax] = ThicknessRange();
+	if (tMax - tMin < 1e-3f)
+		return 1.f;
+	return std::clamp((steelThickness - tMin) / (tMax - tMin), 0.f, 1.f);
+}
+
+float NomogramWindow::WeldBulge() const
+{
+	return weldBulgeMin + (weldBulgeMax - weldBulgeMin) * ThicknessShare();
+}
+
+float NomogramWindow::RootBulge() const
+{
+	return rootBulgeMax * ThicknessShare();
+}
+
+float NomogramWindow::WallPathFactor() const
+{
+	// центральный луч идёт к шву у детектора наклонно, если источник смещён от плоскости шва:
+	// на толщину t поперёк стенки приходится сдвиг вдоль неё, путь — t·√(1 + (сдвиг/высота)²)
+	float ratio = 0.f;
+	if (IsConeInPipe())
+	{
+		// источник на оси в L от плоскости шва: на радиус r — L вдоль оси
+		const float r = pipeDiameter / 2.f - steelThickness; // внутренний радиус
+		if (r > 0.f)
+			ratio = sourceShift / r;
+	}
+	else if (scheme == Scheme::Frontal || scheme == Scheme::Elliptic)
+	{
+		// источник над трубой, смещён на s вдоль оси; стенки на пути луча — поперёк вертикали.
+		// У фронтальной F — по лучу, у эллипса — по вертикали
+		const float h = (scheme == Scheme::Frontal)
+							? std::sqrt(std::max(focusDistance * focusDistance - sourceShift * sourceShift, 1.f))
+							: std::max(focusDistance, 1.f);
+		ratio = sourceShift / h;
+	}
+	// панорамный аппарат в панорамной схеме и пластина — луч на шов перпендикулярен стенке
+	return std::sqrt(1.f + ratio * ratio);
 }
 
 bool NomogramWindow::IsConeInPipe() const
@@ -560,13 +935,12 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 	cl.line = ImGui::GetColorU32(ImGuiCol_Text);
 	cl.wall = ImGui::GetColorU32(ImGuiCol_FrameBgActive);
 
-	cl.dl->AddRectFilled(p0, p1, ImGui::GetColorU32(ImGuiCol_FrameBg));
 	cl.dl->PushClipRect(p0, p1, true);
 
 	const bool isPipe = scheme != Scheme::Plate;
 	const float D = pipeDiameter;
 	const float R = D / 2.f;
-	const float t = isPipe ? std::min(steelThickness, R * 0.45f) : steelThickness; // на рисунке
+	const float t = steelThickness;
 	const float F = focusDistance;
 
 	char textF[64];
@@ -575,13 +949,14 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 	std::snprintf(textT, sizeof(textT), "t = %.1f мм", steelThickness);
 
 	// всё в одном масштабе, расстояния на рисунке пропорциональны настоящим
-	const float b = weldBulge;
+	const float b = WeldBulge();
 	// у фронтальной F — по лучу до центра детектора, по перпендикуляру ближе; у эллипса F — по вертикали
 	const float shiftF = (scheme == Scheme::Frontal) ? sourceShift : 0.f;
 	const float H = std::sqrt(std::max(F * F - shiftF * shiftF, 0.f)); // до плоскости детектора
 	// от ближней к источнику поверхности объекта до детектора: у трубы — De и выпуклость
-	// нижнего шва, у пластины валик шва к источнику, детектор вплотную
-	const float depth = isPipe ? D + b : t;
+	// нижнего шва, у пластины — толщина и обратный валик (основной валик к источнику)
+	const float rootB = RootBulge();
+	const float depth = isPipe ? D + b : t + rootB;
 	const float aReal = std::max(H - depth, 0.f); // от источника до объекта
 	const float filmHalf = detectorWidth / 2.f;
 	const float plateLen = std::max({12.f * t, 60.f, 1.3f * detectorWidth});
@@ -629,16 +1004,29 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 
 	const float marginX = ImGui::CalcTextSize("F = 2000 мм").x + 20.f;
 	const float marginY = ImGui::GetTextLineHeight() + 8.f;
-	const float splitX = isPipe ? p0.x + size.x * 0.6f : p1.x;
+	// виды один над другим: сверху продольный разрез, снизу сечение
+	const float splitY = isPipe ? p0.y + size.y * 0.5f : p1.y;
 
-	// у эллипса над источником размер смещения
+	// у каждого вида свой фон со скруглёнными углами, как у виджетов, между видами — зазор
+	const float viewGap = isPipe ? ImGui::GetStyle().ItemSpacing.y / 2.f : 0.f;
+	const ImVec2 longMax{p1.x, splitY - viewGap};
+	const ImVec2 crossMin{p0.x, splitY + viewGap};
+	const ImU32 viewBg = ImGui::GetColorU32(ImGuiCol_FrameBg);
+	const float rounding = ImGui::GetStyle().FrameRounding;
+	cl.dl->AddRectFilled(p0, longMax, viewBg, rounding);
+	if (isPipe)
+		cl.dl->AddRectFilled(crossMin, p1, viewBg, rounding);
+
+	// у эллипса и фронтальной над источником размер смещения, над сечением фронтальной —
+	// число экспозиций
 	const float marginTop = marginY + ((scheme == Scheme::Elliptic || scheme == Scheme::Frontal)
 										   ? ImGui::GetTextLineHeight() + 14.f
 										   : 0.f);
+	const float marginTopCross = marginY + (scheme == Scheme::Frontal ? ImGui::GetTextLineHeight() : 0.f);
 
 	const ImVec2 lsMin{p0.x + marginX, p0.y + marginTop};
-	const ImVec2 lsMax{splitX - marginX, p1.y - marginY};
-	const ImVec2 csMin{splitX + marginX / 2.f, p0.y + marginTop};
+	const ImVec2 lsMax{p1.x - marginX, splitY - marginY};
+	const ImVec2 csMin{p0.x + marginX, splitY + marginTopCross};
 	const ImVec2 csMax{p1.x - marginX, p1.y - marginY};
 
 	cl.scale = FitScale(lMin, lMax, lsMin, lsMax);
@@ -685,13 +1073,13 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 		c.dl->PopClipRect();
 	};
 
-	cl.dl->PushClipRect(p0, {splitX, p1.y}, true);
+	cl.dl->PushClipRect(p0, longMax, true);
 	if (cone)
 		Beam(cl, sourceX, 0.f, pi, device.beamAngleX, beamFull, beamFade); // вдоль трубы к шву
 	else
 	{
 		if (scheme != Scheme::Panoramic)
-			drawBeam(cl, p0, {splitX, p1.y}, sourceX, (scheme == Scheme::Plate) ? 0.f : sourceShift, device.beamAngleX);
+			drawBeam(cl, p0, longMax, sourceX, (scheme == Scheme::Plate) ? 0.f : sourceShift, device.beamAngleX);
 		else
 			Beam(cl, sourceX, 0.f, pi / 2.f, device.beamAngleX, beamFull, beamFade);
 		// панорамный аппарат излучает по кругу — на продольном разрезе и вверх
@@ -703,25 +1091,36 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 	if (isPipe)
 	{
 		// конус вдоль трубы в сечении освещает весь периметр
-		cc.dl->PushClipRect({splitX, p0.y}, p1, true);
+		cc.dl->PushClipRect(crossMin, p1, true);
 		if (scheme != Scheme::Panoramic)
-			drawBeam(cc, {splitX, p0.y}, p1, 0.f, 0.f, device.beamAngleY);
+			drawBeam(cc, crossMin, p1, 0.f, 0.f, device.beamAngleY);
 		else
 			Beam(cc, 0.f, 0.f, pi / 2.f, cone ? 360.f : device.beamAngleY, beamFull, beamFade);
 		cc.dl->PopClipRect();
 	}
 
-	// Накрывает ли пучок детектор — по настоящим размерам, а не по рисунку
-	std::string warning;
+	// Предупреждения — по настоящим размерам, а не по рисунку; выводятся все, столбиком
+	std::vector<std::string> warnings;
 	{
+		if (scheme == Scheme::Elliptic && sourceShift > 0.2f * aReal + 0.5f)
+			warnings.emplace_back("Выход за пределы допустимого смещения");
+
 		const float shift = (scheme == Scheme::Frontal || scheme == Scheme::Elliptic) ? sourceShift : 0.f;
 		// для конуса — угол от оси трубы до ближнего к источнику края детектора
 		const float need = cone ? std::atan2(R + b, coneShift - filmHalf) * 180.f / pi
 								: std::atan((filmHalf + shift) / std::max(H, 1.f)) * 180.f / pi;
 		if (scheme == Scheme::Panoramic && !panoramicDevice && !cone)
-			warning = "Аппарат не панорамный";
-		else if (need > device.beamAngleX / 2.f)
-			warning = "Пучок не накрывает детектор";
+			warnings.emplace_back("Аппарат не панорамный");
+		else if (scheme != Scheme::Elliptic && need > device.beamAngleX / 2.f) // у эллипса не проверяем
+			warnings.emplace_back("Пучок не накрывает детектор");
+		else if (scheme == Scheme::Elliptic)
+		{
+			// изображение трубы — между касательными от источника, по настоящим размерам
+			const float dist = aReal + R;
+			const float shadowHalf = (aReal + D + b) * R / std::sqrt(std::max(dist * dist - R * R, 1e-3f));
+			if (aReal <= 0.f || shadowHalf > ellipseFilmLength / 2.f)
+				warnings.emplace_back("Изображение не помещается на детектор");
+		}
 		else if (scheme == Scheme::Frontal)
 		{
 			// в сечении: края изогнутого детектора (периметр / N) от источника над трубой
@@ -729,7 +1128,7 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 			const float edgeX = (R + b) * std::sin(span);
 			const float edgeY = R + aReal + (R + b) * std::cos(span); // ниже источника
 			if (std::atan2(edgeX, edgeY) * 180.f / pi > device.beamAngleY / 2.f)
-				warning = "Пучок не накрывает края детектора по периметру";
+				warnings.emplace_back("Пучок не накрывает края детектора по периметру");
 		}
 	}
 
@@ -841,8 +1240,50 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 		AxisLine(cc, 0.f, 0.f, 0.f, bottom + gap);
 		if (elliptic)
 		{
-			const float half = 0.6f * D;
+			const float half = ellipseFilmLength / 2.f;
 			FlatFilm(cc, -half, half, filmY, 1.f);
+
+			// касательные от источника к трубе до детектора — границы изображения трубы;
+			// угол — от настоящего источника, при разрыве линии прерываются там же, где пучок:
+			// выше — от нарисованного источника, ниже — от настоящего (за рамкой)
+			const float dist = aReal + R; // от настоящего источника до оси трубы
+			if (dist > R)
+			{
+				const float tanT = R / std::sqrt(dist * dist - R * R);
+				if (broken)
+				{
+					const float gapY = cc.P(0.f, breakY).y;
+					const float vy = aShown - aReal; // настоящий источник, выше рамки
+					cc.dl->PushClipRect(crossMin, {p1.x, gapY - 3.f}, true);
+					for (float side : {-1.f, 1.f})
+						Ray(cc, 0.f, 0.f, side * breakY * tanT, breakY);
+					cc.dl->PopClipRect();
+					cc.dl->PushClipRect({crossMin.x, gapY + 3.f}, p1, true);
+					for (float side : {-1.f, 1.f})
+						Ray(cc, 0.f, vy, side * (filmY - vy) * tanT, filmY);
+					cc.dl->PopClipRect();
+				}
+				else
+					for (float side : {-1.f, 1.f})
+						Ray(cc, 0.f, 0.f, side * filmY * tanT, filmY);
+			}
+
+			// в правом верхнем углу сечения — вид на детектор с эллипсом
+			const float regionW = p1.x - crossMin.x;
+			const float regionH = p1.y - crossMin.y;
+			const float insetW = 0.38f * regionW;
+			const float insetH = std::min(insetW * detectorWidth / ellipseFilmLength, 0.5f * regionH);
+			const ImVec2 insetMin{p1.x - 6.f - insetW, crossMin.y + 6.f};
+			EllipseDetectorView(cc, insetMin, {p1.x - 6.f, insetMin.y + insetH}, D, steelThickness, aReal, b,
+								sourceShift, ellipseFilmLength, detectorWidth);
+
+			// под ним — коэффициент для размеров дефектов шва со стороны источника:
+			// α = (f + S) / (f + S + D), f — до поверхности контролируемого участка
+			const float alpha = (aReal + steelThickness) / (aReal + steelThickness + D);
+			char textAlpha[64];
+			std::snprintf(textAlpha, sizeof(textAlpha), "Коэффициент размера дефекта α = %.2f", alpha);
+			const ImVec2 ts = ImGui::CalcTextSize(textAlpha);
+			cc.dl->AddText({p1.x - 6.f - ts.x, insetMin.y + insetH + 4.f}, cc.line, textAlpha);
 		}
 		else
 		{
@@ -852,10 +1293,8 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 			ArcFilm(cc, 0.f, top + R, R + b, pi / 2.f - span, pi / 2.f + span);
 
 			char textN[96];
-			std::snprintf(textN, sizeof(textN), "Экспозиций по ГОСТ 7512-82: %d", exposures);
-			// вверху своего вида, по центру
-			const ImVec2 ts = ImGui::CalcTextSize(textN);
-			cc.dl->AddText({(splitX + p1.x) / 2.f - ts.x / 2.f, p0.y + 4.f}, cc.line, textN);
+			std::snprintf(textN, sizeof(textN), "Количество экспозиций по ГОСТ 7512-82 = %d", exposures);
+			cc.dl->AddText({p0.x + 6.f, crossMin.y + 4.f}, cc.line, textN); // левый верхний угол сечения
 		}
 		Source(cc, 0.f, 0.f);
 		break;
@@ -865,12 +1304,14 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 		const float top = aShown;
 		const float bottom = aShown + t;
 
-		const float filmY = bottom; // валик шва к источнику, детектор вплотную
+		const float filmY = bottom + rootB; // детектор за обратным валиком
 
 		HatchRect(cl, -plateLen / 2.f, top, plateLen / 2.f, bottom, true);
 		for (float ex : {-plateLen / 2.f, plateLen / 2.f})
 			BreakLine(cl, ex, top, bottom);
-		Weld(cl, 0.f, top, bottom, b); // валиком к источнику
+		Weld(cl, 0.f, top, bottom, b);				   // валиком к источнику
+		if (rootB > 0.05f)
+			RootBead(cl, 0.f, bottom, 0.15f * t, rootB, 1.f); // обратный валик к детектору
 		FlatFilm(cl, -filmHalf, filmHalf, filmY, 1.f);
 		AxisLine(cl, 0.f, 0.f, 0.f, filmY + gap);
 		Source(cl, 0.f, 0.f);
@@ -888,17 +1329,25 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 	{
 		char info[96];
 		std::snprintf(info, sizeof(info), "Просвечиваемая толщина 2t = %.1f мм", 2.f * steelThickness);
-		cl.dl->AddText({p0.x + 6.f, p1.y - ImGui::GetTextLineHeight() - 4.f}, cl.line, info);
+		cl.dl->AddText({p0.x + 6.f, p0.y + 4.f}, cl.line, info); // левый верхний угол продольного разреза
 	}
 
-	// граница между продольным разрезом и сечением
-	if (isPipe)
-		cl.dl->AddLine({splitX, p0.y}, {splitX, p1.y}, ImGui::GetColorU32(ImGuiCol_Separator), 2.f);
-
-	if (!warning.empty())
+	// фактический путь центрального луча в металле — в левом нижнем углу продольного разреза
 	{
-		const ImVec2 ts = ImGui::CalcTextSize(warning.c_str());
-		cl.dl->AddText({p1.x - ts.x - 6.f, p1.y - ts.y - 4.f}, cl.source, warning.c_str());
+		const float k = WallPathFactor();
+		const float nominal = (scheme == Scheme::Frontal || scheme == Scheme::Elliptic) ? 2.f * t : t;
+		char textPath[96];
+		std::snprintf(textPath, sizeof(textPath), "Путь в металле: %.1f мм (×%.2f)", nominal * k, k);
+		cl.dl->AddText({p0.x + 6.f, longMax.y - ImGui::GetTextLineHeight() - 4.f}, cl.line, textPath);
+	}
+
+	// предупреждения в правом нижнем углу, снизу вверх
+	float warningY = p1.y - 4.f;
+	for (const std::string &w : warnings)
+	{
+		const ImVec2 ts = ImGui::CalcTextSize(w.c_str());
+		warningY -= ts.y;
+		cl.dl->AddText({p1.x - ts.x - 6.f, warningY}, cl.source, w.c_str());
 	}
 
 	cl.dl->PopClipRect();

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 #include "imgui.h"
 #include "resourceManager.hpp"
 
@@ -47,8 +48,21 @@ private:
     void DrawScheme(ImVec2 size);
     // панорамная схема с конусным аппаратом (торцевой конус, полусфера): пучок вдоль трубы
     bool IsConeInPipe() const;
+    // во сколько раз путь луча в стенке длиннее её толщины (конус внутри трубы)
+    float WallPathFactor() const;
 
-    static constexpr float weldBulge = 3.f; // выпуклость шва, на неё же отодвинут детектор, мм
+    // выпуклость наружного валика шва (на неё же отодвинут детектор), мм: от min при самой тонкой
+    // стенке до max при самой толстой
+    static constexpr float weldBulgeMin = 1.f;
+    static constexpr float weldBulgeMax = 3.f;
+    float WeldBulge() const;
+    // пределы толщины стенки (стали) для ползунка, мм
+    std::pair<float, float> ThicknessRange() const;
+    // обратный валик шва пластины, мм: от 0 при самой тонкой стенке до max при самой толстой
+    static constexpr float rootBulgeMax = 1.f;
+    float RootBulge() const;
+    float ThicknessShare() const;
+    static constexpr float ellipseFilmLength = 200.f; // детектор в сечении на эллипс, мм
     static constexpr float frontalAngleMax = 5.f; // наклон к плоскости шва для фронтальной, градусы
 
     std::string nameAxisY = "Экспозиция, мА х мин";
@@ -58,6 +72,7 @@ private:
     float pipeDiameter = {159.f};
     float focusDistance = {700.f};
     float detectorWidth = {100.f}; // вдоль оси трубы (вдоль шва у пластины), мм
+    bool actualWallPath = {false}; // номограмма по фактическому пути в стенке
     float sourceShift = {50.f}; // смещение источника от плоскости шва (эллипс, фронтальная), мм
     float steelThickness = {10.f};
     float deviceCurrent = {1.f};

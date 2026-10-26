@@ -130,10 +130,7 @@ void LabWindow::Show(bool &isOpen)
 
             if (ImGui::BeginTabItem("Параметры контроля"))
             {
-                // у главного окна нет полосы прокрутки, поэтому вкладка в своей области
-                if (ImGui::BeginChild("##nomogram-scroll"))
-                    nomogramWindow.Show();
-                ImGui::EndChild();
+                nomogramWindow.Show();
                 ImGui::EndTabItem();
             }
 
