@@ -72,7 +72,7 @@ private:
     float pipeDiameter = {159.f};
     float focusDistance = {700.f};
     float detectorWidth = {100.f}; // вдоль оси трубы (вдоль шва у пластины), мм
-    bool actualWallPath = {false}; // номограмма по фактическому пути в стенке
+    bool actualWallPath = {true}; // номограмма по фактическому пути в стенке
     float sourceShift = {50.f}; // смещение источника от плоскости шва (эллипс, фронтальная), мм
     float steelThickness = {10.f};
     float deviceCurrent = {1.f};
