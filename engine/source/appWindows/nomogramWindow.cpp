@@ -716,7 +716,7 @@ void NomogramWindow::Show()
 	// рекомендуемое напряжение U = 7·S + 100 кВ, S — просвечиваемая толщина (с учётом пути, если включён);
 	// на номограмме для него — точка и пунктирная кривая, если аппарат может дать такой режим
 	const XrayDevice &device = calculatedDevices[deviceIndex];
-	const float recommendedU = 7.f * steelThickness * wallFactor * pathFactor + 100.f;
+	const int recommendedU = static_cast<int>(std::lround(7.f * steelThickness * wallFactor * pathFactor + 100.f));
 	float curveUMin = std::numeric_limits<float>::max();
 	float curveUMax = 0.f;
 	for (const Curve &curve : device.curveVector)
@@ -729,20 +729,16 @@ void NomogramWindow::Show()
 	const bool overVoltage = recommendedU > device.voltageMaximum;
 	const bool overPower = recommendedU * deviceCurrent > device.electricPower;
 	const bool drawRecommended = byVoltage && inRange && !overVoltage && !overPower;
-	ImGui::SameLine();
+	
 	if (!byVoltage)
-		ImGui::Text("Рекомендуемое напряжение: %.0f кВ (кривые не по напряжению)", recommendedU);
-	else if (!inRange)
-		ImGui::Text("Рекомендуемое напряжение: %.0f кВ (вне кривых %.0f–%.0f кВ)", recommendedU, curveUMin, curveUMax);
+		ImGui::Text("Рекомендуемое напряжение: %d кВ (кривые не по напряжению)", recommendedU);
 	else if (overVoltage)
-		ImGui::TextColored(ImVec4(1.f, 0.31f, 0.24f, 1.f), "Рекомендуемое напряжение: %.0f кВ — выше %.0f кВ аппарата",
-						   recommendedU, device.voltageMaximum);
+		ImGui::TextColored(ImVec4(1.f, 0.31f, 0.24f, 1.f), "Рекомендуемое напряжение: %d кВ - превышено напряжение РА", recommendedU);
 	else if (overPower)
 		ImGui::TextColored(ImVec4(1.f, 0.31f, 0.24f, 1.f),
-						   "Рекомендуемое напряжение: %.0f кВ — при %.1f мА превышена мощность", recommendedU,
-						   deviceCurrent);
+						   "Рекомендуемое напряжение: %d кВ - превышена мощность РА", recommendedU);
 	else
-		ImGui::Text("Рекомендуемое напряжение: %.0f кВ", recommendedU);
+		ImGui::Text("Рекомендуемое напряжение: %d кВ", recommendedU);
 
 	if (ImPlot::BeginPlot(calculatedDevices[deviceIndex].name.c_str(),
 						  ImVec2(-1.f, ImGui::GetContentRegionAvail().y), // до низа окна
@@ -759,36 +755,17 @@ void NomogramWindow::Show()
 		std::vector<CurvesRef> visibleLines; // массив структур массивов
 		visibleLines.reserve(calculatedDevices[deviceIndex].curveVector.size());
 
-		int colorIndex = 0;
 		for (const auto &curve : calculatedDevices[deviceIndex].curveVector)
 		{
 			if (calculatedDevices[deviceIndex].electricPower >= curve.voltage * deviceCurrent)
 			{
-				const ImVec4 color = ImPlot::GetColormapColor(colorIndex++);
-				const int count = static_cast<int>(curve.xData.size());
-				ImPlotSpec spec;
-				spec.LineColor = color;
+				// по толщине стенки t нужна экспозиция как для пути t·k: кривая сжимается по толщине в k раз
+				std::vector<float> xs = curve.xData;
+				for (float &x : xs) // cppcheck-suppress useStlAlgorithm
+					x /= pathFactor;
 
-				if (pathFactor > 1.0001f)
-				{
-					// исходная кривая бледно, для сравнения
-					ImPlotSpec faded;
-					faded.LineColor = ImVec4(color.x, color.y, color.z, 0.3f);
-					ImPlot::PlotLine(("##nominal-" + curve.label).c_str(), curve.xData.data(), curve.yData.data(),
-									 count, faded);
-
-					// по толщине стенки t нужна экспозиция как для пути t·k: кривая сжимается по толщине в k раз
-					std::vector<float> xs = curve.xData;
-					for (float &x : xs) // cppcheck-suppress useStlAlgorithm
-						x /= pathFactor;
-					ImPlot::PlotLine(curve.label.c_str(), xs.data(), curve.yData.data(), count, spec);
-					visibleLines.push_back({xs, curve.yData, color, curve.label});
-				}
-				else
-				{
-					ImPlot::PlotLine(curve.label.c_str(), curve.xData.data(), curve.yData.data(), count, spec);
-					visibleLines.push_back({curve.xData, curve.yData, color, curve.label});
-				}
+				ImPlot::PlotLine(curve.label.c_str(), xs.data(), curve.yData.data(), static_cast<int>(xs.size()));
+				visibleLines.push_back({xs, curve.yData, ImPlot::GetLastItemColor(), curve.label});
 			}
 		}
 		if (!visibleLines.empty())
@@ -798,7 +775,7 @@ void NomogramWindow::Show()
 		}
 		DrawMarkers(visibleLines, steelThickness * wallFactor);
 
-		const auto neighbors = NeighborCurves(calculatedDevices[deviceIndex].curveVector, recommendedU);
+		const auto neighbors = NeighborCurves(calculatedDevices[deviceIndex].curveVector, static_cast<float>(recommendedU));
 		if (drawRecommended && neighbors)
 		{
 			const Curve between = InterpolatedCurve(*neighbors, pathFactor);
@@ -817,9 +794,10 @@ void NomogramWindow::Show()
 				dx.insert(dx.end(), {xa, xb});
 				dy.insert(dy.end(), {exposure(xa), exposure(xb)});
 			}
-			const ImVec4 white{0.95f, 0.95f, 0.95f, 1.f};
+			// цвет текста темы: светлый на тёмной теме, тёмный на светлой
+			const ImVec4 accent = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 			ImPlotSpec dashSpec;
-			dashSpec.LineColor = white;
+			dashSpec.LineColor = accent;
 			dashSpec.LineWeight = 1.5f;
 			dashSpec.Flags = ImPlotLineFlags_Segments;
 			ImPlot::PlotLine("##recommended", dx.data(), dy.data(), static_cast<int>(dx.size()), dashSpec);
@@ -832,15 +810,15 @@ void NomogramWindow::Show()
 				ImPlotSpec markerSpec;
 				markerSpec.Marker = ImPlotMarker_Diamond;
 				markerSpec.MarkerSize = 6.f;
-				markerSpec.MarkerFillColor = white;
-				markerSpec.MarkerLineColor = ImVec4(0.05f, 0.05f, 0.05f, 1.f);
+				markerSpec.MarkerFillColor = accent;
+				markerSpec.MarkerLineColor = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg); // контур — цвет фона
 				ImPlot::PlotScatter("##recommended-point", &px, &py, 1, markerSpec);
 
 				const char *unit = measureIndex == Measure::mAxmin ? "мА х мин"
 								   : measureIndex == Measure::min  ? "мин"
 																   : "с";
-				ImPlot::Annotation(px, py, white, ImVec2(8.f, 14.f), true,
-								   measureIndex == Measure::sec ? "U=%.0f кВ T=%.0f %s" : "U=%.0f кВ T=%.1f %s",
+				ImPlot::Annotation(px, py, accent, ImVec2(8.f, 14.f), true,
+								   measureIndex == Measure::sec ? "U=%d кВ T=%.0f %s" : "U=%d кВ T=%.1f %s",
 								   recommendedU, py, unit);
 			}
 		}
