@@ -542,8 +542,7 @@ void NomogramWindow::Show()
 	ImGui::BeginChild("##controls", ImVec2(controlsWidth, 0.f));
 	ImGui::PushItemWidth(-FLT_MIN); // поля и график — на всю ширину левой части
 
-	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("(?)").x -
-							ImGui::CalcTextSize("Паспорт").x - 2.f * spacing);
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("(?)").x - spacing);
 	if (ImGui::BeginCombo("##Аппарат#", calculatedDevices[deviceIndex].name.c_str()))
 	{
 		for (int i = 0; i < std::ssize(calculatedDevices); ++i)
@@ -565,8 +564,6 @@ void NomogramWindow::Show()
 	ImGui::SameLine();
 
 	NDT::HelpMarker(calculatedDevices[deviceIndex].information.c_str());
-	ImGui::SameLine();
-	ImGui::TextLinkOpenURL("Паспорт", "resources/devices_manual/Arina.pdf");
 
 	static constexpr const char *schemeNames[] = {"Панорамная", "Фронтальная", "На эллипс", "Пластина"};
 	static_assert(std::size(schemeNames) == static_cast<size_t>(Scheme::Count));
