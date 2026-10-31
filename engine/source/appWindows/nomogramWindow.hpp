@@ -76,6 +76,7 @@ private:
     float sourceShift = {50.f}; // смещение источника от плоскости шва (эллипс, фронтальная), мм
     float steelThickness = {10.f};
     float deviceCurrent = {1.f};
+    float filmDensity = {2.f}; // оптическая плотность, е.о.п.; исходные номограммы для D = 2
     float steelThicknessMin = {1.f};
     float steelThicknessMax = {10.f};
     std::vector<XrayDevice> devices;

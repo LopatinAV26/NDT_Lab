@@ -200,7 +200,8 @@ namespace
 		std::vector<const Curve *> sorted;
 		for (const Curve &curve : curves)
 			sorted.push_back(&curve);
-		std::sort(sorted.begin(), sorted.end(), [](const Curve *a, const Curve *b) { return a->voltage < b->voltage; });
+		std::sort(sorted.begin(), sorted.end(), [](const Curve *a, const Curve *b)
+				  { return a->voltage < b->voltage; });
 		// одинаковые напряжения (разные плёнки) для интерполяции не годятся — берём первую
 		sorted.erase(std::unique(sorted.begin(), sorted.end(), [](const Curve *a, const Curve *b)
 								 { return std::fabs(a->voltage - b->voltage) < 0.5f; }),
@@ -259,12 +260,13 @@ namespace
 		const float pad = 6.f;
 		const float sc = std::min((rMax.x - rMin.x - 2.f * pad) / filmLen, (rMax.y - rMin.y - 2.f * pad) / filmWidth);
 		const ImVec2 mid{(rMin.x + rMax.x) / 2.f, (rMin.y + rMax.y) / 2.f};
-		auto Q = [&](float across, float along) { return ImVec2{mid.x + across * sc, mid.y + along * sc}; };
+		auto Q = [&](float across, float along)
+		{ return ImVec2{mid.x + across * sc, mid.y + along * sc}; };
 
 		const ImVec2 f0 = Q(-filmLen / 2.f, -filmWidth / 2.f);
 		const ImVec2 f1 = Q(filmLen / 2.f, filmWidth / 2.f);
 		c.dl->AddRectFilled(f0, f1, IM_COL32(12, 12, 14, 255)); // засвеченная плёнка
-		c.dl->PushClipRect(f0, f1, true); // на детекторе — только то, что на него попадает
+		c.dl->PushClipRect(f0, f1, true);						// на детекторе — только то, что на него попадает
 
 		if (f > 0.f)
 		{
@@ -337,7 +339,7 @@ namespace
 						c.dl->PrimWriteIdx(id);
 				}
 			};
-			const float hw = 0.7f * t; // полуширина шва вдоль трубы, как на разрезе
+			const float hw = 0.7f * t;					  // полуширина шва вдоль трубы, как на разрезе
 			band(1.6f * hw, IM_COL32(255, 255, 255, 50)); // размытое свечение
 			band(hw, IM_COL32(240, 240, 240, 140));		  // плотный валик
 		}
@@ -642,12 +644,24 @@ void NomogramWindow::Show()
 		sourceShift = std::clamp(sourceShift, 0.f, shiftMax);
 		// у эллипса больше 0,2f — подпись красная, как предупреждение на схеме
 		const bool overShift = scheme == Scheme::Elliptic && sourceShift > 0.2f * f + 0.5f;
+		if (scheme == Scheme::Elliptic)
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("(?)").x - spacing);
 		if (overShift)
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 80, 60, 255));
 		ImGui::DragFloat("##Смещение источника#", &sourceShift, 0.5f, 0.f, shiftMax,
 						 "Смещение источника: %.0f мм", ImGuiSliderFlags_AlwaysClamp);
 		if (overShift)
 			ImGui::PopStyleColor();
+		if (scheme == Scheme::Elliptic)
+		{
+			ImGui::SameLine();
+			char shiftHelp[256];
+			std::snprintf(shiftHelp, sizeof(shiftHelp),
+						  "В соответствии с РД-25.160.10-КТН-0016-23 \n"
+						  "рекомендуется значение 0.2f (%.0f мм)",
+						  0.2f * f);
+			NDT::HelpMarker(shiftHelp);
+		}
 	}
 	else if (IsConeInPipe())
 	{
@@ -678,6 +692,16 @@ void NomogramWindow::Show()
 					   "Сила тока: %.1f мА",
 					   ImGuiSliderFlags_AlwaysClamp);
 	ImGui::EndDisabled();
+
+	ImGui::TextUnformatted("Оптическая плотность, е.о.п.:");
+	ImGui::SameLine();
+	if (ImGui::InputFloat("##Оптическая плотность#", &filmDensity, 0.5f, 0.5f, "%.1f"))
+	{
+		if (!std::isfinite(filmDensity))
+			filmDensity = 2.f;
+		filmDensity = std::round(std::clamp(filmDensity, 2.f, 3.5f) * 2.f) / 2.f;
+	}
+	ImGui::SetItemTooltip("Требуемая оптическая плотность в центре снимка на основном металле");
 
 	if (!calculatedDevices[deviceIndex].currentAdjustment && measureIndex == Measure::mAxmin)
 	{
@@ -726,11 +750,11 @@ void NomogramWindow::Show()
 	const bool overVoltage = recommendedU > device.voltageMaximum;
 	const bool overPower = recommendedU * deviceCurrent > device.electricPower;
 	const bool drawRecommended = byVoltage && inRange && !overVoltage && !overPower;
-	
+
 	if (!byVoltage)
 		ImGui::Text("Рекомендуемое напряжение: %d кВ (кривые не по напряжению)", recommendedU);
 	else if (overVoltage)
-		ImGui::TextColored(ImVec4(1.f, 0.31f, 0.24f, 1.f), "Рекомендуемое напряжение: %d кВ - превышено напряжение РА", recommendedU);
+		ImGui::TextColored(ImVec4(1.f, 0.31f, 0.24f, 1.f), "Рекомендуемое напряжение: %d кВ - превышает напряжение РА", recommendedU);
 	else if (overPower)
 		ImGui::TextColored(ImVec4(1.f, 0.31f, 0.24f, 1.f),
 						   "Рекомендуемое напряжение: %d кВ - превышена мощность РА", recommendedU);
@@ -776,7 +800,8 @@ void NomogramWindow::Show()
 		if (drawRecommended && neighbors)
 		{
 			const Curve between = InterpolatedCurve(*neighbors, pathFactor);
-			auto exposure = [&](float x) { return std::pow(10.f, CurveLogExposure(between, x, 1.f)); };
+			auto exposure = [&](float x)
+			{ return std::pow(10.f, CurveLogExposure(between, x, 1.f)); };
 
 			// пунктирная кривая от начала до конца промежуточной кривой: отрезки через один
 			const float xMin = between.xData.front();
@@ -826,10 +851,10 @@ void NomogramWindow::Show()
 	ImGui::EndChild();
 
 	ImGui::SameLine();
-	//ImGui::BeginChild("##scheme");
-	//if (ImGui::CollapsingHeader("Схема просвечивания", ImGuiTreeNodeFlags_DefaultOpen))
-		DrawScheme(ImGui::GetContentRegionAvail());
-	//ImGui::EndChild();
+	// ImGui::BeginChild("##scheme");
+	// if (ImGui::CollapsingHeader("Схема просвечивания", ImGuiTreeNodeFlags_DefaultOpen))
+	DrawScheme(ImGui::GetContentRegionAvail());
+	// ImGui::EndChild();
 }
 
 std::pair<float, float> NomogramWindow::ThicknessRange() const
@@ -1284,7 +1309,7 @@ void NomogramWindow::DrawScheme(ImVec2 size)
 		HatchRect(cl, -plateLen / 2.f, top, plateLen / 2.f, bottom, true);
 		for (float ex : {-plateLen / 2.f, plateLen / 2.f})
 			BreakLine(cl, ex, top, bottom);
-		Weld(cl, 0.f, top, bottom, b);				   // валиком к источнику
+		Weld(cl, 0.f, top, bottom, b); // валиком к источнику
 		if (rootB > 0.05f)
 			RootBead(cl, 0.f, bottom, 0.15f * t, rootB, 1.f); // обратный валик к детектору
 		FlatFilm(cl, -filmHalf, filmHalf, filmY, 1.f);
@@ -1335,6 +1360,8 @@ std::vector<XrayDevice> NomogramWindow::ExposureRecalculation(const std::vector<
 	auto &device = result[deviceIndex];
 
 	float factor = static_cast<float>(std::pow((distance / deviceVector[deviceIndex].focusDistanceDefault), 2));
+	// Приближение с постоянным градиентом: при D = 2 поправка ×1, при D = 3 — ×1,6.
+	factor *= std::pow(1.6f, filmDensity - 2.f);
 
 	if (!result[deviceIndex].currentAdjustment)
 		current = 1.f;
